@@ -177,9 +177,48 @@
   .u-icon{font-size:30px;margin-bottom:7px}
   .u-text{color:var(--text-muted);font-size:14px}
   .u-hint{color:#bbb;font-size:12px;margin-top:3px}
-  .prev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:9px;margin-top:11px}
-  .prev-item{position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;background:#f0e8d0}
-  .prev-item img{width:100%;height:100%;object-fit:cover}
+  /* ───── IMAGE PREVIEW GRID ───── */
+  .prev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:11px}
+  .prev-item{position:relative;border-radius:10px;overflow:hidden;background:var(--surface);border:1.5px solid var(--border);transition:all .2s;display:flex;flex-direction:column}
+  .prev-item:hover{border-color:var(--gold);transform:translateY(-1px);box-shadow:0 4px 14px rgba(201,168,76,.12)}
+  .prev-item.is-primary{border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,168,76,.25)}
+  .prev-item.is-uploading{border-color:rgba(201,168,76,.5);background:rgba(201,168,76,.05);padding:10px;flex-direction:row;align-items:center;gap:10px;grid-column:span 2}
+  .prev-item.is-error{border-color:rgba(139,0,0,.5);background:rgba(139,0,0,.05);padding:10px;flex-direction:row;align-items:center;gap:10px;grid-column:span 2}
+
+  .pi-thumb{width:100%;aspect-ratio:1;background:#f0e8d0;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+  .pi-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .pi-thumb-loading,.pi-thumb-error{width:54px;height:54px;aspect-ratio:1;border-radius:8px;font-size:22px}
+  .pi-thumb-loading{background:rgba(201,168,76,.12)}
+  .pi-thumb-error{background:rgba(139,0,0,.12)}
+
+  .pi-spinner{
+    width:24px;height:24px;border:2.5px solid rgba(201,168,76,.25);
+    border-top-color:var(--gold);border-radius:50%;
+    animation:piSpin .8s linear infinite;
+  }
+  @keyframes piSpin{to{transform:rotate(360deg)}}
+
+  .pi-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;padding-right:24px}
+  .pi-name{font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pi-meta{font-size:11px;color:var(--text-muted)}
+  .pi-status{color:var(--gold-dark);font-weight:600}
+  .pi-error-text{color:#a55;font-weight:600}
+
+  .pi-bar{height:4px;background:rgba(201,168,76,.12);border-radius:2px;overflow:hidden;margin-top:5px}
+  .pi-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold-light),var(--gold));border-radius:2px;transition:width .3s ease-out}
+
+  .pi-badge{position:absolute;top:6px;left:6px;background:var(--gold);color:var(--deep);font-size:10px;font-weight:700;padding:3px 8px;border-radius:11px;letter-spacing:.5px;box-shadow:0 2px 6px rgba(0,0,0,.2);pointer-events:none}
+
+  .pi-reorder{position:absolute;bottom:6px;left:6px;display:flex;gap:3px;opacity:0;transition:opacity .2s;pointer-events:none}
+  .prev-item:hover .pi-reorder{opacity:1;pointer-events:auto}
+  .pi-move{background:rgba(18,16,10,.85);color:var(--gold-light);border:none;width:24px;height:24px;border-radius:6px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .pi-move:hover:not(:disabled){background:var(--gold);color:var(--deep)}
+  .pi-move:disabled{opacity:.35;cursor:not-allowed}
+
+  .pi-rm{position:absolute;top:6px;right:6px;background:rgba(139,0,0,.85);color:white;border:none;border-radius:50%;width:24px;height:24px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:2}
+  .pi-rm:hover{background:#a00;transform:scale(1.1)}
+
+  /* Legacy support — old code might still query these */
   .prev-rm{position:absolute;top:3px;right:3px;background:rgba(139,0,0,.85);color:white;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 
   .dtable{width:100%;border-collapse:collapse;background:white;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.05)}
@@ -313,7 +352,11 @@
     .u-icon{font-size:24px;margin-bottom:4px}
     .u-text{font-size:12.5px}
     .u-hint{font-size:11px}
-    .prev-grid{grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:7px}
+    .prev-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:9px}
+    .prev-item.is-uploading,.prev-item.is-error{grid-column:span 1;flex-direction:column;align-items:stretch;text-align:center}
+    .pi-info{padding-right:0;align-items:center}
+    .pi-name{text-align:center}
+    .pi-reorder{opacity:1;pointer-events:auto}
 
     .btn-gold{padding:10px 18px;font-size:13px}
     .btn-ol{padding:10px 16px;font-size:13px}
@@ -1949,10 +1992,10 @@ function rmHeroStat(idx){const cur=captureHeroStats();cur.splice(idx,1);renderHe
 
 function saveHero(){
   const db=getDB();
-  db.settings.hero.bgImage=(tempImgs['h_bg']||[])[0]||'';
+  db.settings.hero.bgImage=(captureImgs('h_bg')[0]||'');
   db.settings.hero.phra3dGlb=_tempGlb||'';
-  db.settings.hero.phra3dFront=(tempImgs['h_phra_front']||[])[0]||'';
-  db.settings.hero.phra3dBack=(tempImgs['h_phra_back']||[])[0]||'';
+  db.settings.hero.phra3dFront=(captureImgs('h_phra_front')[0]||'');
+  db.settings.hero.phra3dBack=(captureImgs('h_phra_back')[0]||'');
   db.settings.hero.eyebrow=document.getElementById('h_eyebrow').value;
   db.settings.hero.titleHighlight=document.getElementById('h_titleHL').value;
   db.settings.hero.titleRest=document.getElementById('h_titleRest').value;
@@ -2299,7 +2342,7 @@ function savePayment(){
     shipFromTo:document.getElementById('pay_shipFromTo').value,
     shipFee:document.getElementById('pay_shipFee').value,
     policy:document.getElementById('pay_policy').value,
-    qrImage:(tempImgs['pay_qr']||[])[0]||'',
+    qrImage:(captureImgs('pay_qr')[0]||''),
   };
   saveDB(db);showToast(tr('paymentSaved'));
 }
@@ -2390,7 +2433,7 @@ function saveReviewsSection(){
 function saveReview(){
   const name=document.getElementById('r_name').value.trim();
   const text=document.getElementById('r_text').value.trim();
-  const imgs=tempImgs['r_imgs']||[];
+  const imgs=captureImgs('r_imgs');
   if(!name){showToast(tr('needName'));return;}
   if(!text && !imgs.length){
     showToast(lang==='th'?'ต้องมีข้อความหรือรูปอย่างน้อย 1 อย่าง':'Need at least review text OR a photo');
@@ -2541,9 +2584,9 @@ function saveType(){
   const db=getDB();if(!db.casingTypes)db.casingTypes=[];
   if(curEditTypeId){
     const ty=db.casingTypes.find(t=>t.id===curEditTypeId);
-    if(ty){ty.name=name;ty.priceRange=price;ty.desc=document.getElementById('ft_desc').value;ty.bannerImg=(tempImgs['ft_banner']||[])[0]||'';delete ty.price;}
+    if(ty){ty.name=name;ty.priceRange=price;ty.desc=document.getElementById('ft_desc').value;ty.bannerImg=(captureImgs('ft_banner')[0]||'');delete ty.price;}
   } else {
-    db.casingTypes.push({id:genId(db.casingTypes),name,priceRange:price,desc:document.getElementById('ft_desc').value,bannerImg:(tempImgs['ft_banner']||[])[0]||'',variants:[]});
+    db.casingTypes.push({id:genId(db.casingTypes),name,priceRange:price,desc:document.getElementById('ft_desc').value,bannerImg:(captureImgs('ft_banner')[0]||''),variants:[]});
   }
   saveDB(db);tempImgs={};closeModal('typeModal');showToast(tr('saved'));loadCasingTypes();loadDash();
 }
@@ -2632,7 +2675,7 @@ function saveVariant(){
   if(!name||!price){showToast(tr('needNamePrice'));return;}
   const db=getDB();const ty=(db.casingTypes||[]).find(t=>t.id===curEditTypeId);if(!ty)return;
   if(!ty.variants)ty.variants=[];
-  const data={name,price:Number(price),imgs:tempImgs['fv_imgs']||[]};
+  const data={name,price:Number(price),imgs:captureImgs('fv_imgs')};
   if(curEditVariantId){
     const v=ty.variants.find(x=>x.id===curEditVariantId);
     if(v)Object.assign(v,data);
@@ -2667,7 +2710,7 @@ function saveAmulet(){
     status:document.getElementById('a_status').value||'available',
     hidePrice:document.getElementById('a_hidePrice').checked,
     featured:document.getElementById('a_featured').checked,
-    imgs:tempImgs['a_imgs']||[]
+    imgs:captureImgs('a_imgs')
   };
   if(editingItemId.amulets){
     const it=db.amulets.find(x=>x.id===editingItemId.amulets);
@@ -2725,7 +2768,7 @@ function saveAccess(){
     status:document.getElementById('ac_status').value||'available',
     hidePrice:document.getElementById('ac_hidePrice').checked,
     featured:document.getElementById('ac_featured').checked,
-    imgs:tempImgs['ac_imgs']||[]
+    imgs:captureImgs('ac_imgs')
   };
   if(editingItemId.accessories){
     const it=db.accessories.find(x=>x.id===editingItemId.accessories);
@@ -2771,7 +2814,7 @@ function saveProject(){
   const name=document.getElementById('p_name').value.trim();
   if(!name){showToast(tr('needName'));return;}
   const db=getDB();
-  const data={name,status:document.getElementById('p_status').value,date:document.getElementById('p_date').value||'',desc:document.getElementById('p_desc').value,imgs:tempImgs['p_imgs']||[]};
+  const data={name,status:document.getElementById('p_status').value,date:document.getElementById('p_date').value||'',desc:document.getElementById('p_desc').value,imgs:captureImgs('p_imgs')};
   if(editingItemId.projects){
     const it=db.projects.find(x=>x.id===editingItemId.projects);
     if(it)Object.assign(it,data);
@@ -2812,32 +2855,82 @@ function delItem(type,id){
   showToast(tr('deleted'));loadList(type);loadDash();
 }
 
-// Upload a single File to Firebase Storage, returning the public URL.
-// Shows a temporary "loading" placeholder while uploading so the user sees
-// something happen immediately.
+// ─── IMAGE UPLOAD + PREVIEW SYSTEM ────────────────────────────────────────
+// State: tempImgs[key] is an array. Each entry can be either:
+//   (a) a string URL (legacy / done state from DB load)
+//   (b) an object {status, url, fileName, fileSize, progress, error}
+// renderPrev() normalises both shapes when rendering.
+//
+// On save, captureImgs(key) returns only the entries that finished uploading
+// — partial uploads are skipped silently.
+
+// Public helper for save logic — turns the temp state into a clean URL array.
+function captureImgs(key){
+  const arr = tempImgs[key] || [];
+  return arr
+    .map(e => (typeof e === 'string' ? e : (e && e.status === 'done' ? e.url : null)))
+    .filter(Boolean);
+}
+
+// Upload one File. `isSingle` replaces the list (used for single-slot fields
+// like hero front/back images), `false` appends.
 async function uploadOne(file, key, isSingle){
   if(!tempImgs[key]) tempImgs[key] = [];
-  // Add a placeholder so the user gets immediate feedback
-  const placeholder = 'data:image/svg+xml;utf8,' + encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="120" height="120" fill="%23e8d9b0"/><text x="50%" y="50%" font-family="sans-serif" font-size="13" fill="%238b6914" text-anchor="middle" dominant-baseline="middle">Uploading…</text></svg>'
-  );
+  const entry = {
+    status: 'uploading',
+    url: '',
+    fileName: file.name || 'image',
+    fileSize: file.size || 0,
+    progress: 0,
+    error: '',
+  };
   let slot;
   if(isSingle){
-    tempImgs[key] = [placeholder];
+    // Clean up any previous file on Storage before replacing
+    (tempImgs[key] || []).forEach(e => {
+      const u = typeof e === 'string' ? e : (e && e.url);
+      if(u && typeof u === 'string' && u.startsWith('http')){
+        FB.deleteFile(u).catch(() => {});
+      }
+    });
+    tempImgs[key] = [entry];
     slot = 0;
   } else {
     slot = tempImgs[key].length;
-    tempImgs[key].push(placeholder);
+    tempImgs[key].push(entry);
   }
   renderPrev(key);
+
+  // Animate the indeterminate progress bar (we don't have real progress
+  // from Firebase Storage's uploadBytes, but a slow fake is better than
+  // nothing — gives users a sense of "stuff is happening").
+  const animateProgress = () => {
+    if(!tempImgs[key] || !tempImgs[key][slot]) return;
+    const e = tempImgs[key][slot];
+    if(typeof e !== 'object' || e.status !== 'uploading') return;
+    // Asymptotic: approach 90% but never quite reach it until really done
+    e.progress = Math.min(90, e.progress + (90 - e.progress) * 0.08);
+    const node = document.querySelector(`[data-pkey="${key}"][data-pidx="${slot}"] .pi-bar-fill`);
+    if(node) node.style.width = e.progress.toFixed(1) + '%';
+    setTimeout(animateProgress, 200);
+  };
+  animateProgress();
+
   try {
     const url = await FB.uploadFile(file, file.name || key);
-    tempImgs[key][slot] = url;
+    // Verify we're still the same slot (user might have removed/reordered)
+    if(tempImgs[key] && tempImgs[key][slot] === entry){
+      entry.status = 'done';
+      entry.url = url;
+      entry.progress = 100;
+    }
     renderPrev(key);
   } catch(err){
     console.error('upload failed:', err);
-    // Remove the placeholder on failure
-    tempImgs[key].splice(slot, 1);
+    if(tempImgs[key] && tempImgs[key][slot] === entry){
+      entry.status = 'error';
+      entry.error = err.message || 'unknown';
+    }
     renderPrev(key);
     showToast((lang === 'th' ? 'อัปโหลดล้มเหลว: ' : 'Upload failed: ') + (err.message || 'unknown'));
   }
@@ -2846,25 +2939,98 @@ async function uploadOne(file, key, isSingle){
 function handleImgs(event, key){
   const files = [...event.target.files];
   files.forEach(file => uploadOne(file, key, false));
+  event.target.value = ''; // allow re-selecting the same file
 }
 
 function handleSingleImg(event, key){
   const file = event.target.files[0];
   if(!file) return;
   uploadOne(file, key, true);
+  event.target.value = '';
+}
+
+function formatBytes(n){
+  if(!n) return '';
+  if(n < 1024) return n + ' B';
+  if(n < 1024*1024) return (n/1024).toFixed(0) + ' KB';
+  return (n/1024/1024).toFixed(1) + ' MB';
 }
 
 function renderPrev(key){
-  const el=document.getElementById(key+'_p');if(!el)return;
-  el.innerHTML=(tempImgs[key]||[]).map((src,i)=>`<div class="prev-item"><img src="${src}"><button class="prev-rm" onclick="rmImg('${key}',${i})">✕</button></div>`).join('');
+  const el = document.getElementById(key + '_p');
+  if(!el) return;
+  const arr = tempImgs[key] || [];
+  if(!arr.length){ el.innerHTML = ''; return; }
+  const last = arr.length - 1;
+  el.innerHTML = arr.map((entry, i) => {
+    // Normalise: legacy strings become a "done" object
+    const e = (typeof entry === 'string') ? {status:'done', url:entry, fileName:'', fileSize:0} : entry;
+    const isPrimary = i === 0 && arr.length > 1;
+    const canMoveLeft  = i > 0;
+    const canMoveRight = i < last;
+    if(e.status === 'uploading'){
+      return `
+        <div class="prev-item is-uploading" data-pkey="${key}" data-pidx="${i}">
+          <div class="pi-thumb pi-thumb-loading">
+            <div class="pi-spinner"></div>
+          </div>
+          <div class="pi-info">
+            <div class="pi-name" title="${escapeAttr(e.fileName)}">${escapeAttr(e.fileName)}</div>
+            <div class="pi-meta">${formatBytes(e.fileSize)} · <span class="pi-status">${lang==='th'?'กำลังอัปโหลด…':'Uploading…'}</span></div>
+            <div class="pi-bar"><div class="pi-bar-fill" style="width:${(e.progress||0).toFixed(1)}%"></div></div>
+          </div>
+          <button class="pi-rm" onclick="rmImg('${key}',${i})" title="${lang==='th'?'ยกเลิก':'Cancel'}">✕</button>
+        </div>`;
+    }
+    if(e.status === 'error'){
+      return `
+        <div class="prev-item is-error" data-pkey="${key}" data-pidx="${i}">
+          <div class="pi-thumb pi-thumb-error">⚠️</div>
+          <div class="pi-info">
+            <div class="pi-name" title="${escapeAttr(e.fileName)}">${escapeAttr(e.fileName)}</div>
+            <div class="pi-meta pi-error-text">${lang==='th'?'อัปโหลดล้มเหลว':'Upload failed'}</div>
+          </div>
+          <button class="pi-rm" onclick="rmImg('${key}',${i})">✕</button>
+        </div>`;
+    }
+    // status === 'done' OR legacy string
+    const url = e.url;
+    return `
+      <div class="prev-item is-done${isPrimary ? ' is-primary' : ''}" data-pkey="${key}" data-pidx="${i}">
+        <div class="pi-thumb"><img src="${url}" alt=""></div>
+        ${isPrimary ? `<div class="pi-badge">${lang==='th'?'หลัก':'Cover'}</div>` : ''}
+        <div class="pi-reorder">
+          <button class="pi-move" onclick="moveImg('${key}',${i},-1)" ${canMoveLeft ? '' : 'disabled'} title="${lang==='th'?'เลื่อนซ้าย':'Move left'}">◀</button>
+          <button class="pi-move" onclick="moveImg('${key}',${i},1)" ${canMoveRight ? '' : 'disabled'} title="${lang==='th'?'เลื่อนขวา':'Move right'}">▶</button>
+        </div>
+        <button class="pi-rm" onclick="rmImg('${key}',${i})" title="${lang==='th'?'ลบ':'Remove'}">✕</button>
+      </div>`;
+  }).join('');
+}
+
+function escapeAttr(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// Move an image left (dir=-1) or right (dir=1) within its preview list
+function moveImg(key, idx, dir){
+  const arr = tempImgs[key];
+  if(!Array.isArray(arr)) return;
+  const target = idx + dir;
+  if(target < 0 || target >= arr.length) return;
+  const tmp = arr[idx];
+  arr[idx] = arr[target];
+  arr[target] = tmp;
+  renderPrev(key);
 }
 
 function rmImg(key, idx){
-  const url = tempImgs[key][idx];
+  const entry = (tempImgs[key] || [])[idx];
+  const url = typeof entry === 'string' ? entry : (entry && entry.url);
   tempImgs[key].splice(idx, 1);
   renderPrev(key);
-  // Best-effort cleanup of the file on Storage so we don't leak orphans.
-  // (Won't run if the URL is still a data: placeholder for an in-flight upload.)
   if(url && typeof url === 'string' && url.startsWith('http')){
     FB.deleteFile(url).catch(() => {});
   }
