@@ -243,6 +243,12 @@
   .card:hover{transform:translateY(-5px);box-shadow:0 14px 44px rgba(201,168,76,.16);border-color:var(--gold)}
   .card-img{width:100%;height:225px;background:linear-gradient(135deg,#2d1e06,#12100a);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
   .card-img img{width:100%;height:100%;object-fit:cover}
+  /* Smooth fade-in for lazy-loaded images — img.is-loading is the initial
+     state (opacity 0 + shimmer placeholder), removed by JS once the image
+     has decoded successfully. Avoids the visual "pop" when deferred images
+     finish downloading mid-scroll. */
+  img.is-loading{opacity:0}
+  img.is-loaded{opacity:1;transition:opacity .3s ease-out}
   .card-ph{display:flex;flex-direction:column;align-items:center;gap:7px;color:#6a5030}
   .card-ph span{font-size:13px}
   .cbadge{position:absolute;top:11px;right:11px;background:var(--accent);color:white;font-size:11px;font-weight:700;padding:4px 11px;border-radius:25px}
@@ -653,7 +659,7 @@
 
 <div class="fb-splash" id="fbSplash">
   <div class="fb-splash-inner">
-    <div class="fb-splash-logo"><img src="/favicon/apple-touch-icon.png" alt=""></div>
+    <div class="fb-splash-logo"><img loading="lazy" decoding="async" src="/favicon/apple-touch-icon.png" alt=""></div>
     <div class="fb-splash-dots"><span class="fb-splash-dot"></span><span class="fb-splash-dot"></span><span class="fb-splash-dot"></span></div>
   </div>
 </div>
@@ -838,7 +844,7 @@
 <div id="lightbox" onclick="closeLightbox(event)">
   <button id="lbClose" onclick="closeLightbox(event)" aria-label="Close">✕</button>
   <button id="lbPrev" onclick="lbPrev(event)" aria-label="Previous">‹</button>
-  <div id="lbImgWrap"><img id="lbImg" src="" alt=""></div>
+  <div id="lbImgWrap"><img loading="lazy" decoding="async" id="lbImg" src="" alt=""></div>
   <button id="lbNext" onclick="lbNext(event)" aria-label="Next">›</button>
   <div id="lbCounter"></div>
 </div>
@@ -1378,7 +1384,7 @@ function renderHomeReviews(){
   grid.innerHTML = picks.map(rv => {
     const stars = '★'.repeat(rv.rating||5) + '☆'.repeat(5-(rv.rating||5));
     const imgsHtml = (rv.imgs && rv.imgs.length)
-      ? `<div class="rev-imgs">${rv.imgs.slice(0,3).map((img,i)=>`<img src="${img}" onclick="openReviewLightbox(${rv.id},${i})">`).join('')}</div>`
+      ? `<div class="rev-imgs">${rv.imgs.slice(0,3).map((img,i)=>`<img loading="lazy" decoding="async" src="${img}" onclick="openReviewLightbox(${rv.id},${i})">`).join('')}</div>`
       : '';
     const textHtml = rv.text ? `<p class="rev-text">${rv.text}</p>` : '';
     return `
@@ -1429,7 +1435,7 @@ function buildCard(a,type,settings){
   return `
     <div class="card" onclick="openProd('${type}',${a.id})">
       <div class="card-img">
-        ${a.imgs&&a.imgs[0]?`<img src="${a.imgs[0]}">`:`<div class="card-ph"><span style="font-size:44px">${icon}</span><span>No image</span></div>`}
+        ${a.imgs&&a.imgs[0]?`<img loading="lazy" decoding="async" src="${a.imgs[0]}">`:`<div class="card-ph"><span style="font-size:44px">${icon}</span><span>No image</span></div>`}
         ${a.badge?`<div class="cbadge cbadge-gold">${a.badge}</div>`:''}
         ${pill}
         ${overlay}
@@ -1456,7 +1462,7 @@ function renderReviews(){
   if(!r.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">No reviews yet.</div>`;return;}
   grid.innerHTML=r.map(rv=>{
     const stars='★'.repeat(rv.rating||5)+'☆'.repeat(5-(rv.rating||5));
-    const imgsHtml=(rv.imgs&&rv.imgs.length)?`<div class="rev-imgs">${rv.imgs.map((img,i)=>`<img src="${img}" onclick="openReviewLightbox(${rv.id},${i})">`).join('')}</div>`:'';
+    const imgsHtml=(rv.imgs&&rv.imgs.length)?`<div class="rev-imgs">${rv.imgs.map((img,i)=>`<img loading="lazy" decoding="async" src="${img}" onclick="openReviewLightbox(${rv.id},${i})">`).join('')}</div>`:'';
     const textHtml = rv.text ? `<p class="rev-text">${rv.text}</p>` : '';
     return `
       <div class="rev-card${rv.text ? '' : ' rev-card-imgonly'}">
@@ -1496,7 +1502,7 @@ function renderPayment(){
         <dl class="pay-info">
           <dt>Account Name</dt><dd>${p.paynowName||'—'}</dd>
         </dl>
-        ${p.qrImage?`<div class="pay-qr"><img src="${p.qrImage}" alt="PayNow QR"></div>`:''}
+        ${p.qrImage?`<div class="pay-qr"><img loading="lazy" decoding="async" src="${p.qrImage}" alt="PayNow QR"></div>`:''}
       </div>
       <div class="pay-block">
         <h3>📦 Shipping</h3>
@@ -1602,7 +1608,7 @@ function renderCasingTypes(){
     return `
     <div class="ftype-card" onclick="openCasingType(${ty.id})">
       <div class="ftype-banner">
-        ${ty.bannerImg?`<img src="${ty.bannerImg}">`:`<span class="ftype-icon-bg">🪬</span>`}
+        ${ty.bannerImg?`<img loading="lazy" decoding="async" src="${ty.bannerImg}">`:`<span class="ftype-icon-bg">🪬</span>`}
         <div class="ftype-count">${count} ${count===1?'style':'styles'}</div>
       </div>
       <div class="ftype-body">
@@ -1637,7 +1643,7 @@ function renderVariants(typeId){
   grid.innerHTML=vars.map(v=>`
     <div class="var-card" onclick="openVariant(${ty.id},${v.id})">
       <div class="var-img">
-        ${v.imgs&&v.imgs[0]?`<img src="${v.imgs[0]}">`:'🪬'}
+        ${v.imgs&&v.imgs[0]?`<img loading="lazy" decoding="async" src="${v.imgs[0]}">`:'🪬'}
         ${v.price?`<div class="var-price-badge">S$${Number(v.price).toLocaleString()}</div>`:''}
         ${v.imgs&&v.imgs.length>1?`<div class="var-img-count">📷 ${v.imgs.length}</div>`:''}
       </div>
@@ -1667,7 +1673,7 @@ function openVariant(typeId,varId){
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="variant-gallery">
-      ${imgs.length?imgs.map((img,i)=>`<div class="variant-photo" onclick="openLightbox(${i})"><img src="${img}"></div>`).join(''):'<div class="variant-photo" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d1e06,#12100a)">🪬</div>'}
+      ${imgs.length?imgs.map((img,i)=>`<div class="variant-photo" onclick="openLightbox(${i})"><img loading="lazy" decoding="async" src="${img}"></div>`).join(''):'<div class="variant-photo" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d1e06,#12100a)">🪬</div>'}
     </div>`;
   document.getElementById('modal').classList.add('open');
 }
@@ -1724,7 +1730,7 @@ function renderP(){
   grid.innerHTML=db.projects.map(p=>`
     <div class="proj-card" onclick="openProject(${p.id})">
       <div class="proj-img">
-        ${p.imgs&&p.imgs[0]?`<img src="${p.imgs[0]}">`:'🎯'}
+        ${p.imgs&&p.imgs[0]?`<img loading="lazy" decoding="async" src="${p.imgs[0]}">`:'🎯'}
         ${p.imgs&&p.imgs.length>1?`<div class="proj-photo-count">📷 ${p.imgs.length}</div>`:''}
       </div>
       <div class="proj-body">
@@ -1762,7 +1768,7 @@ function openProject(id){
     ${imgs.length?`
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-weight:600;letter-spacing:.3px;text-transform:uppercase">Sample Photos · click to view full size</div>
       <div class="variant-gallery">
-        ${imgs.map((img,i)=>`<div class="variant-photo" onclick="openLightbox(${i})"><img src="${img}"></div>`).join('')}
+        ${imgs.map((img,i)=>`<div class="variant-photo" onclick="openLightbox(${i})"><img loading="lazy" decoding="async" src="${img}"></div>`).join('')}
       </div>
     `:''}`;
   document.getElementById('modal').classList.add('open');
@@ -1805,10 +1811,10 @@ function openProd(type,id){
     <div class="prod-detail">
       <div>
         <div class="prod-main-img" id="mImg">
-          ${item.imgs&&item.imgs[0]?`<img src="${item.imgs[0]}">`:`<span style="font-size:64px">${icon}</span>`}
+          ${item.imgs&&item.imgs[0]?`<img loading="lazy" decoding="async" src="${item.imgs[0]}">`:`<span style="font-size:64px">${icon}</span>`}
           ${status==='sold'?`<div class="status-overlay sold"><span>SOLD</span></div>`:status==='reserved'?`<div class="status-overlay reserved"><span>RESERVED</span></div>`:''}
         </div>
-        ${item.imgs&&item.imgs.length>1?`<div class="prod-thumbs">${item.imgs.map((img,i)=>`<div class="prod-thumb ${i===0?'active':''}" onclick="swImg(this,'${img}')"><img src="${img}"></div>`).join('')}</div>`:''}
+        ${item.imgs&&item.imgs.length>1?`<div class="prod-thumbs">${item.imgs.map((img,i)=>`<div class="prod-thumb ${i===0?'active':''}" onclick="swImg(this,'${img}')"><img loading="lazy" decoding="async" src="${img}"></div>`).join('')}</div>`:''}
       </div>
       <div class="prod-info">
         ${item.badge?`<span class="tag cbadge-gold" style="display:inline-block;margin-bottom:8px">${item.badge}</span>`:''}
@@ -1829,10 +1835,54 @@ function openProd(type,id){
   window._lastOpened={type,id};
 }
 function openContactWithItemBtn(type,id){openContactWithItem(type,id);}
-function swImg(el,src){document.querySelectorAll('.prod-thumb').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('mImg').innerHTML=`<img src="${src}" style="width:100%;height:100%;object-fit:cover">`;}
+function swImg(el,src){document.querySelectorAll('.prod-thumb').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('mImg').innerHTML=`<img loading="lazy" decoding="async" src="${src}" style="width:100%;height:100%;object-fit:cover">`;}
 function closeModal(e){if(!e||e.target===document.getElementById('modal'))document.getElementById('modal').classList.remove('open');}
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3000);}
+
+// Auto fade-in for lazy-loaded images. We use event delegation on the
+// document body so we catch <img> tags that get added dynamically by
+// renderAmulets()/renderFeatured()/etc. without having to wire up each one.
+function setupImageFadeIn(){
+  document.body.addEventListener('load', (e) => {
+    const t = e.target;
+    if(t && t.tagName === 'IMG' && t.getAttribute('loading') === 'lazy'){
+      t.classList.remove('is-loading');
+      t.classList.add('is-loaded');
+    }
+  }, true);  // useCapture: 'load' doesn't bubble, so we capture instead
+
+  // Also process images that are ALREADY in DOM by the time this runs.
+  // Some (cached / above-the-fold) might fire their load event before our
+  // listener is attached.
+  document.querySelectorAll('img[loading="lazy"]').forEach(img => {
+    if(img.complete && img.naturalWidth > 0){
+      img.classList.add('is-loaded');
+    } else {
+      img.classList.add('is-loading');
+    }
+  });
+}
+setupImageFadeIn();
+
+// Re-tag newly-added images as "is-loading" so they get the fade transition.
+// MutationObserver fires whenever the page is re-rendered (applySettings etc.)
+new MutationObserver(muts => {
+  muts.forEach(mut => {
+    mut.addedNodes && mut.addedNodes.forEach(node => {
+      if(node.nodeType !== 1) return;
+      const imgs = node.tagName === 'IMG' ? [node] : node.querySelectorAll && [...node.querySelectorAll('img[loading="lazy"]')];
+      (imgs || []).forEach(img => {
+        if(img.complete && img.naturalWidth > 0){
+          img.classList.add('is-loaded');
+        } else if(!img.classList.contains('is-loaded')){
+          img.classList.add('is-loading');
+        }
+      });
+    });
+  });
+}).observe(document.body, {childList: true, subtree: true});
+
 
 // Apply settings once now using whatever data is currently in the FB cache
 // (might be empty on cold start — we'll re-render once data arrives).
