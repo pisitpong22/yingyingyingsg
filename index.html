@@ -289,6 +289,76 @@
 
   /* SIMPLIFIED STYLE CARDS — name + image only */
   .var-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}
+  /* ───── CASING TYPE DETAIL PAGE ───── */
+  .casing-detail-head{
+    display:grid;grid-template-columns:1fr 280px;gap:30px;
+    margin:14px 0 36px;align-items:start;
+  }
+  .casing-detail-main{min-width:0}
+  .casing-detail-title{
+    font-family:var(--font-display);font-size:32px;color:var(--text);
+    font-weight:700;margin:0 0 16px;line-height:1.15;
+  }
+  .casing-detail-desc{
+    color:var(--text);font-size:15px;line-height:1.85;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left:3px solid var(--gold);
+    border-radius:10px;
+    padding:20px 24px;
+  }
+  /* Rich-text descriptions: line breaks, bold, italic, color all preserved */
+  .casing-detail-desc strong,
+  .casing-detail-desc b{font-weight:700;color:var(--text)}
+  .casing-detail-desc em,
+  .casing-detail-desc i{font-style:italic}
+  .casing-detail-desc p{margin:0 0 10px}
+  .casing-detail-desc p:last-child{margin-bottom:0}
+  .casing-detail-desc br{line-height:1.85}
+
+  /* Side info card — price */
+  .casing-detail-side{display:flex;flex-direction:column;gap:14px}
+  .cd-side-card{
+    background:linear-gradient(135deg,var(--deep) 0%,#1f1608 100%);
+    border:1px solid var(--gold);
+    border-radius:12px;
+    padding:22px 24px;
+    text-align:center;
+    box-shadow:0 6px 18px rgba(201,168,76,.12);
+  }
+  .cd-side-label{
+    color:var(--gold);font-size:11px;letter-spacing:2.5px;
+    font-weight:600;text-transform:uppercase;
+    margin-bottom:8px;
+  }
+  .cd-side-value{
+    font-family:var(--font-display);font-size:28px;
+    color:var(--gold-light);font-weight:700;letter-spacing:.5px;
+  }
+
+  /* Available styles section header */
+  .var-grid-head{
+    display:flex;align-items:center;gap:18px;
+    margin:18px 0 22px;
+  }
+  .var-grid-title{
+    font-family:var(--font-display);font-size:20px;
+    color:var(--text);font-weight:700;margin:0;
+    white-space:nowrap;
+  }
+  .var-grid-line{
+    flex:1;height:1px;
+    background:linear-gradient(90deg,var(--gold) 0%,transparent 100%);
+  }
+
+  @media(max-width:780px){
+    .casing-detail-head{grid-template-columns:1fr;gap:18px;margin-bottom:24px}
+    .casing-detail-title{font-size:24px}
+    .casing-detail-desc{font-size:14px;padding:16px 18px}
+    .cd-side-card{padding:16px 20px}
+    .cd-side-value{font-size:24px}
+    .var-grid-title{font-size:17px}
+  }
   .var-card{background:var(--surface);border:1px solid var(--border);border-radius:13px;overflow:hidden;cursor:pointer;transition:all .3s}
   .var-card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(201,168,76,.15);border-color:var(--gold)}
   .var-img{width:100%;aspect-ratio:1;background:linear-gradient(135deg,#2d1e06,#12100a);display:flex;align-items:center;justify-content:center;font-size:50px;position:relative;overflow:hidden}
@@ -805,8 +875,17 @@
     <div id="casingTypes"><div class="ftype-grid" id="cTypeGrid"></div></div>
     <div id="casingVariants" style="display:none">
       <div class="crumb" id="vCrumb"></div>
-      <h3 style="font-family:var(--font-display);font-size:24px;color:var(--text);margin-bottom:8px" id="vTitle"></h3>
-      <p style="color:var(--text-muted);font-size:14px;margin-bottom:24px;line-height:1.7" id="vDesc"></p>
+      <div class="casing-detail-head">
+        <div class="casing-detail-main">
+          <h3 class="casing-detail-title" id="vTitle"></h3>
+          <div class="casing-detail-desc" id="vDesc"></div>
+        </div>
+        <div class="casing-detail-side" id="vSide"></div>
+      </div>
+      <div class="var-grid-head">
+        <h4 class="var-grid-title" data-en="Available Styles" data-th="แบบที่มีให้เลือก">Available Styles</h4>
+        <div class="var-grid-line"></div>
+      </div>
       <div class="var-grid" id="vGrid"></div>
     </div>
   </div>
@@ -1640,7 +1719,26 @@ function renderVariants(typeId){
     <span class="crumb-sep">▸</span>
     <span class="crumb-cur">${ty.name}</span>`;
   document.getElementById('vTitle').textContent=ty.name;
-  document.getElementById('vDesc').innerHTML=`${ty.desc||''}${ty.priceRange?`<br><strong style="color:var(--gold-dark);font-size:16px;font-family:var(--font-display)">Price range: S$${ty.priceRange}</strong>`:''}`;
+  document.getElementById('vDesc').innerHTML = ty.desc || '';
+  // Right-side info card: price range only (extracted from admin's structured price field)
+  const sideEl = document.getElementById('vSide');
+  if(ty.priceRange){
+    sideEl.innerHTML = `
+      <div class="cd-side-card">
+        <div class="cd-side-label">Price range</div>
+        <div class="cd-side-value">S$${ty.priceRange}</div>
+      </div>`;
+    sideEl.style.display = '';
+  } else if(ty.price){
+    sideEl.innerHTML = `
+      <div class="cd-side-card">
+        <div class="cd-side-label">Starting from</div>
+        <div class="cd-side-value">S$${Number(ty.price).toLocaleString()}</div>
+      </div>`;
+    sideEl.style.display = '';
+  } else {
+    sideEl.style.display = 'none';
+  }
   const vars=ty.variants||[];
   const grid=document.getElementById('vGrid');
   if(!vars.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">No styles in this type yet.</div>`;return;}
