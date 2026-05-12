@@ -64,7 +64,9 @@
   nav{position:sticky;top:0;z-index:100;background:rgba(18,16,10,0.97);backdrop-filter:blur(12px);border-bottom:1px solid rgba(201,168,76,0.25)}
   .nav-inner{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:66px;gap:12px}
   .logo{display:flex;align-items:center;gap:11px;cursor:pointer;flex-shrink:0}
-  .logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--gold-light),var(--gold-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 16px rgba(201,168,76,0.35)}
+  .logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--gold-light),var(--gold-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 16px rgba(201,168,76,0.35);overflow:hidden;flex-shrink:0}
+  .logo-icon img{width:100%;height:100%;object-fit:cover;display:block}
+  .logo-icon.has-image{background:transparent;box-shadow:0 0 16px rgba(201,168,76,0.35)}
   .logo-text{color:var(--gold-light);font-size:16px;font-weight:700;line-height:1.15;font-family:var(--font-display)}
   .logo-sub{color:#9e8a60;font-size:10px;letter-spacing:2px}
   .nav-links{display:flex;gap:2px;list-style:none;flex-wrap:wrap}
@@ -88,14 +90,24 @@
   }
   /* When no 3D model is uploaded, hero is single-column full width */
   .hero.no-3d{grid-template-columns:1fr;padding:0 80px}
-  .hero.no-3d .hero-inner{max-width:900px;margin:0 auto;text-align:center}
+  .hero.no-3d .hero-inner{max-width:900px;margin:0 auto;text-align:center;padding:80px 0}
+  .hero.no-3d .hero-title{text-align:center}
+  .hero.no-3d .hero-sub{text-align:center}
+  .hero.no-3d .hero-desc{text-align:center;max-width:680px;margin-left:auto;margin-right:auto}
   .hero.no-3d .hero-btns{justify-content:center}
-  .hero.no-3d .hero-stats{justify-content:center}
+  .hero.no-3d .hero-stats{justify-content:center;max-width:none;margin-left:auto;margin-right:auto;width:fit-content}
+  .hero.no-3d .stat{text-align:center;padding-left:0}
+  .hero.no-3d .stat::before{display:none}
   @media(max-width:780px){
     .hero.no-3d{padding:24px 22px 40px}
-    .hero.no-3d .hero-inner{text-align:left}
+    .hero.no-3d .hero-inner{text-align:left;padding:0}
+    .hero.no-3d .hero-title{text-align:left}
+    .hero.no-3d .hero-sub{text-align:left}
+    .hero.no-3d .hero-desc{text-align:left;margin:0}
     .hero.no-3d .hero-btns{justify-content:flex-start}
-    .hero.no-3d .hero-stats{justify-content:flex-start}
+    .hero.no-3d .hero-stats{justify-content:flex-start;width:auto}
+    .hero.no-3d .stat{text-align:left;padding-left:16px}
+    .hero.no-3d .stat::before{display:block}
   }
   /* Thai pattern overlay - subtle, gives non-AI feel */
   .hero::before{
@@ -788,7 +800,7 @@ let curAcat='all', curAccat='all', curCasingType=null;
 function defaultSettings(){
   return {
     pageTitle:'Yingyingying Amulet | Authentic Thai Amulets',
-    logoIcon:'📿',
+    logoIcon:'/favicon/apple-touch-icon.png',
     logoText:'Yingyingying Amulet',
     logoSub:'AUTHENTIC THAI AMULETS',
     topbar:'📿 Yingyingying Amulet — Authentic Thai Amulets · Certified Genuine · Worldwide Shipping 📿',
@@ -986,7 +998,17 @@ function applySettings(){
   const db=getDB(); const s=db.settings;
   document.getElementById('pageTitle').textContent=s.pageTitle;
   document.getElementById('topbar').textContent=s.topbar;
-  document.getElementById('logoIcon').textContent=s.logoIcon;
+  // logoIcon supports either emoji (📿) or a URL/path (/favicon/...) — auto-detect
+  const logoEl = document.getElementById('logoIcon');
+  const v = s.logoIcon || '';
+  const looksLikeImage = /^(\/|https?:\/\/|\.\/|data:image\/)/i.test(v) || /\.(png|jpe?g|svg|webp|gif)(\?|$)/i.test(v);
+  if(looksLikeImage){
+    logoEl.classList.add('has-image');
+    logoEl.innerHTML = `<img src="${v}" alt="logo">`;
+  } else {
+    logoEl.classList.remove('has-image');
+    logoEl.textContent = v;
+  }
   document.getElementById('logoText').textContent=s.logoText;
   document.getElementById('logoSub').textContent=s.logoSub;
 
