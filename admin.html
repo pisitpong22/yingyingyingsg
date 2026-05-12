@@ -214,6 +214,8 @@
   .a-crumb .cur{color:var(--text);font-weight:600}
 
   .type-tile{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:18px;display:flex;gap:16px;align-items:center;margin-bottom:14px;transition:all .2s}
+  .type-tile-reorder{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+  .type-tile-reorder .ho-arrow-btn{width:28px;height:28px;font-size:11px}
   .type-tile:hover{border-color:var(--gold);box-shadow:0 4px 16px rgba(201,168,76,.1)}
   .type-tile-img{width:80px;height:80px;border-radius:10px;background:linear-gradient(135deg,#2d1e06,#12100a);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;overflow:hidden}
   .type-tile-img img{width:100%;height:100%;object-fit:cover}
@@ -2483,8 +2485,13 @@ function loadCasingTypes(){
   const types=getDB().casingTypes||[];
   const c=document.getElementById('typesList');
   if(!types.length){c.innerHTML=`<div style="text-align:center;padding:50px;background:var(--surface);border:1px dashed var(--border);border-radius:12px;color:var(--text-muted)">${tr('noTypes')}</div>`;return;}
-  c.innerHTML=types.map(ty=>`
+  const last = types.length - 1;
+  c.innerHTML=types.map((ty, idx)=>`
     <div class="type-tile">
+      <div class="type-tile-reorder">
+        <button class="ho-arrow-btn" onclick="moveType(${ty.id}, -1)" ${idx === 0 ? 'disabled' : ''} title="${lang==='th'?'เลื่อนขึ้น':'Move up'}">▲</button>
+        <button class="ho-arrow-btn" onclick="moveType(${ty.id}, 1)" ${idx === last ? 'disabled' : ''} title="${lang==='th'?'เลื่อนลง':'Move down'}">▼</button>
+      </div>
       <div class="type-tile-img">${ty.bannerImg?`<img src="${ty.bannerImg}">`:'🪬'}</div>
       <div class="type-tile-info">
         <div class="type-tile-name">${ty.name}</div>
@@ -2498,6 +2505,21 @@ function loadCasingTypes(){
       </div>
     </div>
   `).join('');
+}
+
+// Move a casing type up (dir=-1) or down (dir=1) in the order
+function moveType(typeId, dir){
+  const db = getDB();
+  if(!Array.isArray(db.casingTypes)) return;
+  const idx = db.casingTypes.findIndex(t => t.id === typeId);
+  if(idx < 0) return;
+  const target = idx + dir;
+  if(target < 0 || target >= db.casingTypes.length) return;
+  const tmp = db.casingTypes[idx];
+  db.casingTypes[idx] = db.casingTypes[target];
+  db.casingTypes[target] = tmp;
+  saveDB(db);
+  loadCasingTypes();
 }
 
 function openTypeForm(typeId){
@@ -2553,10 +2575,17 @@ function loadVariants(){
   const c=document.getElementById('variantsList');
   const vars=ty.variants||[];
   if(!vars.length){c.innerHTML=`<div style="text-align:center;padding:50px;background:var(--surface);border:1px dashed var(--border);border-radius:12px;color:var(--text-muted)">${tr('noStyles')}</div>`;return;}
+  const last = vars.length - 1;
   c.innerHTML=`<table class="dtable">
-    <thead><tr><th>${tr('image')}</th><th>${tr('name')}</th><th>${tr('price')}</th><th>${tr('photos')}</th><th>${tr('actions')}</th></tr></thead>
-    <tbody>${vars.map(v=>`
+    <thead><tr><th style="width:60px">${lang==='th'?'ลำดับ':'Order'}</th><th>${tr('image')}</th><th>${tr('name')}</th><th>${tr('price')}</th><th>${tr('photos')}</th><th>${tr('actions')}</th></tr></thead>
+    <tbody>${vars.map((v, idx)=>`
       <tr>
+        <td>
+          <div style="display:flex;gap:3px">
+            <button class="ho-arrow-btn" style="width:26px;height:26px;font-size:11px" onclick="moveVariant(${v.id}, -1)" ${idx === 0 ? 'disabled' : ''} title="${lang==='th'?'เลื่อนขึ้น':'Move up'}">▲</button>
+            <button class="ho-arrow-btn" style="width:26px;height:26px;font-size:11px" onclick="moveVariant(${v.id}, 1)" ${idx === last ? 'disabled' : ''} title="${lang==='th'?'เลื่อนลง':'Move down'}">▼</button>
+          </div>
+        </td>
         <td>${v.imgs&&v.imgs[0]?`<img class="thumb" src="${v.imgs[0]}">`:`<div class="no-img">🪬</div>`}</td>
         <td><strong>${v.name}</strong></td>
         <td>${v.price?`S$${Number(v.price).toLocaleString()}`:'-'}</td>
@@ -2567,6 +2596,22 @@ function loadVariants(){
         </div></td>
       </tr>`).join('')}
     </tbody></table>`;
+}
+
+// Move a variant up/down within its parent casing type
+function moveVariant(variantId, dir){
+  const db = getDB();
+  const ty = (db.casingTypes || []).find(t => t.id === curEditTypeId);
+  if(!ty || !Array.isArray(ty.variants)) return;
+  const idx = ty.variants.findIndex(v => v.id === variantId);
+  if(idx < 0) return;
+  const target = idx + dir;
+  if(target < 0 || target >= ty.variants.length) return;
+  const tmp = ty.variants[idx];
+  ty.variants[idx] = ty.variants[target];
+  ty.variants[target] = tmp;
+  saveDB(db);
+  loadVariants();
 }
 
 function openVariantForm(varId){
