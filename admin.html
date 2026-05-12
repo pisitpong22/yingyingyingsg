@@ -1,0 +1,3336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Yingyingying Amulet</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif:wght@400;600;700&family=Sarabun:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500;1,700&family=Cinzel:wght@400;600;700&family=Marcellus&family=Bodoni+Moda:ital,wght@0,400;0,700;1,400;1,700&family=Crimson+Pro:ital,wght@0,400;0,700;1,400;1,700&family=DM+Serif+Display:ital@0;1&family=Libre+Caslon+Text:ital@0;1&display=swap" rel="stylesheet">
+<script type="module" src="firebase-shared.js"></script>
+<style>
+  :root{
+    --gold:#c9a84c;--gold-light:#e8c96a;--gold-dark:#8b6914;
+    --cream:#fdf6e3;--deep:#12100a;--text:#2c1a06;--text-muted:#7a6040;
+    --surface:#fff9ee;--border:rgba(201,168,76,0.28);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}html,body{height:100%;font-family:'Inter',sans-serif;background:var(--cream);color:var(--text)}
+  body.th,body.th *{font-family:'Sarabun','Inter',sans-serif !important}
+  ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--cream)}::-webkit-scrollbar-thumb{background:var(--gold);border-radius:3px}
+
+  /* LANG SWITCHER */
+  .lang-sw{display:flex;gap:3px;background:rgba(255,255,255,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:3px}
+  .lb{padding:5px 12px;border-radius:6px;border:none;background:transparent;color:#9e8a60;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+  .lb.active{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--deep)}
+  .lb:hover:not(.active){color:var(--gold-light);background:rgba(201,168,76,0.1)}
+  .login-lang{position:absolute;top:24px;right:24px;z-index:10}
+
+  #loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(ellipse at 30% 50%,rgba(201,168,76,.08) 0%,transparent 55%),linear-gradient(155deg,#12100a 0%,#231700 60%,#12100a 100%);padding:24px;position:relative}
+  .login-box{background:rgba(255,249,238,0.04);backdrop-filter:blur(12px);border:1px solid rgba(201,168,76,.25);border-radius:20px;padding:48px 40px;width:100%;max-width:420px;text-align:center;animation:fadeUp .5s ease}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  .login-icon{font-size:52px;margin-bottom:16px}
+  .login-title{font-family:'Noto Serif',serif;font-size:22px;font-weight:700;color:var(--gold-light);margin-bottom:6px}
+  body.th .login-title{font-family:'Sarabun',sans-serif !important}
+  .login-sub{color:#9e8a60;font-size:13px;margin-bottom:32px}
+  .login-group{display:flex;flex-direction:column;gap:6px;text-align:left;margin-bottom:16px}
+  .login-label{font-size:13px;font-weight:600;color:#c8b888}
+  .login-input{background:rgba(255,255,255,0.06);border:1px solid rgba(201,168,76,.3);border-radius:9px;padding:12px 16px;font-size:15px;color:#fff;transition:all .2s}
+  .login-input::placeholder{color:#6a5030}
+  .login-input:focus{outline:none;border-color:var(--gold);background:rgba(255,255,255,.09);box-shadow:0 0 0 3px rgba(201,168,76,.15)}
+  .login-btn{width:100%;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--deep);border:none;padding:14px;border-radius:9px;font-size:16px;font-weight:700;cursor:pointer;transition:all .3s;margin-top:8px}
+  .login-btn:hover{box-shadow:0 6px 24px rgba(201,168,76,.4);transform:translateY(-1px)}
+  .login-err{color:#ff6b6b;font-size:13px;margin-top:10px;display:none}
+  .login-hint{color:#6a5030;font-size:12px;margin-top:20px;line-height:1.7}
+
+  #adminScreen{display:none}
+  .admin-top{background:rgba(18,16,10,0.97);backdrop-filter:blur(12px);border-bottom:1px solid rgba(201,168,76,.25);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:62px;position:sticky;top:0;z-index:100}
+  .admin-logo{display:flex;align-items:center;gap:10px}
+  .admin-logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--gold-light),var(--gold-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .admin-logo-text{font-family:'Noto Serif',serif;color:var(--gold-light);font-size:15px;font-weight:700}
+  body.th .admin-logo-text{font-family:'Sarabun',sans-serif !important}
+  .admin-badge{background:rgba(201,168,76,.2);color:var(--gold-light);font-size:11px;font-weight:600;padding:3px 10px;border-radius:25px;border:1px solid rgba(201,168,76,.3);margin-left:8px}
+  .top-right{display:flex;align-items:center;gap:10px}
+  .view-btn{color:#9e8a60;font-size:13px;text-decoration:none;border:1px solid rgba(201,168,76,.2);padding:6px 14px;border-radius:7px;transition:all .2s}
+  .view-btn:hover{color:var(--gold-light)}
+  .logout-btn{background:transparent;border:1px solid rgba(201,168,76,.3);color:#c8b888;padding:7px 16px;border-radius:7px;font-size:13px;cursor:pointer;transition:all .2s}
+  .logout-btn:hover{background:rgba(139,0,0,.3);border-color:#8b0000;color:#ff9999}
+
+  /* ───── FONT PICKER ───── */
+  .font-picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:6px}
+  .font-card{background:var(--surface);border:2px solid var(--border);border-radius:10px;padding:18px 16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+  .font-card:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 6px 16px rgba(201,168,76,.15)}
+  .font-card.active{border-color:var(--gold);background:rgba(201,168,76,.08);box-shadow:0 0 0 3px rgba(201,168,76,.2)}
+  .font-card.active::after{content:'✓';position:absolute;top:8px;right:10px;color:var(--gold-dark);font-size:18px;font-weight:700}
+  .font-card-preview{font-size:30px;font-weight:700;color:var(--text);line-height:1.1;margin-bottom:6px;word-break:break-word}
+  .font-card-name{font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;font-family:'Inter',sans-serif}
+  .font-card-vibe{font-size:11.5px;color:var(--gold-dark);font-family:'Inter',sans-serif;margin-top:2px;font-style:italic}
+  .ho-list{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+  .ho-item{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;transition:all .2s;cursor:grab;user-select:none}
+  .ho-item:hover{border-color:var(--gold);box-shadow:0 4px 14px rgba(201,168,76,.12)}
+  .ho-item.dragging{opacity:.35;cursor:grabbing}
+  .ho-item.drag-over-top{border-top:3px solid var(--gold)}
+  .ho-item.drag-over-bottom{border-bottom:3px solid var(--gold)}
+  .ho-item.disabled{opacity:.55;background:rgba(0,0,0,.03)}
+  .ho-grip{font-size:18px;color:var(--text-muted);cursor:grab;padding:4px 2px}
+  .ho-grip:active{cursor:grabbing}
+  .ho-icon{font-size:24px;width:36px;text-align:center;flex-shrink:0}
+  .ho-label{flex:1;min-width:0;font-weight:600;color:var(--text);font-size:15px}
+  .ho-pos{font-size:11px;color:var(--text-muted);background:rgba(201,168,76,.12);padding:2px 8px;border-radius:20px;font-weight:600;letter-spacing:.5px}
+  .ho-arrows{display:flex;gap:4px}
+  .ho-arrow-btn{background:transparent;border:1px solid var(--border);color:var(--text);width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .ho-arrow-btn:hover:not(:disabled){background:var(--gold);color:var(--deep);border-color:var(--gold)}
+  .ho-arrow-btn:disabled{opacity:.3;cursor:not-allowed}
+  .ho-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12.5px;color:var(--text-muted);font-weight:600}
+  .ho-toggle input{width:auto;cursor:pointer}
+  @media(max-width:680px){
+    .ho-item{flex-wrap:wrap;gap:10px;padding:12px 14px}
+    .ho-label{flex-basis:calc(100% - 80px)}
+    .ho-pos{order:5}
+    .ho-arrows{order:6;margin-left:auto}
+    .ho-toggle{order:7;flex-basis:100%;border-top:1px dashed var(--border);padding-top:8px;margin-top:4px}
+  }
+
+  /* ───── LIVE EDITOR (split-screen WYSIWYG) ───── */
+  .live-btn{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--deep);border:none;padding:7px 16px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+  .live-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+  #liveEditor{position:fixed;inset:0;z-index:9999;background:var(--deep);display:none;flex-direction:column}
+  #liveEditor.open{display:flex}
+  .le-top{height:54px;background:rgba(18,16,10,0.98);border-bottom:1px solid rgba(201,168,76,.25);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0}
+  .le-title{display:flex;align-items:center;gap:10px;color:var(--gold-light);font-weight:700;font-size:15px}
+  .le-title-badge{background:rgba(201,168,76,.2);color:var(--gold-light);font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;border:1px solid rgba(201,168,76,.3);letter-spacing:1px}
+  .le-actions{display:flex;align-items:center;gap:10px}
+  .le-hint{color:#9e8a60;font-size:12px;display:flex;align-items:center;gap:6px}
+  .le-hint .dot{width:8px;height:8px;border-radius:50%;background:#4ade80;box-shadow:0 0 8px #4ade80;animation:lePulse 2s ease-in-out infinite}
+  @keyframes lePulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .le-reload{background:transparent;border:1px solid rgba(201,168,76,.3);color:#c8b888;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;transition:all .2s}
+  .le-reload:hover{background:rgba(201,168,76,.1);color:var(--gold-light)}
+  .le-close{background:rgba(139,0,0,.2);border:1px solid rgba(139,0,0,.4);color:#ff9999;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;transition:all .2s}
+  .le-close:hover{background:rgba(139,0,0,.4)}
+  .le-body{flex:1;display:grid;grid-template-columns:1fr 440px;min-height:0;background:#0a0805}
+  .le-preview{position:relative;background:#000;overflow:hidden}
+  .le-iframe{width:100%;height:100%;border:none;display:block;background:#0e0c08}
+  .le-panel{background:var(--surface);border-left:1px solid rgba(201,168,76,.25);overflow-y:auto;position:relative}
+  .le-panel-inner{padding:18px 20px 80px}
+  .le-panel-header{position:sticky;top:0;background:linear-gradient(180deg,var(--surface) 0%,var(--surface) 80%,transparent 100%);padding:6px 0 14px;margin-bottom:14px;z-index:5}
+  .le-panel-empty{padding:40px 24px;text-align:center;color:var(--text-muted)}
+  .le-panel-empty-icon{font-size:48px;margin-bottom:14px;opacity:.5}
+  .le-panel-empty-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px}
+  .le-panel-empty-text{font-size:13px;line-height:1.7}
+  .le-mobile-warn{display:none}
+  @media(max-width:980px){
+    .le-body{grid-template-columns:1fr}
+    .le-panel{position:fixed;right:0;top:54px;bottom:0;width:100%;max-width:420px;transform:translateX(100%);transition:transform .25s;box-shadow:-8px 0 30px rgba(0,0,0,.5)}
+    .le-panel.open{transform:translateX(0)}
+  }
+  /* highlight field on focus from preview click */
+  .le-focused-field{animation:leFlash 1.5s ease-out}
+  @keyframes leFlash{
+    0%{background:rgba(201,168,76,.35);box-shadow:0 0 0 4px rgba(201,168,76,.35)}
+    100%{background:transparent;box-shadow:0 0 0 0 transparent}
+  }
+
+  .admin-body{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 62px)}
+  .sidebar{background:var(--deep);border-right:1px solid rgba(201,168,76,.18);padding:22px 0;position:sticky;top:62px;height:calc(100vh - 62px);overflow-y:auto}
+  .sidebar-label{color:var(--gold);font-size:10px;letter-spacing:2.5px;padding:4px 18px 8px;font-weight:600;text-transform:uppercase}
+  .side-item{display:flex;align-items:center;gap:9px;padding:11px 18px;color:#c8b888;cursor:pointer;font-size:14px;font-weight:500;transition:all .2s;border-left:3px solid transparent}
+  .side-item:hover,.side-item.active{background:rgba(201,168,76,.1);color:var(--gold-light);border-left-color:var(--gold)}
+  .side-div{height:1px;background:rgba(201,168,76,.12);margin:10px 18px}
+
+  .main{padding:32px;background:var(--cream);overflow-y:auto;max-width:100%}
+  .panel{display:none;animation:fadeUp .3s ease}
+  .panel.active{display:block}
+  .panel-title{font-family:'Noto Serif',serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px;padding-bottom:14px;border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  body.th .panel-title{font-family:'Sarabun',sans-serif !important}
+  .panel-sub{color:var(--text-muted);font-size:14px;line-height:1.7;margin-bottom:22px}
+
+  .dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:18px;margin-bottom:32px}
+  .dash-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;text-align:center;transition:all .3s}
+  .dash-card:hover{border-color:var(--gold);box-shadow:0 6px 24px rgba(201,168,76,.12)}
+  .dash-icon{font-size:30px;margin-bottom:8px}
+  .dash-num{font-family:'Noto Serif',serif;font-size:34px;font-weight:700;color:var(--gold-dark)}
+  .dash-label{font-size:13px;color:var(--text-muted);margin-top:3px}
+  .dash-link{font-size:12px;color:var(--gold-dark);cursor:pointer;font-weight:600;margin-top:8px;display:block}
+
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .fg{display:flex;flex-direction:column;gap:5px}
+  .fg.full{grid-column:1/-1}
+  .fl{font-size:13px;font-weight:600;color:var(--text)}
+  .fl-hint{font-size:11px;color:var(--text-muted);font-weight:400;margin-top:2px}
+  .fi,.fta,.fsel{background:white;border:1px solid #d4c09a;border-radius:8px;padding:10px 13px;font-size:14px;color:var(--text);transition:all .2s;width:100%}
+  .fi:focus,.fta:focus,.fsel:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.13)}
+  .fta{resize:vertical;min-height:96px}
+  .form-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:24px}
+  .form-section-title{font-size:15px;font-weight:700;margin-bottom:6px;color:var(--text);display:flex;align-items:center;gap:10px;justify-content:space-between}
+  .form-section-desc{color:var(--text-muted);font-size:13px;margin-bottom:14px;line-height:1.6}
+
+  .color-row{display:flex;gap:10px;align-items:center}
+  .color-input{width:48px;height:42px;border-radius:8px;border:1px solid #d4c09a;padding:2px;cursor:pointer;flex-shrink:0}
+
+  .upload-zone{border:2px dashed #d4c09a;border-radius:12px;padding:32px 24px;text-align:center;cursor:pointer;transition:all .3s;background:#fffdf5;position:relative}
+  .upload-zone:hover,.upload-zone.dov{border-color:var(--gold);background:rgba(201,168,76,.05)}
+  .upload-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
+  .u-icon{font-size:30px;margin-bottom:7px}
+  .u-text{color:var(--text-muted);font-size:14px}
+  .u-hint{color:#bbb;font-size:12px;margin-top:3px}
+  .prev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:9px;margin-top:11px}
+  .prev-item{position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;background:#f0e8d0}
+  .prev-item img{width:100%;height:100%;object-fit:cover}
+  .prev-rm{position:absolute;top:3px;right:3px;background:rgba(139,0,0,.85);color:white;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
+  .dtable{width:100%;border-collapse:collapse;background:white;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.05)}
+  .dtable th{background:var(--deep);color:var(--gold-light);padding:11px 15px;text-align:left;font-size:13px;font-weight:600}
+  .dtable td{padding:11px 15px;border-bottom:1px solid #f0e8d0;font-size:14px;vertical-align:middle}
+  .dtable tr:last-child td{border-bottom:none}
+  .dtable tr:hover td{background:#fffdf5}
+  .thumb{width:42px;height:42px;border-radius:6px;object-fit:cover}
+  .no-img{width:42px;height:42px;border-radius:6px;background:#f0e8d0;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .tag{background:rgba(201,168,76,.1);color:var(--gold-dark);font-size:12px;padding:3px 10px;border-radius:25px;border:1px solid rgba(201,168,76,.22);font-weight:500}
+  .row-actions{display:flex;gap:6px;flex-wrap:wrap}
+
+  .btn-gold{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--deep);padding:11px 26px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:all .3s;box-shadow:0 3px 14px rgba(201,168,76,.25)}
+  .btn-gold:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(201,168,76,.4)}
+  .btn-ol{background:transparent;color:var(--text-muted);padding:11px 22px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;border:1px solid #d4c09a;transition:all .2s}
+  .btn-ol:hover{border-color:var(--gold);color:var(--gold-dark)}
+  .btn-del{background:transparent;color:#cc3333;border:1px solid #cc3333;padding:6px 13px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+  .btn-del:hover{background:#cc3333;color:white}
+  .btn-edit{background:transparent;color:var(--gold-dark);border:1px solid var(--gold-dark);padding:6px 13px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+  .btn-edit:hover{background:var(--gold-dark);color:white}
+  .btn-sm{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--deep);border:none;padding:8px 16px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer}
+  .btn-add{background:transparent;color:var(--gold-dark);border:2px dashed var(--gold-dark);padding:10px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;width:100%;margin-top:10px}
+  .btn-add:hover{background:rgba(201,168,76,.08);border-style:solid}
+
+  .sub-title{font-family:'Noto Serif',serif;font-size:17px;font-weight:700;color:var(--text);margin:28px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+  body.th .sub-title{font-family:'Sarabun',sans-serif !important}
+
+  .a-crumb{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-muted);margin-bottom:22px;flex-wrap:wrap}
+  .a-crumb a{color:var(--gold-dark);text-decoration:none;cursor:pointer;font-weight:600}
+  .a-crumb a:hover{text-decoration:underline}
+  .a-crumb .sep{color:#bbb;font-size:11px}
+  .a-crumb .cur{color:var(--text);font-weight:600}
+
+  .type-tile{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:18px;display:flex;gap:16px;align-items:center;margin-bottom:14px;transition:all .2s}
+  .type-tile:hover{border-color:var(--gold);box-shadow:0 4px 16px rgba(201,168,76,.1)}
+  .type-tile-img{width:80px;height:80px;border-radius:10px;background:linear-gradient(135deg,#2d1e06,#12100a);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;overflow:hidden}
+  .type-tile-img img{width:100%;height:100%;object-fit:cover}
+  .type-tile-info{flex:1;min-width:0}
+  .type-tile-name{font-family:'Noto Serif',serif;font-size:17px;font-weight:700;margin-bottom:3px}
+  body.th .type-tile-name{font-family:'Sarabun',sans-serif !important}
+  .type-tile-desc{color:var(--text-muted);font-size:13px;line-height:1.55;margin-bottom:6px}
+  .type-tile-meta{font-size:12px;color:var(--gold-dark);font-weight:600}
+  .type-tile-actions{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+
+  .rep-row{background:white;border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px;display:flex;gap:12px;align-items:start}
+  .rep-handle{display:flex;flex-direction:column;align-items:center;justify-content:center;color:#bbb;font-size:11px;flex-shrink:0;padding-top:6px;gap:2px}
+  .rep-handle button{background:transparent;border:1px solid #ddd;border-radius:5px;width:26px;height:22px;cursor:pointer;color:var(--text-muted);font-size:11px;transition:all .15s}
+  .rep-handle button:hover{border-color:var(--gold);color:var(--gold-dark)}
+  .rep-fields{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+  .rep-rm{background:transparent;border:1px solid #cc3333;color:#cc3333;padding:6px 10px;border-radius:6px;font-size:11px;cursor:pointer;flex-shrink:0;height:fit-content}
+  .rep-rm:hover{background:#cc3333;color:white}
+  .switch{position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0}
+  .switch input{opacity:0;width:0;height:0}
+  .slider{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:24px;transition:.2s}
+  .slider:before{position:absolute;content:'';height:18px;width:18px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.2s}
+  .switch input:checked + .slider{background:var(--gold)}
+  .switch input:checked + .slider:before{transform:translateX(20px)}
+  .switch-label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);font-weight:500}
+
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100000;align-items:center;justify-content:center;padding:20px}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--cream);border-radius:16px;width:100%;max-width:760px;max-height:92vh;overflow-y:auto;padding:30px;border:1px solid var(--border);animation:fadeUp .3s ease}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+  .modal-title{font-family:'Noto Serif',serif;font-size:20px;font-weight:700}
+  body.th .modal-title{font-family:'Sarabun',sans-serif !important}
+  .modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-muted)}
+
+  .toast{position:fixed;top:78px;right:24px;background:var(--deep);color:var(--gold-light);padding:13px 20px;border-radius:10px;font-size:14px;font-weight:500;border:1px solid rgba(201,168,76,.3);z-index:99999;display:none;box-shadow:0 8px 24px rgba(0,0,0,.25);animation:slideInTR .3s ease}
+  .toast.show{display:block}
+  @keyframes slideInTR{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+  .save-bar{position:sticky;bottom:0;background:rgba(253,246,227,0.95);backdrop-filter:blur(10px);border-top:1px solid var(--border);margin:0 -32px -32px;padding:14px 32px;display:flex;justify-content:flex-end;gap:10px;z-index:50}
+
+  /* HAMBURGER */
+  .menu-btn{display:none;background:transparent;border:1px solid rgba(201,168,76,.3);color:var(--gold-light);width:36px;height:36px;border-radius:7px;cursor:pointer;font-size:17px;align-items:center;justify-content:center}
+  .mobile-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:90;backdrop-filter:blur(3px)}
+  .mobile-overlay.open{display:block}
+
+  /* TABLET */
+  @media(max-width:900px){
+    .admin-body{grid-template-columns:1fr}
+    .sidebar{
+      position:fixed;top:0;left:-260px;width:240px;height:100vh;
+      transition:left .3s ease;z-index:100;
+      box-shadow:8px 0 30px rgba(0,0,0,.4);
+      padding-top:62px;
+    }
+    .sidebar.open{left:0}
+    .menu-btn{display:flex}
+  }
+
+  /* MOBILE */
+  @media(max-width:768px){
+    body{font-size:14px}
+    .admin-top{padding:0 14px;height:56px;gap:8px}
+    .admin-logo{gap:8px;min-width:0;flex:1}
+    .admin-logo-icon{width:32px;height:32px;font-size:16px;flex-shrink:0}
+    .admin-logo-text{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .admin-badge{display:none}
+    #adminUser{display:none}
+    .top-right{gap:6px}
+    .top-right .lb{padding:4px 9px;font-size:11px}
+    .view-btn{padding:5px 10px;font-size:11px}
+    .view-btn span,.view-btn{font-size:11px}
+    .logout-btn{padding:5px 10px;font-size:11px}
+
+    .main{padding:18px 14px}
+    .panel-title{font-size:18px;padding-bottom:10px;margin-bottom:8px}
+    .panel-title button{padding:9px 14px;font-size:12px}
+    .panel-sub{font-size:12.5px;line-height:1.6;margin-bottom:16px}
+
+    .form-card{padding:16px 14px;margin-bottom:16px;border-radius:10px}
+    .form-grid{grid-template-columns:1fr;gap:12px}
+    .form-section-title{font-size:13.5px;flex-wrap:wrap}
+    .form-section-desc{font-size:12px}
+    .fl{font-size:12.5px}
+    .fl-hint{font-size:10.5px}
+    .fi,.fta,.fsel{padding:9px 11px;font-size:13.5px}
+    .fta{min-height:80px}
+
+    .dash-grid{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+    .dash-card{padding:16px 12px}
+    .dash-icon{font-size:24px;margin-bottom:5px}
+    .dash-num{font-size:26px}
+    .dash-label{font-size:11.5px}
+    .dash-link{font-size:11px}
+
+    .upload-zone{padding:22px 14px}
+    .u-icon{font-size:24px;margin-bottom:4px}
+    .u-text{font-size:12.5px}
+    .u-hint{font-size:11px}
+    .prev-grid{grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:7px}
+
+    .btn-gold{padding:10px 18px;font-size:13px}
+    .btn-ol{padding:10px 16px;font-size:13px}
+    .btn-del,.btn-edit{padding:5px 10px;font-size:11.5px}
+    .btn-sm{padding:7px 12px;font-size:12px}
+    .btn-add{padding:9px 14px;font-size:12.5px}
+
+    /* TABLES */
+    .dtable{font-size:12.5px}
+    .dtable th,.dtable td{padding:9px 10px}
+    .thumb,.no-img{width:36px;height:36px;font-size:15px}
+
+    .sub-title{font-size:15px;margin:22px 0 12px}
+
+    .type-tile{padding:12px;flex-direction:column;align-items:stretch;gap:10px}
+    .type-tile-img{width:100%;height:120px;border-radius:8px}
+    .type-tile-name{font-size:15px}
+    .type-tile-desc{font-size:12px}
+    .type-tile-meta{font-size:11px}
+    .type-tile-actions{flex-direction:row;flex-wrap:wrap;gap:6px}
+    .type-tile-actions button{flex:1;min-width:auto}
+
+    /* REPEATER ROWS — stack vertically */
+    .rep-row{padding:12px;flex-wrap:wrap;gap:10px}
+    .rep-fields{grid-template-columns:1fr;gap:8px}
+    .rep-handle{flex-direction:row}
+
+    .save-bar{padding:10px 14px;margin:0 -14px -18px;flex-wrap:wrap}
+    .save-bar button{flex:1;min-width:120px}
+
+    /* LOGIN */
+    .login-box{padding:32px 24px}
+    .login-title{font-size:19px}
+    .login-sub{font-size:12px;margin-bottom:24px}
+    .login-input{padding:11px 13px;font-size:14px}
+
+    /* MODAL */
+    .modal-overlay{padding:0;align-items:flex-end}
+    .modal{max-width:100%;max-height:96vh;border-radius:16px 16px 0 0;padding:22px 16px;animation:slideUpMobile .3s ease}
+    @keyframes slideUpMobile{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .modal-title{font-size:17px}
+    .modal-head{margin-bottom:16px;padding-bottom:12px}
+
+    /* SIDEBAR mobile drawer */
+    .sidebar{padding-top:60px}
+    .sidebar-label{font-size:9px;padding:4px 16px 6px}
+    .side-item{padding:10px 16px;font-size:13.5px}
+
+    .a-crumb{font-size:12.5px;margin-bottom:16px}
+
+    /* TOAST */
+    .toast{right:14px;top:68px;left:14px;font-size:12.5px;padding:11px 16px;border-radius:9px;text-align:center}
+
+    /* SWITCH */
+    .switch-label{font-size:11.5px}
+  }
+
+  /* SMALL MOBILE */
+  @media(max-width:380px){
+    .dash-grid{grid-template-columns:1fr}
+    .panel-title{font-size:16px;flex-direction:column;align-items:stretch}
+    .panel-title button{width:100%}
+  }
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="login-lang">
+    <div class="lang-sw">
+      <button class="lb active" onclick="setLang('en')">EN</button>
+      <button class="lb" onclick="setLang('th')">TH</button>
+    </div>
+  </div>
+  <div class="login-box">
+    <div class="login-icon">🔐</div>
+    <div class="login-title" data-en="Admin Panel" data-th="แผงควบคุมแอดมิน">Admin Panel</div>
+    <div class="login-sub" data-en="Yingyingying Amulet — Management System" data-th="Yingyingying Amulet — ระบบจัดการ">Yingyingying Amulet — Management System</div>
+    <div class="login-group">
+      <label class="login-label" data-en="Email" data-th="อีเมล">Email</label>
+      <input class="login-input" id="lu" type="email" autocomplete="email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-group">
+      <label class="login-label" data-en="Password" data-th="รหัสผ่าน">Password</label>
+      <input class="login-input" id="lp" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-err" id="loginErr" data-en="❌ Wrong email or password" data-th="❌ อีเมลหรือรหัสผ่านไม่ถูกต้อง">❌ Wrong email or password</div>
+    <button class="login-btn" onclick="doLogin()" data-en="🔓 Sign In" data-th="🔓 เข้าสู่ระบบ">🔓 Sign In</button>
+    <div class="login-hint" data-en="Manage admin users in Firebase Console" data-th="จัดการแอดมินผ่าน Firebase Console" style="font-size:11.5px">Manage admin users in Firebase Console</div>
+  </div>
+</div>
+
+<div id="adminScreen">
+  <div class="admin-top">
+    <button class="menu-btn" id="menuBtn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+    <div class="admin-logo">
+      <div class="admin-logo-icon">📿</div>
+      <div class="admin-logo-text">Yingyingying Amulet</div>
+      <span class="admin-badge" data-en="⚙ Admin" data-th="⚙ แอดมิน">⚙ Admin</span>
+    </div>
+    <div class="top-right">
+      <span style="color:#9e8a60;font-size:13px" id="adminUser"></span>
+      <div class="lang-sw">
+        <button class="lb active" onclick="setLang('en')">EN</button>
+        <button class="lb" onclick="setLang('th')">TH</button>
+      </div>
+      <a href="index.html" target="_blank" class="view-btn" data-en="👁 View Store" data-th="👁 ดูหน้าร้าน">👁 View Store</a>
+      <button class="live-btn" onclick="openLiveEditor()" data-en="✨ Live Editor" data-th="✨ แก้แบบสด">✨ Live Editor</button>
+      <button class="logout-btn" onclick="doLogout()" data-en="Sign Out" data-th="ออกจากระบบ">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="mobile-overlay" id="mobileOverlay" onclick="toggleSidebar()"></div>
+
+  <div class="admin-body">
+    <div class="sidebar">
+      <div class="sidebar-label" data-en="Overview" data-th="ภาพรวม">Overview</div>
+      <div class="side-item active" onclick="showPanel('dashboard',this)" data-en="📊 Dashboard" data-th="📊 แดชบอร์ด">📊 Dashboard</div>
+      <div class="side-div"></div>
+      <div class="sidebar-label" data-en="Site Content" data-th="เนื้อหาเว็บไซต์">Site Content</div>
+      <div class="side-item" onclick="showPanel('content-branding',this)" data-en="🏷️ Branding & Logo" data-th="🏷️ แบรนด์ & โลโก้">🏷️ Branding & Logo</div>
+      <div class="side-item" onclick="showPanel('content-nav',this)" data-en="🧭 Navigation Menu" data-th="🧭 เมนูนำทาง">🧭 Navigation Menu</div>
+      <div class="side-item" onclick="showPanel('content-hero',this)" data-en="⭐ Hero Section" data-th="⭐ ส่วน Hero">⭐ Hero Section</div>
+      <div class="side-item" onclick="showPanel('content-homeLayout',this)" data-en="🏠 Homepage Layout" data-th="🏠 จัดเลย์เอาท์หน้าแรก">🏠 Homepage Layout</div>
+      <div class="side-item" onclick="showPanel('content-services',this)" data-en="🎯 Service Cards" data-th="🎯 การ์ดบริการ">🎯 Service Cards</div>
+      <div class="side-item" onclick="showPanel('content-sections',this)" data-en="📄 Section Headers" data-th="📄 หัวข้อหน้า">📄 Section Headers</div>
+      <div class="side-item" onclick="showPanel('content-trust',this)" data-en="🏆 Trust Cards" data-th="🏆 การ์ดน่าเชื่อถือ">🏆 Trust Cards</div>
+      <div class="side-item" onclick="showPanel('content-contact',this)" data-en="💬 Contact Buttons" data-th="💬 ปุ่มติดต่อ">💬 Contact Buttons</div>
+      <div class="side-item" onclick="showPanel('content-payment',this)" data-en="💳 Payment & Shipping" data-th="💳 ชำระเงิน & จัดส่ง">💳 Payment & Shipping</div>
+      <div class="side-item" onclick="showPanel('content-featured',this)" data-en="✨ Featured on Home" data-th="✨ แนะนำหน้าแรก">✨ Featured on Home</div>
+      <div class="side-div"></div>
+      <div class="sidebar-label" data-en="Manage Items" data-th="จัดการสินค้า">Manage Items</div>
+      <div class="side-item" onclick="showPanel('amulets',this)" data-en="📿 Amulets" data-th="📿 พระเครื่อง">📿 Amulets</div>
+      <div class="side-item" onclick="showPanel('accessories',this)" data-en="⛓️ Accessories" data-th="⛓️ อุปกรณ์เสริม">⛓️ Accessories</div>
+      <div class="side-item" onclick="showPanel('casing',this)" data-en="🪬 Casing Service" data-th="🪬 บริการกรอบพระ">🪬 Casing Service</div>
+      <div class="side-item" onclick="showPanel('projects',this)" data-en="🎯 Projects" data-th="🎯 โปรเจกต์">🎯 Projects</div>
+      <div class="side-item" onclick="showPanel('reviews',this)" data-en="🙏 Reviews" data-th="🙏 รีวิว">🙏 Reviews</div>
+      <div class="side-div"></div>
+      <div class="sidebar-label" data-en="System" data-th="ระบบ">System</div>
+      <div class="side-item" onclick="showPanel('settings',this)" data-en="⚙️ Settings" data-th="⚙️ ตั้งค่า">⚙️ Settings</div>
+    </div>
+
+    <div class="main">
+
+      <div class="panel active" id="panel-dashboard">
+        <div class="panel-title" data-en="📊 Dashboard" data-th="📊 แดชบอร์ด">📊 Dashboard</div>
+        <div class="panel-sub" data-en-html="Edit any text on the customer site through <strong>Site Content</strong> on the left." data-th-html="แก้ไขข้อความบนหน้าร้านได้ที่ <strong>เนื้อหาเว็บไซต์</strong> ทางซ้าย">Edit any text on the customer site through <strong>Site Content</strong> on the left.</div>
+        <div class="dash-grid">
+          <div class="dash-card"><div class="dash-icon">📿</div><div class="dash-num" id="dA">0</div><div class="dash-label" data-en="Amulets" data-th="พระเครื่อง">Amulets</div><span class="dash-link" onclick="showPanel('amulets',null)" data-en="Manage →" data-th="จัดการ →">Manage →</span></div>
+          <div class="dash-card"><div class="dash-icon">⛓️</div><div class="dash-num" id="dAc">0</div><div class="dash-label" data-en="Accessories" data-th="อุปกรณ์เสริม">Accessories</div><span class="dash-link" onclick="showPanel('accessories',null)" data-en="Manage →" data-th="จัดการ →">Manage →</span></div>
+          <div class="dash-card"><div class="dash-icon">🪬</div><div class="dash-num" id="dF">0</div><div class="dash-label" data-en="Casing Types" data-th="ประเภทกรอบ">Casing Types</div><span class="dash-link" onclick="showPanel('casing',null)" data-en="Manage →" data-th="จัดการ →">Manage →</span></div>
+          <div class="dash-card"><div class="dash-icon">🎯</div><div class="dash-num" id="dP">0</div><div class="dash-label" data-en="Projects" data-th="โปรเจกต์">Projects</div><span class="dash-link" onclick="showPanel('projects',null)" data-en="Manage →" data-th="จัดการ →">Manage →</span></div>
+        </div>
+      </div>
+
+      <!-- BRANDING -->
+      <div class="panel" id="panel-content-branding">
+        <div class="panel-title" data-en="🏷️ Branding & Logo" data-th="🏷️ แบรนด์ & โลโก้">🏷️ Branding & Logo</div>
+        <div class="panel-sub" data-en="Shop name, top bar message, and logo display." data-th="ชื่อร้าน, ข้อความแถบบน, และการแสดงโลโก้">Shop name, top bar message, and logo display.</div>
+        <div class="form-card">
+          <div class="form-grid">
+            <div class="fg full"><label class="fl" data-en="Browser Tab Title" data-th="ชื่อแท็บเบราว์เซอร์">Browser Tab Title</label><input class="fi" id="b_pageTitle"></div>
+            <div class="fg"><label class="fl" data-en="Logo Icon (emoji)" data-th="ไอคอนโลโก้ (อีโมจิ)">Logo Icon (emoji)</label><input class="fi" id="b_logoIcon" maxlength="4"></div>
+            <div class="fg"><label class="fl" data-en="Logo Text (shop name)" data-th="ข้อความโลโก้ (ชื่อร้าน)">Logo Text (shop name)</label><input class="fi" id="b_logoText"></div>
+            <div class="fg full"><label class="fl" data-en="Logo Subtitle" data-th="คำบรรยายใต้โลโก้">Logo Subtitle</label><input class="fi" id="b_logoSub"></div>
+            <div class="fg full"><label class="fl" data-en="Top Bar Banner" data-th="แบนเนอร์แถบบน">Top Bar Banner</label><input class="fi" id="b_topbar"></div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="form-section-title" data-en="🔤 Display Font" data-th="🔤 ฟอนต์หัวข้อ">🔤 Display Font</div>
+          <div class="form-section-desc" data-en="Font used for the hero title, brand name, section headers, and product names. Pick the look that fits your shop's personality." data-th="ฟอนต์สำหรับหัวข้อ Hero, ชื่อร้าน, หัวข้อแต่ละส่วน, และชื่อสินค้า เลือกแบบที่เข้ากับร้านของคุณ">Pick the typography style for headings, hero title, brand name.</div>
+          <div class="font-picker" id="fontPicker"></div>
+        </div>
+        <div class="save-bar"><button class="btn-gold" onclick="saveBranding()" data-en="💾 Save Branding" data-th="💾 บันทึกแบรนด์">💾 Save Branding</button></div>
+      </div>
+
+      <!-- NAV -->
+      <div class="panel" id="panel-content-nav">
+        <div class="panel-title" data-en="🧭 Navigation Menu" data-th="🧭 เมนูนำทาง">🧭 Navigation Menu</div>
+        <div class="panel-sub" data-en="Rename, reorder, hide, disable, or add custom pages. Built-in pages can be hidden but not deleted." data-th="แก้ชื่อ, เรียงลำดับ, ซ่อน, ปิดใช้งาน, หรือเพิ่มหน้าใหม่ได้ หน้าเริ่มต้นซ่อนได้แต่ลบไม่ได้">Rename, reorder, hide, disable, or add custom pages. Built-in pages can be hidden but not deleted.</div>
+        <div class="form-card">
+          <div class="form-section-title" data-en="Menu Items" data-th="รายการเมนู">Menu Items</div>
+          <div id="navList"></div>
+        </div>
+        <div class="form-card">
+          <div class="form-section-title" data-en="➕ Custom Pages" data-th="➕ หน้าที่กำหนดเอง">➕ Custom Pages</div>
+          <div class="form-section-desc" data-en="Add your own pages. They appear in the menu automatically." data-th="เพิ่มหน้าของคุณเอง จะแสดงในเมนูอัตโนมัติ">Add your own pages. They appear in the menu automatically.</div>
+          <div id="customPagesList"></div>
+          <button class="btn-add" onclick="addCustomPage()" data-en="➕ Add New Page" data-th="➕ เพิ่มหน้าใหม่">➕ Add New Page</button>
+        </div>
+        <div class="save-bar"><button class="btn-gold" onclick="saveNav()" data-en="💾 Save Menu & Pages" data-th="💾 บันทึกเมนูและหน้า">💾 Save Menu & Pages</button></div>
+      </div>
+
+      <!-- HERO -->
+      <div class="panel" id="panel-content-hero">
+        <div class="panel-title" data-en="⭐ Hero Section" data-th="⭐ ส่วน Hero">⭐ Hero Section</div>
+        <div class="panel-sub" data-en="The big banner on the homepage." data-th="แบนเนอร์ใหญ่บนหน้าแรก">The big banner on the homepage.</div>
+
+        <div class="form-card">
+          <div class="form-section-title" data-en="🖼️ Background Image (optional)" data-th="🖼️ รูปพื้นหลัง (ไม่บังคับ)">🖼️ Background Image (optional)</div>
+          <div class="form-section-desc" data-en="A full-width image behind the hero text. Leave empty for default." data-th="รูปเต็มจอด้านหลังข้อความ Hero ปล่อยว่างเพื่อใช้ค่าเริ่มต้น">A full-width image behind the hero text. Leave empty for default.</div>
+          <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'h_bg',true)">
+            <input type="file" accept="image/*" onchange="handleSingleImg(event,'h_bg')">
+            <div class="u-icon">🖼️</div>
+            <div class="u-text" data-en="Click or drag a background image" data-th="คลิกหรือลากรูปพื้นหลังมาวาง">Click or drag a background image</div>
+          </div>
+          <div class="prev-grid" id="h_bg_p"></div>
+        </div>
+
+        <div class="form-card">
+          <div class="form-section-title" data-en="🔮 Phra Somdej 3D Model" data-th="🔮 พระสมเด็จ 3D Model">🔮 Phra Somdej 3D Model</div>
+          <div class="form-section-desc"
+               data-en-html="Upload a 3D model file (.glb or .gltf) to display as a rotatable phra somdej on the homepage. <strong>If no 3D model is uploaded, the hero will show only text — full width, no empty space.</strong> Use <a href='https://trellis2.app' target='_blank' style='color:var(--gold-dark);text-decoration:underline'>trellis2.app</a> or similar to generate a .glb from a photo of your amulet."
+               data-th-html="อัปโหลดไฟล์ 3D (.glb หรือ .gltf) เพื่อแสดงพระสมเด็จหมุนได้บนหน้าแรก <strong>ถ้าไม่อัปโหลด หน้า hero จะแสดงเฉพาะข้อความ — เต็มความกว้าง ไม่มีช่องว่าง</strong> ใช้ <a href='https://trellis2.app' target='_blank' style='color:var(--gold-dark);text-decoration:underline'>trellis2.app</a> หรือเครื่องมือสร้าง 3D อื่นๆ เจนไฟล์ .glb จากรูปพระเครื่อง">
+            Upload a 3D model file (.glb or .gltf). If no model is uploaded, the hero shows text only.
+          </div>
+          <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="dropGlb(event)">
+            <input type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" onchange="handleGlbFile(event)">
+            <div class="u-icon">🗿</div>
+            <div class="u-text" data-en="Click or drag a .glb / .gltf file" data-th="คลิกหรือลากไฟล์ .glb / .gltf">Click or drag a .glb / .gltf file</div>
+          </div>
+          <div id="h_phra_glb_info" style="margin-top:12px"></div>
+          <div style="margin-top:14px;padding:12px 14px;background:rgba(201,168,76,.08);border-left:3px solid var(--gold);border-radius:6px;font-size:12.5px;color:var(--text-muted);line-height:1.7">
+            <strong style="color:var(--gold-dark)" data-en="📐 Tips for good 3D models:" data-th="📐 เคล็ดลับโมเดล 3D ที่ดี:">📐 Tips for good 3D models:</strong>
+            <ul style="margin:6px 0 0 18px;padding:0">
+              <li data-en="File size under 5 MB loads fast on mobile" data-th="ไฟล์ใต้ 5 MB โหลดเร็วบนมือถือ">File size under 5 MB loads fast on mobile</li>
+              <li data-en="Models centred at origin display correctly" data-th="โมเดลที่อยู่กลาง (centre at origin) แสดงผลถูกต้อง">Models centred at origin display correctly</li>
+              <li data-en="Embedded textures (.glb) work best" data-th="ไฟล์ .glb ที่ฝัง texture ใช้งานง่ายที่สุด">Embedded textures (.glb) work best</li>
+            </ul>
+          </div>
+        </div>
+
+        <details class="form-card" style="cursor:pointer">
+          <summary style="font-weight:700;color:var(--text);font-size:14px;list-style:none;padding:4px 0">
+            <span data-en="🖼️ Fallback: Image-based 3D (advanced)" data-th="🖼️ สำรอง: 3D จากรูป (ขั้นสูง)">🖼️ Fallback: Image-based 3D (advanced)</span>
+            <span style="color:var(--text-muted);font-weight:400;font-size:12px;margin-left:8px" data-en="— click to expand" data-th="— คลิกเพื่อขยาย">— click to expand</span>
+          </summary>
+          <div class="form-section-desc" style="margin-top:14px" data-en="Only used if NO .glb is uploaded above. Renders a flat tablet with these images on front/back faces." data-th="ใช้เฉพาะเมื่อไม่ได้อัปโหลด .glb ด้านบน — จะแสดงเป็นแผ่นแบนๆ ที่มีรูปด้านหน้า/หลัง">
+            Only used if NO .glb is uploaded above. Renders a flat tablet with these images.
+          </div>
+          <div class="form-grid">
+            <div class="fg">
+              <label class="fl" data-en="Front Image" data-th="รูปด้านหน้า">Front Image</label>
+              <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'h_phra_front',true)">
+                <input type="file" accept="image/*" onchange="handleSingleImg(event,'h_phra_front')">
+                <div class="u-icon">🪬</div>
+                <div class="u-text" data-en="Click or drag the FRONT image" data-th="คลิกหรือลากรูปด้านหน้า">Click or drag the FRONT image</div>
+              </div>
+              <div class="prev-grid" id="h_phra_front_p"></div>
+            </div>
+            <div class="fg">
+              <label class="fl" data-en="Back Image" data-th="รูปด้านหลัง">Back Image</label>
+              <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'h_phra_back',true)">
+                <input type="file" accept="image/*" onchange="handleSingleImg(event,'h_phra_back')">
+                <div class="u-icon">📿</div>
+                <div class="u-text" data-en="Click or drag the BACK image" data-th="คลิกหรือลากรูปด้านหลัง">Click or drag the BACK image</div>
+              </div>
+              <div class="prev-grid" id="h_phra_back_p"></div>
+            </div>
+          </div>
+        </details>
+
+        <div class="form-card">
+          <div class="form-section-title" data-en="📝 Text Content" data-th="📝 เนื้อหาข้อความ">📝 Text Content</div>
+          <div class="form-grid">
+            <div class="fg full"><label class="fl" data-en="Eyebrow Tag" data-th="แท็กด้านบน">Eyebrow Tag</label><input class="fi" id="h_eyebrow"></div>
+            <div class="fg"><label class="fl" data-en="Title — Highlighted Word(s)" data-th="ชื่อ — คำที่เน้น">Title — Highlighted Word(s)</label><input class="fi" id="h_titleHL"></div>
+            <div class="fg"><label class="fl" data-en="Title — Rest" data-th="ชื่อ — ส่วนที่เหลือ">Title — Rest</label><input class="fi" id="h_titleRest"></div>
+            <div class="fg full"><label class="fl" data-en="Subtitle" data-th="คำโปรย">Subtitle</label><input class="fi" id="h_sub"></div>
+            <div class="fg full"><label class="fl" data-en="Description" data-th="คำอธิบาย">Description</label><textarea class="fta" id="h_desc"></textarea></div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="form-section-title" data-en="🔘 Hero Buttons" data-th="🔘 ปุ่ม Hero">🔘 Hero Buttons</div>
+          <div id="heroBtnList"></div>
+          <button class="btn-add" onclick="addHeroBtn()" data-en="➕ Add Button" data-th="➕ เพิ่มปุ่ม">➕ Add Button</button>
+        </div>
+
+        <div class="form-card">
+          <div class="form-section-title" data-en="📊 Hero Stats" data-th="📊 สถิติ Hero">📊 Hero Stats</div>
+          <div id="heroStatList"></div>
+          <button class="btn-add" onclick="addHeroStat()" data-en="➕ Add Stat" data-th="➕ เพิ่มสถิติ">➕ Add Stat</button>
+        </div>
+
+        <div class="save-bar" style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn-gold" onclick="saveHero()" data-en="💾 Save Hero Section" data-th="💾 บันทึก Hero">💾 Save Hero Section</button>
+          <button class="btn-ol" onclick="resetHeroVisuals()" data-en="🗑️ Clear all hero images (bg + 3D)" data-th="🗑️ ล้างรูปทั้งหมดใน Hero (พื้นหลัง + 3D)" style="border-color:rgba(139,0,0,.4);color:#a85050">🗑️ Clear all hero images</button>
+        </div>
+      </div>
+
+      <!-- HOMEPAGE LAYOUT (section order) -->
+      <div class="panel" id="panel-content-homeLayout">
+        <div class="panel-title" data-en="🏠 Homepage Layout" data-th="🏠 จัดเลย์เอาท์หน้าแรก">🏠 Homepage Layout</div>
+        <div class="panel-sub" data-en-html="Drag the sections below to reorder how they appear on the homepage, or use the arrow buttons. Toggle a section off to hide it from the homepage (you can still edit its content from its own panel)." data-th-html="ลากส่วนต่างๆ ด้านล่างเพื่อจัดลำดับใหม่ในหน้าแรก หรือใช้ปุ่มลูกศร ปิดสวิตช์เพื่อซ่อนส่วนนั้นจากหน้าแรก (ยังแก้ไขเนื้อหาได้จาก panel ของส่วนนั้นๆ)">Drag sections to reorder. Toggle off to hide a section from the homepage.</div>
+        <div class="form-card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;background:rgba(201,168,76,.1);border-radius:8px;border-left:3px solid var(--gold)">
+            <span style="font-size:20px">⭐</span>
+            <div style="font-size:13px;color:var(--text-muted);line-height:1.55">
+              <strong style="color:var(--text)" data-en="Hero is always first" data-th="Hero อยู่บนสุดเสมอ">Hero is always first</strong> <span data-en="— the sections below appear under it." data-th="— ส่วนด้านล่างจะอยู่ใต้ Hero">— the sections below appear under it.</span>
+            </div>
+          </div>
+          <div class="ho-list" id="homeOrderList"></div>
+          <div class="save-bar" style="margin-top:16px"><button class="btn-gold" onclick="saveHomeOrder()" data-en="💾 Save Layout" data-th="💾 บันทึกเลย์เอาท์">💾 Save Layout</button></div>
+        </div>
+      </div>
+
+      <!-- SERVICES -->
+      <div class="panel" id="panel-content-services">
+        <div class="panel-title" data-en="🎯 Homepage Service Cards" data-th="🎯 การ์ดบริการหน้าแรก">🎯 Homepage Service Cards</div>
+        <div class="panel-sub" data-en="The cards on the homepage that link to each section." data-th="การ์ดในหน้าแรกที่ลิงก์ไปแต่ละส่วน">The cards on the homepage that link to each section.</div>
+        <div class="form-card">
+          <div class="fg full" style="margin-bottom:14px"><label class="fl" data-en="Section Title" data-th="ชื่อส่วน">Section Title</label><input class="fi" id="svc_title"></div>
+          <div id="svcList"></div>
+          <button class="btn-add" onclick="addSvcCard()" data-en="➕ Add Service Card" data-th="➕ เพิ่มการ์ดบริการ">➕ Add Service Card</button>
+        </div>
+        <div class="save-bar"><button class="btn-gold" onclick="saveServices()" data-en="💾 Save Service Cards" data-th="💾 บันทึก">💾 Save Service Cards</button></div>
+      </div>
+
+      <!-- SECTIONS -->
+      <div class="panel" id="panel-content-sections">
+        <div class="panel-title" data-en="📄 Section Headers" data-th="📄 หัวข้อหน้า">📄 Section Headers</div>
+        <div class="panel-sub" data-en="Title and description for each page." data-th="ชื่อและคำอธิบายของแต่ละหน้า">Title and description for each page.</div>
+        <div class="form-card">
+          <div class="form-section-title" data-en="📿 Amulets Page" data-th="📿 หน้าพระเครื่อง">📿 Amulets Page</div>
+          <div class="form-grid">
+            <div class="fg"><label class="fl" data-en="Title" data-th="ชื่อ">Title</label><input class="fi" id="sec_a_title"></div>
+            <div class="fg"><label class="fl" data-en="Description" data-th="คำอธิบาย">Description</label><input class="fi" id="sec_a_desc"></div>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="form-section-title" data-en="⛓️ Accessories Page" data-th="⛓️ หน้าอุปกรณ์เสริม">⛓️ Accessories Page</div>
+          <div class="form-grid">
+            <div class="fg"><label class="fl" data-en="Title" data-th="ชื่อ">Title</label><input class="fi" id="sec_ac_title"></div>
+            <div class="fg"><label class="fl" data-en="Description" data-th="คำอธิบาย">Description</label><input class="fi" id="sec_ac_desc"></div>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="form-section-title" data-en="🪬 Casing Page" data-th="🪬 หน้ากรอบพระ">🪬 Casing Page</div>
+          <div class="form-grid">
+            <div class="fg"><label class="fl" data-en="Title" data-th="ชื่อ">Title</label><input class="fi" id="sec_c_title"></div>
+            <div class="fg"><label class="fl" data-en="Description" data-th="คำอธิบาย">Description</label><input class="fi" id="sec_c_desc"></div>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="form-section-title" data-en="🎯 Projects Page" data-th="🎯 หน้าโปรเจกต์">🎯 Projects Page</div>
+          <div class="form-grid">
+            <div class="fg"><label class="fl" data-en="Title" data-th="ชื่อ">Title</label><input class="fi" id="sec_p_title"></div>
+            <div class="fg"><label class="fl" data-en="Description" data-th="คำอธิบาย">Description</label><input class="fi" id="sec_p_desc"></div>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="form-section-title" data-en="👤 About Page" data-th="👤 หน้าเกี่ยวกับ">👤 About Page</div>
+          <div class="form-grid">
+            <div class="fg full"><label class="fl" data-en="Title" data-th="ชื่อ">Title</label><input class="fi" id="sec_ab_title"></div>
+            <div class="fg full"><label class="fl" data-en="Description" data-th="คำอธิบาย">Description</label><textarea class="fta" id="sec_ab_desc"></textarea></div>
+          </div>
+        </div>
+        <div class="save-bar"><button class="btn-gold" onclick="saveSections()" data-en="💾 Save Sections" data-th="💾 บันทึก">💾 Save Sections</button></div>
+      </div>
+
+      <!-- TRUST -->
+      <div class="panel" id="panel-content-trust">
+        <div class="panel-title" data-en="🏆 Trust Cards" data-th="🏆 การ์ดน่าเชื่อถือ">🏆 Trust Cards</div>
+        <div class="panel-sub" data-en="Highlight features shown on the About page." data-th="ฟีเจอร์ที่แสดงบนหน้าเกี่ยวกับ">Highlight features shown on the About page.</div>
+        <div class="form-card">
+          <div id="trustList"></div>
+          <button class="btn-add" onclick="addTrustCard()" data-en="➕ Add Trust Card" data-th="➕ เพิ่มการ์ด">➕ Add Trust Card</button>
+        </div>
+        <div class="save-bar"><button class="btn-gold" onclick="saveTrust()" data-en="💾 Save Trust Cards" data-th="💾 บันทึก">💾 Save Trust Cards</button></div>
+      </div>
+
+      <!-- CONTACT -->
+      <div class="panel" id="panel-content-contact">
+        <div class="panel-title" data-en="💬 Contact Buttons" data-th="💬 ปุ่มติดต่อ">💬 Contact Buttons</div>
+        <div class="form-card">
+          <div class="form-section-title" data-en="🔘 Floating Contact Buttons" data-th="🔘 ปุ่มติดต่อลอย">🔘 Floating Contact Buttons</div>
+          <div id="contactList"></div>
+          <button class="btn-add" onclick="addContactBtn()" data-en="➕ Add Contact Button" data-th="➕ เพิ่มปุ่มติดต่อ">➕ Add Contact Button</button>
+        </div>
+        <div class="form-card">
+          <div class="form-section-title" data-en="📞 Order Button (in product detail)" data-th="📞 ปุ่มสั่งซื้อ (ในรายละเอียดสินค้า)">📞 Order Button (in product detail)</div>
+          <div class="form-grid">
+            <div class="fg"><label class="fl" data-en="Button Text" data-th="ข้อความปุ่ม">Button Text</label><input class="fi" id="cbtn_text"></div>
+            <div class="fg"><label class="fl" data-en="Click Message" data-th="ข้อความเมื่อคลิก">Click Message</label><input class="fi" id="cbtn_msg"></div>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="form-section-title" data-en="🪬 Inquire Button (in casing detail)" data-th="🪬 ปุ่มสอบถาม (ในรายละเอียดกรอบ)">🪬 Inquire Button (in casing detail)</div>
+          <div class="form-grid">
+            <div class="fg"><label class="fl" data-en="Button Text" data-th="ข้อความปุ่ม">Button Text</label><input class="fi" id="cinq_text"></div>
+            <div class="fg"><label class="fl" data-en="Click Message" data-th="ข้อความเมื่อคลิก">Click Message</label><input class="fi" id="cinq_msg"></div>
+          </div>
+        </div>
+        <div class="save-bar"><button class="btn-gold" onclick="saveContact()" data-en="💾 Save Contact" data-th="💾 บันทึก">💾 Save Contact</button></div>
+      </div>
+
+      <!-- PAYMENT -->
+      <div class="panel" id="panel-content-payment">
+        <div class="panel-title" data-en="💳 Payment & Shipping" data-th="💳 ชำระเงิน & จัดส่ง">💳 Payment & Shipping</div>
+        <div class="panel-sub" data-en="Edit the customer-facing Payment page (PayNow UEN, shipping fees, order policy)." data-th="แก้ไขหน้าชำระเงินที่ลูกค้าเห็น (UEN, ค่าจัดส่ง, นโยบายสั่งซื้อ)">Edit the customer-facing Payment page.</div>
+        <div class="form-card">
+          <div class="form-grid">
+            <div class="fg full"><label class="fl" data-en="Page Title" data-th="ชื่อหน้า">Page Title</label><input class="fi" id="pay_title"></div>
+            <div class="fg"><label class="fl" data-en="PayNow Account Name" data-th="ชื่อบัญชี PayNow">PayNow Account Name</label><input class="fi" id="pay_paynowName"></div>
+            <div class="fg"><label class="fl" data-en="PayNow UEN" data-th="UEN">PayNow UEN</label><input class="fi" id="pay_paynowUEN"></div>
+            <div class="fg full"><label class="fl" data-en="Shipping Route" data-th="เส้นทางจัดส่ง">Shipping Route</label><input class="fi" id="pay_shipFromTo"></div>
+            <div class="fg full"><label class="fl" data-en="Shipping Fee Note" data-th="ค่าจัดส่ง">Shipping Fee Note</label><input class="fi" id="pay_shipFee"></div>
+            <div class="fg full"><label class="fl" data-en="Order Policy" data-th="นโยบายการสั่งซื้อ">Order Policy</label><textarea class="fta" id="pay_policy" style="min-height:120px"></textarea></div>
+            <div class="fg full">
+              <label class="fl" data-en="QR Code Image (optional)" data-th="รูป QR (ถ้ามี)">QR Code Image (optional)</label>
+              <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'pay_qr')">
+                <input type="file" accept="image/*" onchange="handleImgs(event,'pay_qr')">
+                <div class="u-icon">📷</div><div class="u-text" data-en="Click or drag image" data-th="คลิกหรือลากรูป">Click or drag image</div>
+              </div>
+              <div class="prev-grid" id="pay_qr_p"></div>
+            </div>
+          </div>
+        </div>
+        <div class="save-bar"><button class="btn-gold" onclick="savePayment()" data-en="💾 Save Payment" data-th="💾 บันทึก">💾 Save Payment</button></div>
+      </div>
+
+      <!-- FEATURED -->
+      <div class="panel" id="panel-content-featured">
+        <div class="panel-title" data-en="✨ Featured on Home" data-th="✨ แนะนำหน้าแรก">✨ Featured on Home</div>
+        <div class="panel-sub" data-en="Showcase highlighted pieces in a special section on the home page. Mark items as Featured in their detail page below." data-th="โชว์สินค้าแนะนำในส่วนพิเศษบนหน้าแรก เลือก ‘แสดง Featured’ ที่หน้าแก้ไขสินค้า">Showcase highlighted pieces on the home page.</div>
+        <div class="form-card">
+          <div class="form-grid">
+            <div class="fg full">
+              <label class="fl" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="feat_enabled" style="width:auto"> <span data-en="Enable Featured Section" data-th="เปิดส่วน Featured">Enable Featured Section</span></label>
+            </div>
+            <div class="fg full"><label class="fl" data-en="Section Title" data-th="ชื่อส่วน">Section Title</label><input class="fi" id="feat_title"></div>
+            <div class="fg full"><label class="fl" data-en="Subtitle" data-th="คำบรรยาย">Subtitle</label><input class="fi" id="feat_sub"></div>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="form-section-title" data-en="📌 Currently Featured" data-th="📌 รายการแนะนำตอนนี้">📌 Currently Featured</div>
+          <div class="form-section-desc" data-en="To add/remove: edit each amulet or accessory and toggle the 'Show as Featured' checkbox." data-th="เพิ่ม/ลบ: ไปแก้ไขสินค้าและติ๊ก ‘แสดง Featured’">To add/remove: edit each item and toggle the Featured checkbox.</div>
+          <div id="featList"></div>
+        </div>
+        <div class="save-bar"><button class="btn-gold" onclick="saveFeatured()" data-en="💾 Save Featured Section" data-th="💾 บันทึก">💾 Save Featured Section</button></div>
+      </div>
+
+      <!-- AMULETS -->
+      <div class="panel" id="panel-amulets">
+        <div class="panel-title" data-en="📿 Manage Amulets" data-th="📿 จัดการพระเครื่อง">📿 Manage Amulets</div>
+        <div class="form-card">
+          <div class="form-section-title" id="a_form_title" data-en="➕ Add New Amulet" data-th="➕ เพิ่มพระเครื่องใหม่">➕ Add New Amulet</div>
+          <div class="form-grid">
+            <div class="fg"><label class="fl" data-en="Name *" data-th="ชื่อ *">Name *</label><input class="fi" id="a_name"></div>
+            <div class="fg"><label class="fl" data-en="Price (SGD) *" data-th="ราคา (SGD) *">Price (SGD) *</label><input class="fi" id="a_price" type="number"></div>
+            <div class="fg"><label class="fl" data-en="Category" data-th="หมวดหมู่">Category</label><input class="fi" id="a_cat" list="a_cat_list" placeholder="e.g. Pong, Coin"><datalist id="a_cat_list"></datalist></div>
+            <div class="fg"><label class="fl" data-en="Badge" data-th="ป้ายกำกับ">Badge</label><input class="fi" id="a_badge"></div>
+            <div class="fg"><label class="fl" data-en="Temple / Origin" data-th="วัด / ที่มา">Temple / Origin</label><input class="fi" id="a_temple"></div>
+            <div class="fg"><label class="fl" data-en="Year" data-th="ปี">Year</label><input class="fi" id="a_year"></div>
+            <div class="fg"><label class="fl" data-en="Status" data-th="สถานะ">Status</label>
+              <select class="fsel" id="a_status">
+                <option value="available" data-en="✅ Available" data-th="✅ พร้อมจำหน่าย">✅ Available</option>
+                <option value="reserved" data-en="⏳ Reserved" data-th="⏳ จอง">⏳ Reserved</option>
+                <option value="sold" data-en="❌ Sold" data-th="❌ ขายแล้ว">❌ Sold</option>
+              </select>
+            </div>
+            <div class="fg" style="justify-content:flex-end">
+              <label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="a_hidePrice" style="width:auto"> <span data-en="Hide price (PM for price)" data-th="ซ่อนราคา (ทักแชท)">Hide price (PM for price)</span></label>
+              <label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:4px"><input type="checkbox" id="a_featured" style="width:auto"> <span data-en="✨ Show as Featured on Home" data-th="✨ แสดงในหน้าแรก">✨ Show as Featured on Home</span></label>
+            </div>
+            <div class="fg full"><label class="fl" data-en="Description" data-th="คำอธิบาย">Description</label><textarea class="fta" id="a_desc"></textarea></div>
+            <div class="fg full">
+              <label class="fl" data-en="Images" data-th="รูปภาพ">Images</label>
+              <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'a_imgs')">
+                <input type="file" multiple accept="image/*" onchange="handleImgs(event,'a_imgs')">
+                <div class="u-icon">📷</div><div class="u-text" data-en="Click or drag images" data-th="คลิกหรือลากรูปมาวาง">Click or drag images</div>
+              </div>
+              <div class="prev-grid" id="a_imgs_p"></div>
+            </div>
+          </div>
+          <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap">
+            <button class="btn-gold" id="a_save_btn" onclick="saveAmulet()" data-en="✅ Save Amulet" data-th="✅ บันทึก">✅ Save Amulet</button>
+            <button class="btn-ol" id="a_cancel_btn" onclick="cancelEditAmulet()" style="display:none" data-en="✕ Cancel Edit" data-th="✕ ยกเลิกการแก้ไข">✕ Cancel Edit</button>
+            <button class="btn-ol" onclick="cancelEditAmulet()" data-en="🔄 Clear" data-th="🔄 ล้าง">🔄 Clear</button>
+          </div>
+        </div>
+        <div class="sub-title" data-en="All Amulets" data-th="พระเครื่องทั้งหมด">All Amulets</div>
+        <div id="a_list"></div>
+      </div>
+
+      <!-- ACCESSORIES -->
+      <div class="panel" id="panel-accessories">
+        <div class="panel-title" data-en="⛓️ Manage Accessories" data-th="⛓️ จัดการอุปกรณ์เสริม">⛓️ Manage Accessories</div>
+        <div class="form-card">
+          <div class="form-section-title" id="ac_form_title" data-en="➕ Add New Accessory" data-th="➕ เพิ่มอุปกรณ์ใหม่">➕ Add New Accessory</div>
+          <div class="form-grid">
+            <div class="fg"><label class="fl" data-en="Name *" data-th="ชื่อ *">Name *</label><input class="fi" id="ac_name"></div>
+            <div class="fg"><label class="fl" data-en="Price (SGD) *" data-th="ราคา (SGD) *">Price (SGD) *</label><input class="fi" id="ac_price" type="number"></div>
+            <div class="fg"><label class="fl" data-en="Category" data-th="หมวดหมู่">Category</label><input class="fi" id="ac_cat" list="ac_cat_list" placeholder="Type or pick from list"><datalist id="ac_cat_list"></datalist></div>
+            <div class="fg"><label class="fl" data-en="Badge" data-th="ป้ายกำกับ">Badge</label><input class="fi" id="ac_badge"></div>
+            <div class="fg"><label class="fl" data-en="Status" data-th="สถานะ">Status</label>
+              <select class="fsel" id="ac_status">
+                <option value="available" data-en="✅ Available" data-th="✅ พร้อมจำหน่าย">✅ Available</option>
+                <option value="reserved" data-en="⏳ Reserved" data-th="⏳ จอง">⏳ Reserved</option>
+                <option value="sold" data-en="❌ Sold" data-th="❌ ขายแล้ว">❌ Sold</option>
+              </select>
+            </div>
+            <div class="fg" style="justify-content:flex-end">
+              <label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="ac_hidePrice" style="width:auto"> <span data-en="Hide price (PM for price)" data-th="ซ่อนราคา (ทักแชท)">Hide price (PM for price)</span></label>
+              <label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:4px"><input type="checkbox" id="ac_featured" style="width:auto"> <span data-en="✨ Show as Featured on Home" data-th="✨ แสดงในหน้าแรก">✨ Show as Featured on Home</span></label>
+            </div>
+            <div class="fg full"><label class="fl" data-en="Description" data-th="คำอธิบาย">Description</label><textarea class="fta" id="ac_desc"></textarea></div>
+            <div class="fg full">
+              <label class="fl" data-en="Images" data-th="รูปภาพ">Images</label>
+              <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'ac_imgs')">
+                <input type="file" multiple accept="image/*" onchange="handleImgs(event,'ac_imgs')">
+                <div class="u-icon">📷</div><div class="u-text" data-en="Click or drag images" data-th="คลิกหรือลากรูปมาวาง">Click or drag images</div>
+              </div>
+              <div class="prev-grid" id="ac_imgs_p"></div>
+            </div>
+          </div>
+          <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap">
+            <button class="btn-gold" id="ac_save_btn" onclick="saveAccess()" data-en="✅ Save" data-th="✅ บันทึก">✅ Save</button>
+            <button class="btn-ol" id="ac_cancel_btn" onclick="cancelEditAccess()" style="display:none" data-en="✕ Cancel Edit" data-th="✕ ยกเลิกการแก้ไข">✕ Cancel Edit</button>
+            <button class="btn-ol" onclick="cancelEditAccess()" data-en="🔄 Clear" data-th="🔄 ล้าง">🔄 Clear</button>
+          </div>
+        </div>
+        <div class="sub-title" data-en="All Accessories" data-th="อุปกรณ์ทั้งหมด">All Accessories</div>
+        <div id="ac_list"></div>
+      </div>
+
+      <!-- CASING -->
+      <div class="panel" id="panel-casing">
+        <div id="casingTypesView">
+          <div class="panel-title">
+            <span data-en="🪬 Casing Service — Types" data-th="🪬 บริการกรอบพระ — ประเภท">🪬 Casing Service — Types</span>
+            <button class="btn-gold" onclick="openTypeForm()" data-en="➕ Add New Casing Type" data-th="➕ เพิ่มประเภทใหม่">➕ Add New Casing Type</button>
+          </div>
+          <div class="panel-sub" data-en="Each Type has price + description. Inside, add Styles (just name + photos)." data-th="แต่ละประเภทมีราคา + คำอธิบาย ภายในเพิ่มแบบได้ (ชื่อ + รูปภาพ)">Each Type has price + description. Inside, add Styles (just name + photos).</div>
+          <div id="typesList"></div>
+        </div>
+        <div id="casingVariantsView" style="display:none">
+          <div class="a-crumb">
+            <a onclick="exitTypeView()" data-en="All Casing Types" data-th="ประเภททั้งหมด">All Casing Types</a>
+            <span class="sep">▸</span>
+            <span class="cur" id="vCrumbName"></span>
+          </div>
+          <div class="panel-title">
+            <span><span data-en="🪬 Styles in" data-th="🪬 แบบใน">🪬 Styles in</span> <em id="vTypeName" style="color:var(--gold-dark)"></em></span>
+            <div style="display:flex;gap:8px">
+              <button class="btn-ol" onclick="openTypeForm(curEditTypeId)" data-en="✏️ Edit Type" data-th="✏️ แก้ไขประเภท">✏️ Edit Type</button>
+              <button class="btn-gold" onclick="openVariantForm()" data-en="➕ Add New Style" data-th="➕ เพิ่มแบบใหม่">➕ Add New Style</button>
+            </div>
+          </div>
+          <div id="variantsList"></div>
+        </div>
+      </div>
+
+      <!-- PROJECTS -->
+      <div class="panel" id="panel-projects">
+        <div class="panel-title" data-en="🎯 Manage Projects" data-th="🎯 จัดการโปรเจกต์">🎯 Manage Projects</div>
+        <div class="form-card">
+          <div class="form-section-title" id="p_form_title" data-en="➕ Add New Project" data-th="➕ เพิ่มโปรเจกต์ใหม่">➕ Add New Project</div>
+          <div class="form-grid">
+            <div class="fg full"><label class="fl" data-en="Project Name *" data-th="ชื่อโปรเจกต์ *">Project Name *</label><input class="fi" id="p_name"></div>
+            <div class="fg">
+              <label class="fl" data-en="Status" data-th="สถานะ">Status</label>
+              <select class="fsel" id="p_status">
+                <option value="active" data-en="In Progress" data-th="กำลังดำเนินการ">In Progress</option>
+                <option value="done" data-en="Completed" data-th="เสร็จสิ้น">Completed</option>
+                <option value="soon" data-en="Coming Soon" data-th="เร็วๆ นี้">Coming Soon</option>
+                <option value="open" data-en="Open All Year" data-th="เปิดรับตลอด">Open All Year</option>
+              </select>
+            </div>
+            <div class="fg"><label class="fl" data-en="Year" data-th="ปี">Year</label><input class="fi" id="p_date"></div>
+            <div class="fg full"><label class="fl" data-en="Description" data-th="คำอธิบาย">Description</label><textarea class="fta" id="p_desc" style="min-height:120px"></textarea></div>
+            <div class="fg full">
+              <label class="fl" data-en="Images" data-th="รูปภาพ">Images</label>
+              <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'p_imgs')">
+                <input type="file" multiple accept="image/*" onchange="handleImgs(event,'p_imgs')">
+                <div class="u-icon">🎯</div><div class="u-text" data-en="Upload project images" data-th="อัปโหลดรูปโปรเจกต์">Upload project images</div>
+              </div>
+              <div class="prev-grid" id="p_imgs_p"></div>
+            </div>
+          </div>
+          <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap">
+            <button class="btn-gold" id="p_save_btn" onclick="saveProject()" data-en="✅ Save Project" data-th="✅ บันทึกโปรเจกต์">✅ Save Project</button>
+            <button class="btn-ol" id="p_cancel_btn" onclick="cancelEditProject()" style="display:none" data-en="✕ Cancel Edit" data-th="✕ ยกเลิกการแก้ไข">✕ Cancel Edit</button>
+          </div>
+        </div>
+        <div class="sub-title" data-en="All Projects" data-th="โปรเจกต์ทั้งหมด">All Projects</div>
+        <div id="p_list"></div>
+      </div>
+
+      <!-- REVIEWS -->
+      <div class="panel" id="panel-reviews">
+        <div class="panel-title" data-en="🙏 Manage Reviews" data-th="🙏 จัดการรีวิว">🙏 Manage Reviews</div>
+        <div class="panel-sub" data-en="Customer reviews/testimonials shown on the Reviews page." data-th="รีวิว/คำชมจากลูกค้าที่แสดงในหน้ารีวิว">Customer reviews shown on the Reviews page.</div>
+
+        <div class="form-card">
+          <div class="form-section-title" data-en="🏠 Show on Homepage" data-th="🏠 แสดงในหน้าแรก">🏠 Show on Homepage</div>
+          <div class="form-section-desc" data-en="Display a preview of customer reviews right after the hero on the home page — visitors see social proof immediately when scrolling down." data-th="แสดงตัวอย่างรีวิวลูกค้าทันทีหลัง Hero ในหน้าแรก — ลูกค้าจะเห็นความน่าเชื่อถือทันทีเมื่อเลื่อนลง">Display a preview of reviews on the home page right after the hero.</div>
+          <div class="form-grid">
+            <div class="fg full">
+              <label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                <input type="checkbox" id="rev_showOnHome" style="width:auto">
+                <span data-en="Show reviews preview on homepage" data-th="แสดงตัวอย่างรีวิวในหน้าแรก">Show reviews preview on homepage</span>
+              </label>
+            </div>
+            <div class="fg full"><label class="fl" data-en="Homepage Section Title" data-th="ชื่อหัวข้อในหน้าแรก">Homepage Section Title</label><input class="fi" id="rev_homeTitle" placeholder="What Our Customers Say"></div>
+            <div class="fg full"><label class="fl" data-en="Homepage Subtitle / Description" data-th="คำบรรยายในหน้าแรก">Homepage Subtitle / Description</label><textarea class="fta" id="rev_homeSub" style="min-height:60px" placeholder="Real words from real devotees and collectors..."></textarea></div>
+            <div class="fg">
+              <label class="fl" data-en="How Many to Show" data-th="แสดงกี่รีวิว">How Many to Show</label>
+              <select class="fsel" id="rev_homeCount">
+                <option value="2">2 reviews</option>
+                <option value="3" selected>3 reviews</option>
+                <option value="4">4 reviews</option>
+                <option value="6">6 reviews</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label class="fl" data-en="Which Reviews?" data-th="เลือกรีวิวยังไง">Which Reviews?</label>
+              <select class="fsel" id="rev_homeMode">
+                <option value="top" data-en="Highest rated first" data-th="คะแนนสูงสุดก่อน">Highest rated first</option>
+                <option value="latest" data-en="Most recent first" data-th="ล่าสุดก่อน">Most recent first</option>
+                <option value="random" data-en="Random pick" data-th="สุ่ม">Random pick</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="form-section-title" data-en="📄 Reviews Page Settings" data-th="📄 ตั้งค่าหน้า Reviews">📄 Reviews Page Settings</div>
+          <div class="form-grid" style="margin-bottom:14px">
+            <div class="fg full">
+              <label class="fl" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="rev_enabled" style="width:auto"> <span data-en="Enable Reviews page in menu" data-th="เปิดหน้า Reviews">Enable Reviews page in menu</span></label>
+            </div>
+            <div class="fg"><label class="fl" data-en="Page Title" data-th="ชื่อหน้า">Page Title</label><input class="fi" id="rev_title"></div>
+            <div class="fg"><label class="fl" data-en="Subtitle" data-th="คำบรรยาย">Subtitle</label><input class="fi" id="rev_sub"></div>
+          </div>
+          <div style="margin-top:8px"><button class="btn-gold" onclick="saveReviewsSection()" data-en="💾 Save All Reviews Settings" data-th="💾 บันทึกการตั้งค่าทั้งหมด">💾 Save All Reviews Settings</button></div>
+        </div>
+
+        <div class="form-card">
+          <div class="form-section-title" id="r_form_title" data-en="➕ Add New Review" data-th="➕ เพิ่มรีวิวใหม่">➕ Add New Review</div>
+          <div class="form-grid">
+            <div class="fg"><label class="fl" data-en="Reviewer Name *" data-th="ชื่อผู้รีวิว *">Reviewer Name *</label><input class="fi" id="r_name"></div>
+            <div class="fg"><label class="fl" data-en="Location" data-th="สถานที่">Location</label><input class="fi" id="r_loc" placeholder="e.g. Singapore"></div>
+            <div class="fg">
+              <label class="fl" data-en="Rating" data-th="คะแนน">Rating</label>
+              <select class="fsel" id="r_rating">
+                <option value="5">★★★★★ (5)</option>
+                <option value="4">★★★★ (4)</option>
+                <option value="3">★★★ (3)</option>
+                <option value="2">★★ (2)</option>
+                <option value="1">★ (1)</option>
+              </select>
+            </div>
+            <div class="fg"><label class="fl" data-en="Date / Year" data-th="วันที่ / ปี">Date / Year</label><input class="fi" id="r_date" placeholder="e.g. 2024"></div>
+            <div class="fg full"><label class="fl" data-en="Review Text (optional if you have photos)" data-th="ข้อความรีวิว (ไม่บังคับถ้ามีรูป)">Review Text (optional if you have photos)</label><textarea class="fta" id="r_text" style="min-height:120px" placeholder="..."></textarea></div>
+            <div class="fg full">
+              <label class="fl" data-en="📷 Photos — paste with Ctrl+V, or click/drag" data-th="📷 รูปภาพ — วางด้วย Ctrl+V หรือคลิก/ลาก">📷 Photos — paste with Ctrl+V, or click/drag</label>
+              <div class="upload-zone" id="r_imgs_zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'r_imgs')">
+                <input type="file" multiple accept="image/*" onchange="handleImgs(event,'r_imgs')">
+                <div class="u-icon">📷</div>
+                <div class="u-text" data-en="Click, drag, or paste screenshots (Ctrl+V)" data-th="คลิก ลาก หรือวางรูปแคป (Ctrl+V)">Click, drag, or paste screenshots (Ctrl+V)</div>
+              </div>
+              <div class="prev-grid" id="r_imgs_p"></div>
+            </div>
+          </div>
+          <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap">
+            <button class="btn-gold" id="r_save_btn" onclick="saveReview()" data-en="✅ Save Review" data-th="✅ บันทึกรีวิว">✅ Save Review</button>
+            <button class="btn-ol" id="r_cancel_btn" onclick="cancelEditReview()" style="display:none" data-en="✕ Cancel Edit" data-th="✕ ยกเลิกการแก้ไข">✕ Cancel Edit</button>
+            <button class="btn-ol" onclick="cancelEditReview()" data-en="🔄 Clear" data-th="🔄 ล้าง">🔄 Clear</button>
+          </div>
+        </div>
+        <div class="sub-title" data-en="All Reviews" data-th="รีวิวทั้งหมด">All Reviews</div>
+        <div id="r_list"></div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="panel" id="panel-settings">
+        <div class="panel-title" data-en="⚙️ Settings" data-th="⚙️ ตั้งค่า">⚙️ Settings</div>
+        <div class="form-card">
+          <div class="form-section-title" data-en="🔐 Change Password" data-th="🔐 เปลี่ยนรหัสผ่าน">🔐 Change Password</div>
+          <div class="form-grid">
+            <div class="fg"><label class="fl" data-en="Current" data-th="รหัสปัจจุบัน">Current</label><input class="fi" id="pw_old" type="password"></div>
+            <div class="fg"></div>
+            <div class="fg"><label class="fl" data-en="New (min 6 chars)" data-th="รหัสใหม่ (อย่างน้อย 6 ตัว)">New (min 6 chars)</label><input class="fi" id="pw_new" type="password"></div>
+            <div class="fg"><label class="fl" data-en="Confirm New" data-th="ยืนยันรหัสใหม่">Confirm New</label><input class="fi" id="pw_cf" type="password"></div>
+          </div>
+          <div style="margin-top:20px"><button class="btn-gold" onclick="changePw()" data-en="🔒 Change Password" data-th="🔒 เปลี่ยนรหัสผ่าน">🔒 Change Password</button></div>
+        </div>
+        <div class="form-card">
+          <div class="form-section-title" data-en="🗄️ Data Management" data-th="🗄️ จัดการข้อมูล">🗄️ Data Management</div>
+          <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap">
+            <button class="btn-gold" onclick="exportDB()" data-en="📤 Export Data" data-th="📤 ส่งออกข้อมูล">📤 Export Data</button>
+            <button class="btn-ol" onclick="document.getElementById('importFile').click()" data-en="📥 Import Data" data-th="📥 นำเข้าข้อมูล">📥 Import Data</button>
+            <input type="file" id="importFile" accept=".json" style="display:none" onchange="importDB(event)">
+          </div>
+          <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+            <button class="btn-del" onclick="confirmReset()" data-en="⚠️ Reset All Data" data-th="⚠️ รีเซ็ตข้อมูลทั้งหมด">⚠️ Reset All Data</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- TYPE MODAL -->
+<div class="modal-overlay" id="typeModal" onclick="if(event.target===this)closeModal('typeModal')">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="typeModalTitle" data-en="Add Casing Type" data-th="เพิ่มประเภทกรอบ">Add Casing Type</div>
+      <button class="modal-close" onclick="closeModal('typeModal')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="fg"><label class="fl" data-en="Type Name *" data-th="ชื่อประเภท *">Type Name *</label><input class="fi" id="ft_name"></div>
+      <div class="fg"><label class="fl" data-en="Price Range (SGD)" data-th="ช่วงราคา (SGD)">Price Range (SGD)</label><input class="fi" id="ft_price" placeholder="e.g. 15-25 or starts from 15"></div>
+      <div class="fg full"><label class="fl" data-en="Description" data-th="คำอธิบาย">Description</label><textarea class="fta" id="ft_desc"></textarea></div>
+      <div class="fg full">
+        <label class="fl" data-en="Banner Image" data-th="รูปแบนเนอร์">Banner Image</label>
+        <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'ft_banner',true)">
+          <input type="file" accept="image/*" onchange="handleSingleImg(event,'ft_banner')">
+          <div class="u-icon">🖼️</div><div class="u-text" data-en="Click or drag a banner image" data-th="คลิกหรือลากรูปแบนเนอร์มาวาง">Click or drag a banner image</div>
+        </div>
+        <div class="prev-grid" id="ft_banner_p"></div>
+      </div>
+    </div>
+    <div style="margin-top:22px;display:flex;gap:12px">
+      <button class="btn-gold" onclick="saveType()" data-en="✅ Save Type" data-th="✅ บันทึกประเภท">✅ Save Type</button>
+      <button class="btn-ol" onclick="closeModal('typeModal')" data-en="Cancel" data-th="ยกเลิก">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- VARIANT MODAL -->
+<div class="modal-overlay" id="variantModal" onclick="if(event.target===this)closeModal('variantModal')">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="variantModalTitle" data-en="Add Style" data-th="เพิ่มแบบ">Add Style</div>
+      <button class="modal-close" onclick="closeModal('variantModal')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="fg"><label class="fl" data-en="Style Name *" data-th="ชื่อแบบ *">Style Name *</label><input class="fi" id="fv_name"></div>
+      <div class="fg"><label class="fl" data-en="Price (SGD) *" data-th="ราคา (SGD) *">Price (SGD) *</label><input class="fi" id="fv_price" type="number"></div>
+      <div class="fg full">
+        <label class="fl" data-en="Sample Images — upload as many as you like" data-th="รูปตัวอย่าง — อัปโหลดได้ไม่จำกัด">Sample Images — upload as many as you like</label>
+        <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'fv_imgs')">
+          <input type="file" multiple accept="image/*" onchange="handleImgs(event,'fv_imgs')">
+          <div class="u-icon">📷</div><div class="u-text" data-en="Click or drag images here" data-th="คลิกหรือลากรูปมาวางที่นี่">Click or drag images here</div>
+        </div>
+        <div class="prev-grid" id="fv_imgs_p"></div>
+      </div>
+    </div>
+    <div style="margin-top:22px;display:flex;gap:12px">
+      <button class="btn-gold" onclick="saveVariant()" data-en="✅ Save Style" data-th="✅ บันทึกแบบ">✅ Save Style</button>
+      <button class="btn-ol" onclick="closeModal('variantModal')" data-en="Cancel" data-th="ยกเลิก">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE MODAL -->
+<div class="modal-overlay" id="pageModal" onclick="if(event.target===this)closeModal('pageModal')">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="pageModalTitle" data-en="Add Custom Page" data-th="เพิ่มหน้าใหม่">Add Custom Page</div>
+      <button class="modal-close" onclick="closeModal('pageModal')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="fg"><label class="fl" data-en="Menu Label *" data-th="ป้ายเมนู *">Menu Label *</label><input class="fi" id="cp_label"></div>
+      <div class="fg"><label class="fl" data-en="Page ID" data-th="ID หน้า">Page ID</label><input class="fi" id="cp_id" disabled style="background:#f0e8d0"></div>
+      <div class="fg full"><label class="fl" data-en="Page Title" data-th="ชื่อหน้า">Page Title</label><input class="fi" id="cp_title"></div>
+      <div class="fg full"><label class="fl" data-en="Subtitle / Description" data-th="คำโปรย / คำอธิบาย">Subtitle / Description</label><input class="fi" id="cp_desc"></div>
+      <div class="fg full"><label class="fl" data-en="Page Content (HTML allowed)" data-th="เนื้อหาหน้า (รองรับ HTML)">Page Content (HTML allowed)</label><textarea class="fta" id="cp_content" style="min-height:180px"></textarea></div>
+    </div>
+    <div style="margin-top:22px;display:flex;gap:12px">
+      <button class="btn-gold" onclick="saveCustomPage()" data-en="✅ Save Page" data-th="✅ บันทึกหน้า">✅ Save Page</button>
+      <button class="btn-ol" onclick="closeModal('pageModal')" data-en="Cancel" data-th="ยกเลิก">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ───── LIVE EDITOR (split-screen WYSIWYG) ───── -->
+<div id="liveEditor">
+  <div class="le-top">
+    <div class="le-title">
+      <span>✨</span>
+      <span data-en="Live Editor" data-th="แก้แบบสด">Live Editor</span>
+      <span class="le-title-badge">BETA</span>
+    </div>
+    <div class="le-actions">
+      <div class="le-hint" id="leHint">
+        <span class="dot"></span>
+        <span data-en="Click anything on the left to edit it" data-th="คลิกอะไรในเว็บฝั่งซ้ายเพื่อแก้ไข">Click anything on the left to edit it</span>
+      </div>
+      <button class="le-reload" onclick="reloadLivePreview()" data-en="🔄 Refresh" data-th="🔄 รีเฟรช">🔄 Refresh</button>
+      <button class="le-close" onclick="closeLiveEditor()" data-en="✕ Close" data-th="✕ ปิด">✕ Close</button>
+    </div>
+  </div>
+  <div class="le-body">
+    <div class="le-preview">
+      <iframe id="liveIframe" class="le-iframe" src="about:blank"></iframe>
+    </div>
+    <div class="le-panel" id="leSidePanel">
+      <div class="le-panel-empty" id="leEmpty">
+        <div class="le-panel-empty-icon">👈</div>
+        <div class="le-panel-empty-title" data-en="Click any element on the left" data-th="คลิกองค์ประกอบใดๆ ทางซ้าย">Click any element on the left</div>
+        <div class="le-panel-empty-text" data-en="Hover over text, images, buttons, or cards in the preview. The matching editor form will open here." data-th="ชี้เมาส์ไปที่ข้อความ รูป ปุ่ม หรือการ์ดในตัวอย่าง ฟอร์มแก้ไขที่ตรงกันจะเปิดที่นี่">Hover over text, images, buttons, or cards in the preview. The matching editor form will open here.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+const DB_KEY='yyy_db';
+const AUTH_KEY='yyy_auth';
+const LANG_KEY='yyy_admin_lang';
+
+// ── I18N ──
+let lang=localStorage.getItem(LANG_KEY)||'en';
+
+const TR = {
+  // Toast / confirm messages
+  saved:{en:'✅ Saved',th:'✅ บันทึกแล้ว'},
+  brandingSaved:{en:'✅ Branding saved',th:'✅ บันทึกแบรนด์แล้ว'},
+  menuSaved:{en:'✅ Menu saved',th:'✅ บันทึกเมนูแล้ว'},
+  heroSaved:{en:'✅ Hero saved',th:'✅ บันทึก Hero แล้ว'},
+  serviceSaved:{en:'✅ Service cards saved',th:'✅ บันทึกการ์ดบริการแล้ว'},
+  sectionsSaved:{en:'✅ Sections saved',th:'✅ บันทึกหัวข้อแล้ว'},
+  trustSaved:{en:'✅ Trust cards saved',th:'✅ บันทึกการ์ดแล้ว'},
+  contactSaved:{en:'✅ Contact saved',th:'✅ บันทึกการติดต่อแล้ว'},
+  pageSaved:{en:'✅ Page saved',th:'✅ บันทึกหน้าแล้ว'},
+  pwChanged:{en:'✅ Password changed',th:'✅ เปลี่ยนรหัสผ่านแล้ว'},
+  deleted:{en:'🗑️ Deleted',th:'🗑️ ลบแล้ว'},
+  reset:{en:'🔄 Reset',th:'🔄 รีเซ็ตแล้ว'},
+  exported:{en:'📤 Exported',th:'📤 ส่งออกแล้ว'},
+  imported:{en:'📥 Imported!',th:'📥 นำเข้าแล้ว!'},
+  needNamePrice:{en:'⚠️ Name and price required',th:'⚠️ ต้องกรอกชื่อและราคา'},
+  needName:{en:'⚠️ Name required',th:'⚠️ ต้องกรอกชื่อ'},
+  needLabel:{en:'⚠️ Menu Label required',th:'⚠️ ต้องกรอกป้ายเมนู'},
+  pwShort:{en:'⚠️ Min 6 characters',th:'⚠️ อย่างน้อย 6 ตัวอักษร'},
+  pwMismatch:{en:'⚠️ Passwords do not match',th:'⚠️ รหัสผ่านไม่ตรงกัน'},
+  pwWrong:{en:'❌ Current password incorrect',th:'❌ รหัสผ่านปัจจุบันไม่ถูกต้อง'},
+  invalidFile:{en:'❌ Invalid file',th:'❌ ไฟล์ไม่ถูกต้อง'},
+  cantRead:{en:'❌ Could not read',th:'❌ อ่านไฟล์ไม่ได้'},
+  builtinNoDelete:{en:'❌ Built-in pages cannot be deleted',th:'❌ หน้าเริ่มต้นลบไม่ได้'},
+  // Confirms
+  confirmDelete:{en:'Delete this item?',th:'ลบรายการนี้?'},
+  confirmDeleteNav:{en:'Delete this menu item and its custom page?',th:'ลบเมนูและหน้านี้?'},
+  confirmDeletePage:{en:'Delete this page?',th:'ลบหน้านี้?'},
+  confirmDeleteType:{en:'Delete this casing type and all its styles?',th:'ลบประเภทและแบบทั้งหมด?'},
+  confirmDeleteStyle:{en:'Delete this style?',th:'ลบแบบนี้?'},
+  confirmReset:{en:'⚠️ Reset ALL data?',th:'⚠️ รีเซ็ตข้อมูลทั้งหมด?'},
+  // Inline UI
+  show:{en:'Show',th:'แสดง'},
+  enabled:{en:'Enabled',th:'ใช้งาน'},
+  builtin:{en:'built-in',th:'เริ่มต้น'},
+  custom:{en:'custom',th:'กำหนดเอง'},
+  pageId:{en:'Page ID',th:'ID หน้า'},
+  menuLabel:{en:'Menu Label',th:'ป้ายเมนู'},
+  noItems:{en:'No items yet.',th:'ยังไม่มีรายการ'},
+  noTypes:{en:'No casing types yet.',th:'ยังไม่มีประเภทกรอบ'},
+  noStyles:{en:'No styles yet.',th:'ยังไม่มีแบบ'},
+  noCustom:{en:'No custom pages yet.',th:'ยังไม่มีหน้าที่กำหนดเอง'},
+  styles:{en:'style(s)',th:'แบบ'},
+  noPriceSet:{en:'no price set',th:'ยังไม่ได้ตั้งราคา'},
+  manageStyles:{en:'📂 Manage Styles',th:'📂 จัดการแบบ'},
+  edit:{en:'✏️ Edit',th:'✏️ แก้ไข'},
+  del:{en:'🗑 Delete',th:'🗑 ลบ'},
+  image:{en:'Image',th:'รูป'},
+  name:{en:'Name',th:'ชื่อ'},
+  category:{en:'Category',th:'หมวดหมู่'},
+  price:{en:'Price',th:'ราคา'},
+  status:{en:'Status',th:'สถานะ'},
+  year:{en:'Year',th:'ปี'},
+  action:{en:'Action',th:'การจัดการ'},
+  actions:{en:'Actions',th:'การจัดการ'},
+  photos:{en:'Photos',th:'รูปภาพ'},
+  images:{en:'image(s)',th:'รูป'},
+  // Hero/services
+  buttonText:{en:'Button Text',th:'ข้อความปุ่ม'},
+  linksTo:{en:'Links to',th:'ลิงก์ไปยัง'},
+  styleType:{en:'Style',th:'สไตล์'},
+  goldFilled:{en:'Gold (filled)',th:'ทอง (เต็ม)'},
+  outline:{en:'Outline',th:'เส้นขอบ'},
+  label:{en:'Label',th:'ป้าย'},
+  source:{en:'Source',th:'แหล่ง'},
+  customValue:{en:'Custom Value',th:'ค่ากำหนดเอง'},
+  srcAmulets:{en:'Auto: Amulets count',th:'อัตโนมัติ: จำนวนพระเครื่อง'},
+  srcAcc:{en:'Auto: Accessories count',th:'อัตโนมัติ: จำนวนอุปกรณ์'},
+  srcProj:{en:'Auto: Projects count',th:'อัตโนมัติ: จำนวนโปรเจกต์'},
+  srcCustom:{en:'Custom value',th:'ค่ากำหนดเอง'},
+  icon:{en:'Icon',th:'ไอคอน'},
+  title:{en:'Title',th:'ชื่อ'},
+  desc:{en:'Description',th:'คำอธิบาย'},
+  color:{en:'Color',th:'สี'},
+  clickMessage:{en:'Click Message',th:'ข้อความเมื่อคลิก'},
+  // ── NEW translations ──
+  contactUrl:{en:'Link URL (wa.me, m.me, line.me…)',th:'ลิงก์ (wa.me, m.me, line.me…)'},
+  contactUrlHint:{en:'Optional. If empty, button shows toast message instead.',th:'ไม่บังคับ ถ้าเว้นว่างจะแสดงข้อความ toast แทน'},
+  paymentSaved:{en:'✅ Payment info saved',th:'✅ บันทึกข้อมูลชำระเงินแล้ว'},
+  featuredSaved:{en:'✅ Featured saved',th:'✅ บันทึกรายการแนะนำแล้ว'},
+  reviewSaved:{en:'✅ Review saved',th:'✅ บันทึกรีวิวแล้ว'},
+  reviewDeleted:{en:'🗑️ Review deleted',th:'🗑️ ลบรีวิวแล้ว'},
+  itemStatus:{en:'Status',th:'สถานะ'},
+  available:{en:'✅ Available',th:'✅ พร้อมจำหน่าย'},
+  reserved:{en:'⏳ Reserved',th:'⏳ จอง'},
+  sold:{en:'❌ Sold',th:'❌ ขายแล้ว'},
+  hidePrice:{en:'Hide price (show "PM for price")',th:'ซ่อนราคา (แสดง "ทักแชท")'},
+  featured:{en:'Show as Featured on Home',th:'แสดงในหน้าแรก (Featured)'},
+  rating:{en:'Rating',th:'คะแนน'},
+  reviewerName:{en:'Reviewer Name',th:'ชื่อผู้รีวิว'},
+  reviewerLocation:{en:'Location (e.g. Singapore)',th:'ที่อยู่ (เช่น Singapore)'},
+  reviewText:{en:'Review Text',th:'ข้อความรีวิว'},
+  reviewDate:{en:'Date / Year',th:'วันที่ / ปี'},
+  noReviews:{en:'No reviews yet.',th:'ยังไม่มีรีวิว'},
+};
+function tr(k){return (TR[k]&&TR[k][lang])||(TR[k]&&TR[k].en)||k;}
+
+function applyLang(){
+  document.body.classList.toggle('th',lang==='th');
+  document.querySelectorAll('.lb').forEach(b=>{
+    b.classList.remove('active');
+    if(b.getAttribute('onclick')&&b.getAttribute('onclick').indexOf("'"+lang+"'")>=0)b.classList.add('active');
+  });
+  // text content
+  document.querySelectorAll('[data-en]').forEach(el=>{
+    const txt=el.getAttribute('data-'+lang);
+    if(txt!=null)el.textContent=txt;
+  });
+  // html content
+  document.querySelectorAll('[data-en-html]').forEach(el=>{
+    const h=el.getAttribute('data-'+lang+'-html');
+    if(h!=null)el.innerHTML=h;
+  });
+}
+
+function setLang(l){
+  lang=l;
+  localStorage.setItem(LANG_KEY,l);
+  applyLang();
+  // refresh dynamic content if visible
+  refreshDynamic();
+}
+
+function refreshDynamic(){
+  const active=document.querySelector('.panel.active');if(!active)return;
+  if(active.id==='panel-amulets')loadList('amulets');
+  else if(active.id==='panel-accessories')loadList('accessories');
+  else if(active.id==='panel-projects')loadList('projects');
+  else if(active.id==='panel-casing'){
+    if(curEditTypeId)loadVariants();else loadCasingTypes();
+  }
+  else if(active.id==='panel-content-nav'){loadNav();loadCustomPagesList();}
+  else if(active.id==='panel-content-hero'){
+    const h=getDB().settings.hero;
+    renderHeroBtns(h.buttons||[]);renderHeroStats(h.stats||[]);
+  }
+  else if(active.id==='panel-content-services'){renderSvcList(getDB().settings.homeServices.cards||[]);}
+  else if(active.id==='panel-content-trust'){renderTrustList(getDB().settings.trustCards||[]);}
+  else if(active.id==='panel-content-contact'){renderContactList(getDB().settings.contacts||[]);}
+  else if(active.id==='panel-content-payment'){loadPayment();}
+  else if(active.id==='panel-content-featured'){loadFeatured();}
+  else if(active.id==='panel-reviews'){loadReviewsPanel();}
+}
+
+// Wrap confirm to use translated text
+const _confirm=window.confirm.bind(window);
+function tConfirm(key){return _confirm(tr(key));}
+
+// ── DEFAULTS ──
+function defaultSettings(){
+  return {
+    pageTitle:'Yingyingying Amulet | Authentic Thai Amulets',
+    logoIcon:'📿',logoText:'Yingyingying Amulet',logoSub:'AUTHENTIC THAI AMULETS',
+    topbar:'📿 Yingyingying Amulet — Authentic Thai Amulets · Certified Genuine · Worldwide Shipping 📿',
+    nav:[
+      {id:'home',label:'Home',visible:true,enabled:true,builtin:true},
+      {id:'amulets',label:'Amulets',visible:true,enabled:true,builtin:true},
+      {id:'accessories',label:'Accessories',visible:true,enabled:true,builtin:true},
+      {id:'casing',label:'Casing Service',visible:true,enabled:true,builtin:true},
+      {id:'projects',label:'Projects',visible:true,enabled:true,builtin:true},
+      {id:'about',label:'About Us',visible:true,enabled:true,builtin:true},
+      {id:'reviews',label:'Reviews',visible:true,enabled:true,builtin:true},
+      {id:'payment',label:'Payment',visible:true,enabled:true,builtin:true},
+    ],
+    customPages:[],
+    hero:{
+      bgImage:'',
+      phra3dGlb:'',
+      phra3dFront:'',
+      phra3dBack:'',
+      eyebrow:'✦ CERTIFIED GENUINE · EVERY PIECE ✦',
+      titleHighlight:'Yingyingying',titleRest:'Amulet',
+      sub:'Authentic Thai Amulets · Curated with Expertise',
+      desc:'Specialists in authentic Thai amulets, meticulously selected and verified.<br>Every piece guaranteed genuine — with professional casing service available.',
+      buttons:[
+        {label:'📿 Browse Amulets',target:'amulets',style:'gold'},
+        {label:'🪬 Casing Service',target:'casing',style:'outline'},
+      ],
+      stats:[
+        {label:'Amulets',source:'amulets'},
+        {label:'Accessories',source:'accessories'},
+        {label:'Projects',source:'projects'},
+        {label:'Guaranteed',value:'100%'},
+      ]
+    },
+    homeServices:{title:'Our Products & Services',cards:[
+      {icon:'📿',title:'Amulets',desc:'Sacred amulets in all categories',target:'amulets'},
+      {icon:'⛓️',title:'Accessories',desc:'Chains, pendants, cases & more',target:'accessories'},
+      {icon:'🪬',title:'Casing Service',desc:'Premium casings in many styles',target:'casing'},
+      {icon:'🎯',title:'Special Projects',desc:'Commissioned & exclusive',target:'projects'},
+    ]},
+    sections:{
+      amulets:{title:'📿 Amulets',desc:'Authentic amulets, hand-selected and verified.'},
+      accessories:{title:'⛓️ Accessories',desc:'Chains, pendants, cases and complete accessories.'},
+      casing:{title:'🪬 Casing Service',desc:'Premium amulet casings in various styles.'},
+      projects:{title:'🎯 Projects',desc:'Special commissioned projects and exclusive collections.'},
+      about:{title:'About Yingyingying Amulet',desc:'We are a specialist amulet shop dedicated to authenticity and quality.'},
+    },
+    trustCards:[
+      {icon:'🏆',title:'Certified Authentic',desc:'Every amulet verified by specialists'},
+      {icon:'✅',title:'100% Guaranteed',desc:'Full authenticity guarantee'},
+      {icon:'🪬',title:'Casing Service',desc:'High-quality casings, custom made'},
+      {icon:'🚚',title:'Worldwide Shipping',desc:'Careful packaging, fast delivery'},
+      {icon:'💬',title:'Free Consultation',desc:'Expert advice at no charge'},
+      {icon:'📱',title:'Multi-Channel',desc:'Facebook, Line & Instagram'},
+    ],
+    contacts:[
+      {label:'📘 Facebook',color:'#1877f2',url:'https://m.me/yingyingyingsg',message:'Contact us on Facebook Messenger'},
+      {label:'💬 Line',color:'#06c755',url:'https://line.me/ti/p/~yingyingyingsg',message:'Contact us on Line'},
+      {label:'📱 WhatsApp',color:'#25d366',url:'https://wa.me/6500000000',message:'Contact us on WhatsApp'},
+    ],
+    contactBtnText:'📞 Contact to Order',
+    contactBtnMessage:'📞 Contact us to order or for more information',
+    casingInquiryText:'📞 Inquire About Service',
+    casingInquiryMessage:'📞 Contact us to inquire about casing service',
+    payment:{
+      enabled:true,
+      title:'💳 Payment & Shipping',
+      paynowName:'YINGYINGYINGSG PTE. LTD.',
+      paynowUEN:'202433708R',
+      shipFromTo:'📍 Amulets in Thailand 🇹🇭 → Shipping to Singapore 🇸🇬',
+      shipFee:'Add S$6 for mailing',
+      policy:'✅ Please make payment to confirm your order.\n⏳ Items reserved after payment only.\n🚫 Once confirmed, orders are final.\n🙏 Thank you for your understanding.',
+      qrImage:'',
+    },
+    featured:{enabled:true,title:'✨ Featured Pieces',sub:'Hand-picked highlights from our collection',ids:[]},
+    reviews:{
+      enabled:true,
+      title:'🙏 What Our Customers Say',
+      sub:'Real words from real devotees & collectors',
+      showOnHome:true,
+      homeTitle:'What Our Customers Say',
+      homeSub:'Real words from real devotees and collectors who trust us with their amulets.',
+      homeCount:3,
+      homeMode:'top'
+    },
+    searchPlaceholder:'Search by name, temple, year, category…',
+    contactPmText:'PM for price',
+    displayFont:'Noto Serif',
+    homeOrder:[
+      {id:'reviews',  enabled:true, label:'Reviews preview'},
+      {id:'featured', enabled:true, label:'Featured items'},
+      {id:'services', enabled:true, label:'Service cards'},
+    ],
+  };
+}
+
+function getAuth(){
+  // Legacy stub — Firebase Auth handles credentials now.
+  // Kept so old code that references this doesn't crash.
+  return {user: (FB.currentUser() && FB.currentUser().email) || 'admin', pass: ''};
+}
+
+async function doLogin(){
+  const u = document.getElementById('lu').value.trim();
+  const p = document.getElementById('lp').value;
+  const err = document.getElementById('loginErr');
+  if(!u || !p){
+    err.textContent = 'Email and password are required';
+    err.style.display = 'block';
+    setTimeout(() => err.style.display = 'none', 3000);
+    return;
+  }
+  try {
+    await FB.signIn(u, p);
+    // onAuthChange listener (below) will handle the UI transition
+  } catch(e){
+    console.error('login error:', e);
+    err.textContent = (lang === 'th' ? 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' : 'Wrong email or password');
+    err.style.display = 'block';
+    document.getElementById('lp').value = '';
+    setTimeout(() => err.style.display = 'none', 3000);
+  }
+}
+
+async function doLogout(){
+  try { await FB.signOut(); } catch(e){ console.error(e); }
+  document.getElementById('adminScreen').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('lu').value='';document.getElementById('lp').value='';
+}
+
+async function changePw(){
+  // Firebase Auth password change requires re-authentication for security.
+  // For now we show a message directing users to Firebase console or use
+  // the "forgot password" email flow. (Full in-place change can be added later.)
+  showToast(lang === 'th'
+    ? 'การเปลี่ยนรหัสผ่านทำผ่าน Firebase Console หรืออีเมล "ลืมรหัสผ่าน"'
+    : 'Password change is done via Firebase Console or "forgot password" email');
+}
+
+// Migration helper — applies all the legacy migrations to a DB object.
+// Used by getDB() to keep old data working after the move to Firestore.
+function applyDbMigrations(d){
+  if(!d) return null;
+  if(d.frameTypes && !d.casingTypes){d.casingTypes=d.frameTypes;delete d.frameTypes;}
+  if(!d.casingTypes)d.casingTypes=[];
+  if(!d.settings)d.settings=defaultSettings();
+  if(!d.settings.customPages)d.settings.customPages=[];
+  if(d.settings.hero && d.settings.hero.bgImage===undefined)d.settings.hero.bgImage='';
+  if(d.settings.hero && d.settings.hero.phra3dGlb===undefined)d.settings.hero.phra3dGlb='';
+  if(d.settings.hero && d.settings.hero.phra3dFront===undefined)d.settings.hero.phra3dFront='';
+  if(d.settings.hero && d.settings.hero.phra3dBack===undefined)d.settings.hero.phra3dBack='';
+  if(d.settings.nav){
+    const hasFrames=d.settings.nav.find(n=>n.id==='frames');
+    if(hasFrames){hasFrames.id='casing';if(hasFrames.label==='Frame Service')hasFrames.label='Casing Service';}
+  }
+  const def=defaultSettings();
+  if(!d.settings.payment)d.settings.payment=def.payment;
+  if(!d.settings.featured)d.settings.featured=def.featured;
+  if(!d.settings.reviews)d.settings.reviews=def.reviews;
+  if(d.settings.searchPlaceholder===undefined)d.settings.searchPlaceholder=def.searchPlaceholder;
+  if(d.settings.contactPmText===undefined)d.settings.contactPmText=def.contactPmText;
+  if(d.settings.displayFont===undefined)d.settings.displayFont=def.displayFont;
+  if(!Array.isArray(d.settings.homeOrder)){
+    d.settings.homeOrder = def.homeOrder.slice();
+  } else {
+    def.homeOrder.forEach(s => {
+      if(!d.settings.homeOrder.some(x => x && x.id === s.id)){
+        d.settings.homeOrder.push({...s});
+      }
+    });
+    const knownIds = def.homeOrder.map(s => s.id);
+    d.settings.homeOrder = d.settings.homeOrder.filter(x => x && knownIds.includes(x.id));
+  }
+  if(d.settings.reviews){
+    if(d.settings.reviews.showOnHome===undefined)d.settings.reviews.showOnHome=true;
+    if(d.settings.reviews.homeTitle===undefined)d.settings.reviews.homeTitle=def.reviews.homeTitle;
+    if(d.settings.reviews.homeSub===undefined)d.settings.reviews.homeSub=def.reviews.homeSub;
+    if(d.settings.reviews.homeCount===undefined)d.settings.reviews.homeCount=3;
+    if(d.settings.reviews.homeMode===undefined)d.settings.reviews.homeMode='top';
+  }
+  if(d.settings.contacts){d.settings.contacts.forEach(c=>{if(c.url===undefined)c.url='';});}
+  if(d.settings.nav && Array.isArray(d.settings.nav)){
+    if(!d.settings.nav.find(n=>n.id==='reviews')){
+      const aboutIdx=d.settings.nav.findIndex(n=>n.id==='about');
+      const insertAt=aboutIdx>=0?aboutIdx+1:d.settings.nav.length;
+      d.settings.nav.splice(insertAt,0,{id:'reviews',label:'Reviews',visible:true,enabled:true,builtin:true});
+    }
+    if(!d.settings.nav.find(n=>n.id==='payment')){
+      const revIdx=d.settings.nav.findIndex(n=>n.id==='reviews');
+      const insertAt=revIdx>=0?revIdx+1:d.settings.nav.length;
+      d.settings.nav.splice(insertAt,0,{id:'payment',label:'Payment',visible:true,enabled:true,builtin:true});
+    }
+  }
+  ['amulets','accessories'].forEach(k=>{
+    if(d[k])d[k].forEach(it=>{if(!it.status)it.status='available';if(it.hidePrice===undefined)it.hidePrice=false;if(!it.featured)it.featured=false;});
+  });
+  if(!d.reviews)d.reviews=[];
+  if(!d.amulets)d.amulets=[];
+  if(!d.accessories)d.accessories=[];
+  if(!d.projects)d.projects=[];
+  return d;
+}
+
+// Synchronous read from in-memory cache. Firestore's onSnapshot keeps this
+// up to date. If no data has been loaded yet (first launch), returns the
+// default empty DB.
+function getDB(){
+  let d = FB.getDB();
+  if(!d || !Object.keys(d).length){
+    return {settings:defaultSettings(),amulets:[],accessories:[],casingTypes:[],projects:[],reviews:[]};
+  }
+  return applyDbMigrations(d);
+}
+
+// Save to Firestore. We don't await here so callers can keep using the
+// previous synchronous-looking API; errors are logged and shown as a toast.
+function saveDB(db){
+  FB.saveDB(db).catch(err => {
+    console.error('saveDB failed:', err);
+    showToast(lang === 'th' ? 'บันทึกล้มเหลว: ' + (err.message || 'unknown') : 'Save failed: ' + (err.message || 'unknown'));
+  });
+}
+function genId(arr){return arr.length?Math.max(...arr.map(i=>i.id))+1:1;}
+
+function showPanel(name,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.side-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if(el)el.classList.add('active');
+  // close mobile sidebar
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('mobileOverlay').classList.remove('open');
+  if(name==='dashboard')loadDash();
+  if(name==='amulets')loadList('amulets');
+  if(name==='accessories')loadList('accessories');
+  if(name==='casing'){exitTypeView();loadCasingTypes();}
+  if(name==='projects')loadList('projects');
+  if(name==='content-branding')loadBranding();
+  if(name==='content-nav')loadNav();
+  if(name==='content-hero')loadHero();
+  if(name==='content-homeLayout')loadHomeLayout();
+  if(name==='content-services')loadServices();
+  if(name==='content-sections')loadSections();
+  if(name==='content-trust')loadTrust();
+  if(name==='content-contact')loadContact();
+  if(name==='content-payment')loadPayment();
+  if(name==='content-featured')loadFeatured();
+  if(name==='reviews')loadReviewsPanel();
+}
+
+function toggleSidebar(){
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('mobileOverlay').classList.toggle('open');
+}
+
+function loadDash(){
+  const db=getDB();
+  document.getElementById('dA').textContent=db.amulets.length;
+  document.getElementById('dAc').textContent=db.accessories.length;
+  document.getElementById('dF').textContent=(db.casingTypes||[]).length;
+  document.getElementById('dP').textContent=db.projects.length;
+}
+
+// BRANDING
+// ── DISPLAY FONT PRESETS ──
+// Each preset: family (Google Fonts name), label, vibe (short description).
+// Make sure family names match the <link href> in <head> exactly.
+const FONT_PRESETS = [
+  {family:'Noto Serif',         vibe:'Classic & balanced',     vibeTh:'คลาสสิก สมดุล'},
+  {family:'Playfair Display',   vibe:'Editorial & elegant',    vibeTh:'หรูหรา แบบนิตยสาร'},
+  {family:'Cormorant Garamond', vibe:'Refined & literary',     vibeTh:'ประณีต วรรณกรรม'},
+  {family:'Cinzel',             vibe:'Engraved & monumental',  vibeTh:'แกะสลัก ตระหง่าน'},
+  {family:'Marcellus',          vibe:'Calm & refined Roman',   vibeTh:'สงบ โรมัน'},
+  {family:'Bodoni Moda',        vibe:'High contrast fashion',  vibeTh:'แฟชั่น คอนทราสต์สูง'},
+  {family:'Crimson Pro',        vibe:'Readable & warm',        vibeTh:'อ่านง่าย อบอุ่น'},
+  {family:'DM Serif Display',   vibe:'Bold & modern',          vibeTh:'หนา ทันสมัย'},
+  {family:'Libre Caslon Text',  vibe:'Traditional book',       vibeTh:'หนังสือ คลาสสิก'},
+];
+
+let _selectedFont = '';
+
+function renderFontPicker(){
+  const cont = document.getElementById('fontPicker');
+  if(!cont) return;
+  cont.innerHTML = FONT_PRESETS.map(p => {
+    const vibe = (lang === 'th') ? p.vibeTh : p.vibe;
+    const active = (p.family === _selectedFont) ? 'active' : '';
+    return `
+      <div class="font-card ${active}" data-font="${p.family}" onclick="selectFont('${p.family}')">
+        <div class="font-card-preview" style="font-family:'${p.family}',serif">Aa</div>
+        <div class="font-card-name">${p.family}</div>
+        <div class="font-card-vibe">${vibe}</div>
+      </div>`;
+  }).join('');
+}
+
+function selectFont(family){
+  _selectedFont = family;
+  renderFontPicker();
+}
+
+function loadBranding(){
+  const s=getDB().settings;
+  document.getElementById('b_pageTitle').value=s.pageTitle||'';
+  document.getElementById('b_logoIcon').value=s.logoIcon||'';
+  document.getElementById('b_logoText').value=s.logoText||'';
+  document.getElementById('b_logoSub').value=s.logoSub||'';
+  document.getElementById('b_topbar').value=s.topbar||'';
+  _selectedFont = s.displayFont || 'Noto Serif';
+  renderFontPicker();
+}
+function saveBranding(){
+  const db=getDB();
+  db.settings.pageTitle=document.getElementById('b_pageTitle').value;
+  db.settings.logoIcon=document.getElementById('b_logoIcon').value;
+  db.settings.logoText=document.getElementById('b_logoText').value;
+  db.settings.logoSub=document.getElementById('b_logoSub').value;
+  db.settings.topbar=document.getElementById('b_topbar').value;
+  db.settings.displayFont=_selectedFont||'Noto Serif';
+  saveDB(db);showToast(tr('brandingSaved'));
+}
+
+// NAV
+function loadNav(){
+  const s=getDB().settings;
+  const list=document.getElementById('navList');
+  list.innerHTML=(s.nav||[]).map((n,i)=>`
+    <div class="rep-row" data-idx="${i}">
+      <div class="rep-handle">
+        <button onclick="moveNav(${i},-1)" ${i===0?'disabled':''}>▲</button>
+        <button onclick="moveNav(${i},1)" ${i===(s.nav.length-1)?'disabled':''}>▼</button>
+      </div>
+      <div class="rep-fields">
+        <div class="fg"><label class="fl">${tr('pageId')} <span class="fl-hint">— ${n.builtin?tr('builtin'):tr('custom')}</span></label><input class="fi" value="${n.id}" disabled style="background:#f0e8d0;color:var(--text-muted)"></div>
+        <div class="fg"><label class="fl">${tr('menuLabel')}</label><input class="fi" data-nav-label="${i}" value="${n.label}"></div>
+        <div class="fg" style="display:flex;flex-direction:row;gap:18px;align-items:end;padding-bottom:10px">
+          <label class="switch-label"><label class="switch"><input type="checkbox" data-nav-vis="${i}" ${n.visible?'checked':''}><span class="slider"></span></label>${tr('show')}</label>
+          <label class="switch-label"><label class="switch"><input type="checkbox" data-nav-en="${i}" ${n.enabled?'checked':''}><span class="slider"></span></label>${tr('enabled')}</label>
+        </div>
+      </div>
+      ${!n.builtin?`<button class="rep-rm" onclick="rmNavItem(${i})">✕</button>`:''}
+    </div>
+  `).join('');
+  loadCustomPagesList();
+}
+
+function captureNavValues(){
+  const db=getDB();const arr=db.settings.nav;
+  arr.forEach((n,i)=>{
+    const lbl=document.querySelector(`[data-nav-label="${i}"]`);
+    const vis=document.querySelector(`[data-nav-vis="${i}"]`);
+    const en=document.querySelector(`[data-nav-en="${i}"]`);
+    if(lbl)n.label=lbl.value;if(vis)n.visible=vis.checked;if(en)n.enabled=en.checked;
+  });
+  return db;
+}
+
+function moveNav(idx,dir){
+  const db=captureNavValues();const arr=db.settings.nav;
+  const ni=idx+dir;if(ni<0||ni>=arr.length)return;
+  [arr[idx],arr[ni]]=[arr[ni],arr[idx]];
+  saveDB(db);loadNav();
+}
+
+function rmNavItem(idx){
+  if(!tConfirm('confirmDeleteNav'))return;
+  const db=captureNavValues();
+  const item=db.settings.nav[idx];
+  if(item.builtin){showToast(tr('builtinNoDelete'));return;}
+  db.settings.customPages=(db.settings.customPages||[]).filter(p=>p.id!==item.id);
+  db.settings.nav.splice(idx,1);
+  saveDB(db);loadNav();showToast(tr('deleted'));
+}
+
+function saveNav(){
+  const db=captureNavValues();
+  saveDB(db);showToast(tr('menuSaved'));
+}
+
+// CUSTOM PAGES
+let editingPageId=null;
+
+function loadCustomPagesList(){
+  const cp=getDB().settings.customPages||[];
+  const c=document.getElementById('customPagesList');
+  if(!cp.length){c.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px">${tr('noCustom')}</div>`;return;}
+  c.innerHTML=cp.map(p=>`
+    <div class="type-tile">
+      <div class="type-tile-img" style="background:linear-gradient(135deg,var(--gold-light),var(--gold-dark));color:var(--deep);font-size:22px">📄</div>
+      <div class="type-tile-info">
+        <div class="type-tile-name">${p.label}</div>
+        <div class="type-tile-desc">${(p.title||p.label)}${p.desc?` — ${p.desc.slice(0,80)}`:''}</div>
+        <div class="type-tile-meta">ID: ${p.id}</div>
+      </div>
+      <div class="type-tile-actions">
+        <button class="btn-edit" onclick="editCustomPage('${p.id}')">${tr('edit')}</button>
+        <button class="btn-del" onclick="delCustomPage('${p.id}')">${tr('del')}</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addCustomPage(){
+  editingPageId=null;
+  document.getElementById('pageModalTitle').textContent=lang==='th'?'เพิ่มหน้าใหม่':'Add Custom Page';
+  document.getElementById('cp_label').value='';
+  document.getElementById('cp_id').value=lang==='th'?'(สร้างอัตโนมัติ)':'(auto-generated)';
+  document.getElementById('cp_title').value='';
+  document.getElementById('cp_desc').value='';
+  document.getElementById('cp_content').value='';
+  document.getElementById('pageModal').classList.add('open');
+}
+
+function editCustomPage(id){
+  const db=getDB();const p=(db.settings.customPages||[]).find(x=>x.id===id);if(!p)return;
+  editingPageId=id;
+  document.getElementById('pageModalTitle').textContent=lang==='th'?'แก้ไขหน้า':'Edit Custom Page';
+  document.getElementById('cp_label').value=p.label||'';
+  document.getElementById('cp_id').value=p.id;
+  document.getElementById('cp_title').value=p.title||'';
+  document.getElementById('cp_desc').value=p.desc||'';
+  document.getElementById('cp_content').value=p.content||'';
+  document.getElementById('pageModal').classList.add('open');
+}
+
+function saveCustomPage(){
+  const label=document.getElementById('cp_label').value.trim();
+  if(!label){showToast(tr('needLabel'));return;}
+  const db=captureNavValues();
+  if(editingPageId){
+    const p=(db.settings.customPages||[]).find(x=>x.id===editingPageId);
+    if(p){
+      p.label=label;
+      p.title=document.getElementById('cp_title').value;
+      p.desc=document.getElementById('cp_desc').value;
+      p.content=document.getElementById('cp_content').value;
+      const navItem=db.settings.nav.find(n=>n.id===editingPageId);if(navItem)navItem.label=label;
+    }
+  } else {
+    let baseId=label.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'page';
+    let id=baseId;let i=2;
+    while(db.settings.nav.find(n=>n.id===id) || (db.settings.customPages||[]).find(p=>p.id===id)){
+      id=baseId+'-'+i;i++;
+    }
+    if(!db.settings.customPages)db.settings.customPages=[];
+    db.settings.customPages.push({id,label,title:document.getElementById('cp_title').value,desc:document.getElementById('cp_desc').value,content:document.getElementById('cp_content').value});
+    db.settings.nav.push({id,label,visible:true,enabled:true,builtin:false});
+  }
+  saveDB(db);closeModal('pageModal');showToast(tr('pageSaved'));loadNav();
+}
+
+function delCustomPage(id){
+  if(!tConfirm('confirmDeletePage'))return;
+  const db=captureNavValues();
+  db.settings.customPages=(db.settings.customPages||[]).filter(p=>p.id!==id);
+  db.settings.nav=db.settings.nav.filter(n=>n.id!==id);
+  saveDB(db);loadNav();showToast(tr('deleted'));
+}
+
+// HERO
+// in-memory holder for the .glb data URL (admin only — admin uses tempImgs for images)
+let _tempGlb = '';
+let _tempGlbName = '';
+let _tempGlbSize = 0;
+
+function loadHero(){
+  const h=getDB().settings.hero;
+  document.getElementById('h_eyebrow').value=h.eyebrow||'';
+  document.getElementById('h_titleHL').value=h.titleHighlight||'';
+  document.getElementById('h_titleRest').value=h.titleRest||'';
+  document.getElementById('h_sub').value=h.sub||'';
+  document.getElementById('h_desc').value=h.desc||'';
+  tempImgs['h_bg']=h.bgImage?[h.bgImage]:[];renderPrev('h_bg');
+  tempImgs['h_phra_front']=h.phra3dFront?[h.phra3dFront]:[];renderPrev('h_phra_front');
+  tempImgs['h_phra_back']=h.phra3dBack?[h.phra3dBack]:[];renderPrev('h_phra_back');
+  _tempGlb = h.phra3dGlb || '';
+  _tempGlbName = '';
+  _tempGlbSize = _tempGlb ? Math.round((_tempGlb.length * 3/4) / 1024) : 0;
+  renderGlbInfo();
+  renderHeroBtns(h.buttons||[]);
+  renderHeroStats(h.stats||[]);
+}
+
+function renderGlbInfo(){
+  const el = document.getElementById('h_phra_glb_info');
+  if(!el) return;
+  if(!_tempGlb){
+    el.innerHTML = '';
+    return;
+  }
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const isUploading = _tempGlb === 'uploading';
+  if(isUploading){
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);border-radius:8px">
+        <div style="font-size:24px">⏫</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;color:var(--text);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(_tempGlbName)}</div>
+          <div style="color:var(--text-muted);font-size:12px;margin-top:2px">${lang==='th'?'กำลังอัปโหลด...':'Uploading...'}</div>
+        </div>
+      </div>`;
+    return;
+  }
+  const sizeStr = _tempGlbSize > 1024 ? (_tempGlbSize/1024).toFixed(1) + ' MB' : _tempGlbSize + ' KB';
+  const tooLarge = _tempGlbSize > 5120; // >5MB warning
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:${tooLarge?'rgba(255,180,90,.12)':'rgba(34,139,34,.12)'};border:1px solid ${tooLarge?'rgba(255,180,90,.4)':'rgba(34,139,34,.4)'};border-radius:8px">
+      <div style="font-size:28px">${tooLarge?'⚠️':'✅'}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;color:var(--text);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(_tempGlbName || (lang==='th'?'โมเดล 3D':'3D model'))}</div>
+        <div style="color:var(--text-muted);font-size:12px;margin-top:2px">${sizeStr}${tooLarge ? (lang==='th'?' — ไฟล์ใหญ่ อาจโหลดช้า':' — large file, may load slowly') : ''}</div>
+      </div>
+      <button class="btn-ol" style="padding:6px 12px;font-size:12px" onclick="clearGlb()" data-en="🗑️ Remove" data-th="🗑️ ลบ">🗑️ Remove</button>
+    </div>`;
+}
+
+function clearGlb(){
+  if(!confirm(lang==='th'?'ลบโมเดล 3D นี้?':'Remove this 3D model?')) return;
+  // Best-effort cleanup of Storage file
+  if(_tempGlb && typeof _tempGlb === 'string' && _tempGlb.startsWith('http')){
+    FB.deleteFile(_tempGlb).catch(() => {});
+  }
+  _tempGlb = '';
+  _tempGlbName = '';
+  _tempGlbSize = 0;
+  renderGlbInfo();
+}
+
+function dropGlb(e){
+  e.preventDefault();
+  const target = e.currentTarget;
+  if(target && target.classList) target.classList.remove('dragging');
+  const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(!f) return;
+  processGlbFile(f);
+}
+
+function handleGlbFile(e){
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  processGlbFile(f);
+  e.target.value = ''; // allow re-uploading same file
+}
+
+async function processGlbFile(file){
+  const name = (file.name || '').toLowerCase();
+  if(!name.endsWith('.glb') && !name.endsWith('.gltf')){
+    showToast(lang==='th'?'รองรับเฉพาะ .glb หรือ .gltf':'Only .glb or .gltf files are supported');
+    return;
+  }
+  if(file.size > 15 * 1024 * 1024){
+    if(!confirm(lang==='th'
+      ?'ไฟล์ใหญ่กว่า 15 MB อาจทำให้เว็บโหลดช้ามาก ต้องการดำเนินการต่อหรือไม่?'
+      :'File is larger than 15 MB — this will significantly slow down the site. Continue anyway?')){
+      return;
+    }
+  }
+  // Mark as uploading so the info panel can show progress
+  _tempGlb     = 'uploading';
+  _tempGlbName = file.name + ' (uploading…)';
+  _tempGlbSize = Math.round(file.size / 1024);
+  renderGlbInfo();
+  showToast(lang==='th'?'⏫ กำลังอัปโหลดโมเดล...':'⏫ Uploading model...');
+  try {
+    // Delete any previous .glb on Storage so we don't keep orphaned files
+    const db = getDB();
+    const prevUrl = db.settings && db.settings.hero && db.settings.hero.phra3dGlb;
+    if(prevUrl && typeof prevUrl === 'string' && prevUrl.startsWith('http')){
+      FB.deleteFile(prevUrl).catch(() => {});
+    }
+    const url = await FB.uploadFile(file, file.name);
+    _tempGlb     = url;
+    _tempGlbName = file.name;
+    _tempGlbSize = Math.round(file.size / 1024);
+    renderGlbInfo();
+    showToast(lang==='th'?'✅ อัปโหลดเสร็จ — กดบันทึก':'✅ Upload complete — click Save');
+  } catch(err){
+    console.error('glb upload failed:', err);
+    _tempGlb = '';
+    _tempGlbName = '';
+    _tempGlbSize = 0;
+    renderGlbInfo();
+    showToast((lang==='th'?'อัปโหลดล้มเหลว: ':'Upload failed: ') + (err.message || 'unknown'));
+  }
+}
+
+function renderHeroBtns(btns){
+  const allTargets=getDB().settings.nav.filter(n=>n.enabled);
+  document.getElementById('heroBtnList').innerHTML=btns.map((b,i)=>{
+    const opts=allTargets.map(n=>`<option value="${n.id}" ${b.target===n.id?'selected':''}>${n.label}</option>`).join('');
+    return `
+    <div class="rep-row">
+      <div class="rep-fields">
+        <div class="fg"><label class="fl">${tr('buttonText')}</label><input class="fi" data-hb-label="${i}" value="${b.label||''}"></div>
+        <div class="fg"><label class="fl">${tr('linksTo')}</label><select class="fsel" data-hb-target="${i}">${opts}</select></div>
+        <div class="fg"><label class="fl">${tr('styleType')}</label>
+          <select class="fsel" data-hb-style="${i}">
+            <option value="gold" ${b.style==='gold'?'selected':''}>${tr('goldFilled')}</option>
+            <option value="outline" ${b.style==='outline'?'selected':''}>${tr('outline')}</option>
+          </select>
+        </div>
+      </div>
+      <button class="rep-rm" onclick="rmHeroBtn(${i})">✕</button>
+    </div>
+  `;}).join('');
+}
+function captureHeroBtns(){
+  const btns=[];document.querySelectorAll('[data-hb-label]').forEach(el=>{
+    const i=el.dataset.hbLabel;
+    btns.push({label:el.value,target:document.querySelector(`[data-hb-target="${i}"]`).value,style:document.querySelector(`[data-hb-style="${i}"]`).value});
+  });
+  return btns;
+}
+function addHeroBtn(){const cur=captureHeroBtns();cur.push({label:'New Button',target:'home',style:'gold'});renderHeroBtns(cur);}
+function rmHeroBtn(idx){const cur=captureHeroBtns();cur.splice(idx,1);renderHeroBtns(cur);}
+
+function renderHeroStats(stats){
+  document.getElementById('heroStatList').innerHTML=stats.map((s,i)=>`
+    <div class="rep-row">
+      <div class="rep-fields">
+        <div class="fg"><label class="fl">${tr('label')}</label><input class="fi" data-hs-label="${i}" value="${s.label||''}"></div>
+        <div class="fg"><label class="fl">${tr('source')}</label>
+          <select class="fsel" data-hs-source="${i}">
+            <option value="amulets" ${s.source==='amulets'?'selected':''}>${tr('srcAmulets')}</option>
+            <option value="accessories" ${s.source==='accessories'?'selected':''}>${tr('srcAcc')}</option>
+            <option value="projects" ${s.source==='projects'?'selected':''}>${tr('srcProj')}</option>
+            <option value="custom" ${!s.source?'selected':''}>${tr('srcCustom')}</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">${tr('customValue')}</label><input class="fi" data-hs-value="${i}" value="${s.value||''}"></div>
+      </div>
+      <button class="rep-rm" onclick="rmHeroStat(${i})">✕</button>
+    </div>
+  `).join('');
+}
+function captureHeroStats(){
+  const st=[];document.querySelectorAll('[data-hs-label]').forEach(el=>{
+    const i=el.dataset.hsLabel;
+    const sourceVal=document.querySelector(`[data-hs-source="${i}"]`).value;
+    const obj={label:el.value};
+    if(sourceVal==='custom') obj.value=document.querySelector(`[data-hs-value="${i}"]`).value;
+    else obj.source=sourceVal;
+    st.push(obj);
+  });
+  return st;
+}
+function addHeroStat(){const cur=captureHeroStats();cur.push({label:'New Stat',value:'0'});renderHeroStats(cur);}
+function rmHeroStat(idx){const cur=captureHeroStats();cur.splice(idx,1);renderHeroStats(cur);}
+
+function saveHero(){
+  const db=getDB();
+  db.settings.hero.bgImage=(tempImgs['h_bg']||[])[0]||'';
+  db.settings.hero.phra3dGlb=_tempGlb||'';
+  db.settings.hero.phra3dFront=(tempImgs['h_phra_front']||[])[0]||'';
+  db.settings.hero.phra3dBack=(tempImgs['h_phra_back']||[])[0]||'';
+  db.settings.hero.eyebrow=document.getElementById('h_eyebrow').value;
+  db.settings.hero.titleHighlight=document.getElementById('h_titleHL').value;
+  db.settings.hero.titleRest=document.getElementById('h_titleRest').value;
+  db.settings.hero.sub=document.getElementById('h_sub').value;
+  db.settings.hero.desc=document.getElementById('h_desc').value;
+  db.settings.hero.buttons=captureHeroBtns();
+  db.settings.hero.stats=captureHeroStats();
+  saveDB(db);showToast(tr('heroSaved'));
+}
+
+// Quick way to wipe all hero visuals (bg image, glb, front/back images)
+// without having to clear each one individually.
+function resetHeroVisuals(){
+  const msg = (lang === 'th')
+    ? 'ลบรูปทั้งหมดในส่วน Hero?\n• รูปพื้นหลัง\n• โมเดล 3D (.glb)\n• รูปพระด้านหน้า/หลัง\n\nข้อความ Hero และปุ่มต่างๆ จะไม่ถูกแตะ'
+    : 'Clear all images in Hero?\n• Background image\n• 3D model (.glb)\n• Phra front/back images\n\nHero text and buttons will NOT be touched.';
+  if(!confirm(msg)) return;
+  const db = getDB();
+  if(db.settings.hero){
+    db.settings.hero.bgImage     = '';
+    db.settings.hero.phra3dGlb   = '';
+    db.settings.hero.phra3dFront = '';
+    db.settings.hero.phra3dBack  = '';
+  }
+  // Clear local upload state too
+  if(typeof tempImgs === 'object'){
+    tempImgs['h_bg'] = [];
+    tempImgs['h_phra_front'] = [];
+    tempImgs['h_phra_back'] = [];
+    if(typeof renderPrev === 'function'){
+      renderPrev('h_bg');
+      renderPrev('h_phra_front');
+      renderPrev('h_phra_back');
+    }
+  }
+  if(typeof _tempGlb !== 'undefined'){
+    _tempGlb = '';
+    _tempGlbName = '';
+    _tempGlbSize = 0;
+    if(typeof renderGlbInfo === 'function') renderGlbInfo();
+  }
+  saveDB(db);
+  showToast(lang === 'th' ? '🗑️ ลบรูป Hero ทั้งหมดแล้ว' : '🗑️ All hero images cleared');
+}
+// ── HOMEPAGE LAYOUT (section ordering) ──
+// Icons for each known home section id
+const HOME_SECTION_ICONS = {
+  reviews:  '🙏',
+  featured: '✨',
+  services: '🎯',
+};
+// Default labels (used if entry.label is missing)
+const HOME_SECTION_LABELS = {
+  reviews:  {en:'Reviews preview',  th:'รีวิวลูกค้า'},
+  featured: {en:'Featured items',   th:'สินค้าแนะนำ'},
+  services: {en:'Service cards',    th:'การ์ดบริการ'},
+};
+
+// Working copy of the order array — admin edits this, then saveHomeOrder persists it.
+let _homeOrderDraft = [];
+
+function loadHomeLayout(){
+  const db = getDB();
+  _homeOrderDraft = (db.settings.homeOrder || []).map(x => ({...x}));
+  renderHomeOrderList();
+}
+
+function renderHomeOrderList(){
+  const cont = document.getElementById('homeOrderList');
+  if(!cont) return;
+  if(!_homeOrderDraft.length){
+    cont.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted)">No sections.</div>';
+    return;
+  }
+  const total = _homeOrderDraft.length;
+  cont.innerHTML = _homeOrderDraft.map((entry, idx) => {
+    const id     = entry.id || '';
+    const icon   = HOME_SECTION_ICONS[id] || '📄';
+    const labels = HOME_SECTION_LABELS[id] || {en: entry.label || id, th: entry.label || id};
+    const label  = (lang === 'th') ? labels.th : labels.en;
+    const enabled = entry.enabled !== false;
+    const disClass = enabled ? '' : 'disabled';
+    return `
+      <div class="ho-item ${disClass}"
+           draggable="true"
+           data-idx="${idx}"
+           ondragstart="hoDragStart(event,${idx})"
+           ondragover="hoDragOver(event)"
+           ondragleave="hoDragLeave(event)"
+           ondrop="hoDrop(event,${idx})"
+           ondragend="hoDragEnd(event)">
+        <span class="ho-grip" title="${lang==='th'?'ลากเพื่อจัดลำดับ':'Drag to reorder'}">⋮⋮</span>
+        <span class="ho-icon">${icon}</span>
+        <span class="ho-label">${escapeHtml(label)}</span>
+        <span class="ho-pos">${lang==='th' ? 'ลำดับ' : 'POS'} ${idx + 1}</span>
+        <div class="ho-arrows">
+          <button class="ho-arrow-btn" onclick="hoMove(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} title="${lang==='th'?'เลื่อนขึ้น':'Move up'}">▲</button>
+          <button class="ho-arrow-btn" onclick="hoMove(${idx}, 1)" ${idx === total - 1 ? 'disabled' : ''} title="${lang==='th'?'เลื่อนลง':'Move down'}">▼</button>
+        </div>
+        <label class="ho-toggle">
+          <input type="checkbox" ${enabled ? 'checked' : ''} onchange="hoToggle(${idx}, this.checked)">
+          <span>${enabled ? (lang==='th'?'แสดง':'Visible') : (lang==='th'?'ซ่อน':'Hidden')}</span>
+        </label>
+      </div>`;
+  }).join('');
+}
+
+function escapeHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function hoMove(idx, dir){
+  const target = idx + dir;
+  if(target < 0 || target >= _homeOrderDraft.length) return;
+  const tmp = _homeOrderDraft[idx];
+  _homeOrderDraft[idx] = _homeOrderDraft[target];
+  _homeOrderDraft[target] = tmp;
+  renderHomeOrderList();
+}
+
+function hoToggle(idx, on){
+  if(!_homeOrderDraft[idx]) return;
+  _homeOrderDraft[idx].enabled = !!on;
+  renderHomeOrderList();
+}
+
+// ── Drag and drop ──
+let _hoDragIdx = -1;
+
+function hoDragStart(e, idx){
+  _hoDragIdx = idx;
+  e.currentTarget.classList.add('dragging');
+  try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(idx)); } catch(_){}
+}
+
+function hoDragOver(e){
+  e.preventDefault();
+  try { e.dataTransfer.dropEffect = 'move'; } catch(_){}
+  const el = e.currentTarget;
+  if(!el || _hoDragIdx < 0) return;
+  // Show top/bottom indicator
+  const rect = el.getBoundingClientRect();
+  const midY = rect.top + rect.height / 2;
+  el.classList.remove('drag-over-top', 'drag-over-bottom');
+  if(e.clientY < midY) el.classList.add('drag-over-top');
+  else el.classList.add('drag-over-bottom');
+}
+
+function hoDragLeave(e){
+  e.currentTarget.classList.remove('drag-over-top', 'drag-over-bottom');
+}
+
+function hoDrop(e, idx){
+  e.preventDefault();
+  const el = e.currentTarget;
+  if(!el) return;
+  const rect = el.getBoundingClientRect();
+  const midY = rect.top + rect.height / 2;
+  let insertAt = (e.clientY < midY) ? idx : (idx + 1);
+  el.classList.remove('drag-over-top', 'drag-over-bottom');
+  if(_hoDragIdx < 0 || _hoDragIdx === idx) return;
+
+  const item = _homeOrderDraft.splice(_hoDragIdx, 1)[0];
+  // Adjust insertion index if we removed an item before it
+  if(_hoDragIdx < insertAt) insertAt--;
+  _homeOrderDraft.splice(insertAt, 0, item);
+  _hoDragIdx = -1;
+  renderHomeOrderList();
+}
+
+function hoDragEnd(e){
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.ho-item').forEach(el => {
+    el.classList.remove('drag-over-top', 'drag-over-bottom');
+  });
+  _hoDragIdx = -1;
+}
+
+function saveHomeOrder(){
+  const db = getDB();
+  db.settings.homeOrder = _homeOrderDraft.map(x => ({...x}));
+  saveDB(db);
+  showToast(lang === 'th' ? '💾 บันทึกเลย์เอาท์แล้ว' : '💾 Layout saved');
+}
+
+// SERVICES
+function loadServices(){
+  const sv=getDB().settings.homeServices;
+  document.getElementById('svc_title').value=sv.title||'';
+  renderSvcList(sv.cards||[]);
+}
+function renderSvcList(cards){
+  const allTargets=getDB().settings.nav.filter(n=>n.enabled);
+  document.getElementById('svcList').innerHTML=cards.map((c,i)=>{
+    const opts=allTargets.map(n=>`<option value="${n.id}" ${c.target===n.id?'selected':''}>${n.label}</option>`).join('');
+    return `
+    <div class="rep-row">
+      <div class="rep-fields">
+        <div class="fg"><label class="fl">${tr('icon')}</label><input class="fi" data-sc-icon="${i}" value="${c.icon||''}" maxlength="4"></div>
+        <div class="fg"><label class="fl">${tr('title')}</label><input class="fi" data-sc-title="${i}" value="${c.title||''}"></div>
+        <div class="fg" style="grid-column:span 2"><label class="fl">${tr('desc')}</label><input class="fi" data-sc-desc="${i}" value="${c.desc||''}"></div>
+        <div class="fg"><label class="fl">${tr('linksTo')}</label><select class="fsel" data-sc-target="${i}">${opts}</select></div>
+      </div>
+      <button class="rep-rm" onclick="rmSvcCard(${i})">✕</button>
+    </div>
+  `;}).join('');
+}
+function captureSvc(){
+  const cards=[];document.querySelectorAll('[data-sc-icon]').forEach(el=>{
+    const i=el.dataset.scIcon;
+    cards.push({
+      icon:el.value,
+      title:document.querySelector(`[data-sc-title="${i}"]`).value,
+      desc:document.querySelector(`[data-sc-desc="${i}"]`).value,
+      target:document.querySelector(`[data-sc-target="${i}"]`).value,
+    });
+  });
+  return cards;
+}
+function addSvcCard(){const cur=captureSvc();cur.push({icon:'✨',title:'New Service',desc:'Description',target:'home'});renderSvcList(cur);}
+function rmSvcCard(i){const cur=captureSvc();cur.splice(i,1);renderSvcList(cur);}
+function saveServices(){
+  const db=getDB();
+  db.settings.homeServices.title=document.getElementById('svc_title').value;
+  db.settings.homeServices.cards=captureSvc();
+  saveDB(db);showToast(tr('serviceSaved'));
+}
+
+// SECTIONS
+function loadSections(){
+  const s=getDB().settings.sections;
+  document.getElementById('sec_a_title').value=s.amulets.title;
+  document.getElementById('sec_a_desc').value=s.amulets.desc;
+  document.getElementById('sec_ac_title').value=s.accessories.title;
+  document.getElementById('sec_ac_desc').value=s.accessories.desc;
+  document.getElementById('sec_c_title').value=s.casing.title;
+  document.getElementById('sec_c_desc').value=s.casing.desc;
+  document.getElementById('sec_p_title').value=s.projects.title;
+  document.getElementById('sec_p_desc').value=s.projects.desc;
+  document.getElementById('sec_ab_title').value=s.about.title;
+  document.getElementById('sec_ab_desc').value=s.about.desc;
+}
+function saveSections(){
+  const db=getDB();const s=db.settings.sections;
+  s.amulets={title:document.getElementById('sec_a_title').value,desc:document.getElementById('sec_a_desc').value};
+  s.accessories={title:document.getElementById('sec_ac_title').value,desc:document.getElementById('sec_ac_desc').value};
+  s.casing={title:document.getElementById('sec_c_title').value,desc:document.getElementById('sec_c_desc').value};
+  s.projects={title:document.getElementById('sec_p_title').value,desc:document.getElementById('sec_p_desc').value};
+  s.about={title:document.getElementById('sec_ab_title').value,desc:document.getElementById('sec_ab_desc').value};
+  saveDB(db);showToast(tr('sectionsSaved'));
+}
+
+// TRUST
+function loadTrust(){renderTrustList(getDB().settings.trustCards||[]);}
+function renderTrustList(cards){
+  document.getElementById('trustList').innerHTML=cards.map((c,i)=>`
+    <div class="rep-row">
+      <div class="rep-fields">
+        <div class="fg"><label class="fl">${tr('icon')}</label><input class="fi" data-tc-icon="${i}" value="${c.icon||''}" maxlength="4"></div>
+        <div class="fg"><label class="fl">${tr('title')}</label><input class="fi" data-tc-title="${i}" value="${c.title||''}"></div>
+        <div class="fg" style="grid-column:span 2"><label class="fl">${tr('desc')}</label><input class="fi" data-tc-desc="${i}" value="${c.desc||''}"></div>
+      </div>
+      <button class="rep-rm" onclick="rmTrust(${i})">✕</button>
+    </div>
+  `).join('');
+}
+function captureTrust(){
+  const arr=[];document.querySelectorAll('[data-tc-icon]').forEach(el=>{
+    const i=el.dataset.tcIcon;
+    arr.push({icon:el.value,title:document.querySelector(`[data-tc-title="${i}"]`).value,desc:document.querySelector(`[data-tc-desc="${i}"]`).value});
+  });
+  return arr;
+}
+function addTrustCard(){const cur=captureTrust();cur.push({icon:'⭐',title:'New Feature',desc:'Description'});renderTrustList(cur);}
+function rmTrust(i){const cur=captureTrust();cur.splice(i,1);renderTrustList(cur);}
+function saveTrust(){const db=getDB();db.settings.trustCards=captureTrust();saveDB(db);showToast(tr('trustSaved'));}
+
+// CONTACT
+function loadContact(){
+  const s=getDB().settings;
+  renderContactList(s.contacts||[]);
+  document.getElementById('cbtn_text').value=s.contactBtnText||'';
+  document.getElementById('cbtn_msg').value=s.contactBtnMessage||'';
+  document.getElementById('cinq_text').value=s.casingInquiryText||'';
+  document.getElementById('cinq_msg').value=s.casingInquiryMessage||'';
+}
+function renderContactList(arr){
+  document.getElementById('contactList').innerHTML=arr.map((c,i)=>`
+    <div class="rep-row">
+      <div class="rep-fields">
+        <div class="fg"><label class="fl">${tr('label')}</label><input class="fi" data-c-label="${i}" value="${c.label||''}"></div>
+        <div class="fg"><label class="fl">${tr('color')}</label><input type="color" class="color-input" data-c-color="${i}" value="${c.color||'#1877f2'}" style="width:100%;height:42px"></div>
+        <div class="fg" style="grid-column:span 2"><label class="fl">${tr('contactUrl')}</label><input class="fi" data-c-url="${i}" value="${c.url||''}" placeholder="https://wa.me/65... or https://m.me/...">
+          <div style="font-size:11px;color:var(--text-muted);margin-top:3px">${tr('contactUrlHint')}</div></div>
+        <div class="fg" style="grid-column:span 2"><label class="fl">${tr('clickMessage')}</label><input class="fi" data-c-msg="${i}" value="${c.message||''}"></div>
+      </div>
+      <button class="rep-rm" onclick="rmContact(${i})">✕</button>
+    </div>
+  `).join('');
+}
+function captureContacts(){
+  const arr=[];document.querySelectorAll('[data-c-label]').forEach(el=>{
+    const i=el.dataset.cLabel;
+    arr.push({
+      label:el.value,
+      color:document.querySelector(`[data-c-color="${i}"]`).value,
+      url:document.querySelector(`[data-c-url="${i}"]`)?document.querySelector(`[data-c-url="${i}"]`).value:'',
+      message:document.querySelector(`[data-c-msg="${i}"]`).value
+    });
+  });
+  return arr;
+}
+function addContactBtn(){const cur=captureContacts();cur.push({label:'📞 New',color:'#888888',url:'',message:'Contact us'});renderContactList(cur);}
+function rmContact(i){const cur=captureContacts();cur.splice(i,1);renderContactList(cur);}
+function saveContact(){
+  const db=getDB();
+  db.settings.contacts=captureContacts();
+  db.settings.contactBtnText=document.getElementById('cbtn_text').value;
+  db.settings.contactBtnMessage=document.getElementById('cbtn_msg').value;
+  db.settings.casingInquiryText=document.getElementById('cinq_text').value;
+  db.settings.casingInquiryMessage=document.getElementById('cinq_msg').value;
+  saveDB(db);showToast(tr('contactSaved'));
+}
+
+// ── PAYMENT ──
+function loadPayment(){
+  const p=getDB().settings.payment||{};
+  document.getElementById('pay_title').value=p.title||'';
+  document.getElementById('pay_paynowName').value=p.paynowName||'';
+  document.getElementById('pay_paynowUEN').value=p.paynowUEN||'';
+  document.getElementById('pay_shipFromTo').value=p.shipFromTo||'';
+  document.getElementById('pay_shipFee').value=p.shipFee||'';
+  document.getElementById('pay_policy').value=p.policy||'';
+  tempImgs['pay_qr']=p.qrImage?[p.qrImage]:[];
+  renderPrev('pay_qr');
+}
+function savePayment(){
+  const db=getDB();
+  db.settings.payment={
+    enabled:true,
+    title:document.getElementById('pay_title').value,
+    paynowName:document.getElementById('pay_paynowName').value,
+    paynowUEN:document.getElementById('pay_paynowUEN').value,
+    shipFromTo:document.getElementById('pay_shipFromTo').value,
+    shipFee:document.getElementById('pay_shipFee').value,
+    policy:document.getElementById('pay_policy').value,
+    qrImage:(tempImgs['pay_qr']||[])[0]||'',
+  };
+  saveDB(db);showToast(tr('paymentSaved'));
+}
+
+// ── FEATURED ──
+function loadFeatured(){
+  const db=getDB();const f=db.settings.featured||{};
+  document.getElementById('feat_enabled').checked=f.enabled!==false;
+  document.getElementById('feat_title').value=f.title||'';
+  document.getElementById('feat_sub').value=f.sub||'';
+  // gather featured items
+  const items=[];
+  (db.amulets||[]).forEach(a=>{if(a.featured)items.push({type:'📿 Amulet',name:a.name,id:a.id,kind:'amulets'});});
+  (db.accessories||[]).forEach(a=>{if(a.featured)items.push({type:'⛓️ Accessory',name:a.name,id:a.id,kind:'accessories'});});
+  const list=document.getElementById('featList');
+  if(!items.length){list.innerHTML=`<div class="empty-state" style="padding:24px">No items marked as Featured yet. Edit any amulet or accessory and toggle "Show as Featured on Home".</div>`;return;}
+  list.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">
+    ${items.map(it=>`<div style="background:rgba(201,168,76,.07);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <div><div style="font-size:11px;color:var(--text-muted)">${it.type}</div><div style="font-weight:600;font-size:13.5px">${it.name}</div></div>
+      <button class="btn-edit" onclick="unfeature('${it.kind}',${it.id})">${tr('del')}</button>
+    </div>`).join('')}
+  </div>`;
+}
+function unfeature(kind,id){
+  const db=getDB();const it=(db[kind]||[]).find(x=>x.id===id);if(!it)return;
+  it.featured=false;saveDB(db);loadFeatured();
+}
+function saveFeatured(){
+  const db=getDB();
+  db.settings.featured={
+    enabled:document.getElementById('feat_enabled').checked,
+    title:document.getElementById('feat_title').value,
+    sub:document.getElementById('feat_sub').value,
+    ids:db.settings.featured?.ids||[],
+  };
+  saveDB(db);showToast(tr('featuredSaved'));
+}
+
+// ── REVIEWS ──
+let editingReviewId=null;
+function loadReviewsPanel(){
+  const db=getDB();const s=db.settings.reviews||{};
+  // Reviews PAGE settings
+  document.getElementById('rev_enabled').checked=s.enabled!==false;
+  document.getElementById('rev_title').value=s.title||'';
+  document.getElementById('rev_sub').value=s.sub||'';
+  // Homepage preview settings
+  document.getElementById('rev_showOnHome').checked = s.showOnHome !== false;
+  document.getElementById('rev_homeTitle').value = s.homeTitle || '';
+  document.getElementById('rev_homeSub').value = s.homeSub || '';
+  document.getElementById('rev_homeCount').value = String(s.homeCount || 3);
+  document.getElementById('rev_homeMode').value = s.homeMode || 'top';
+  loadReviewsList();
+}
+function loadReviewsList(){
+  const db=getDB();const list=db.reviews||[];
+  const cont=document.getElementById('r_list');
+  if(!list.length){cont.innerHTML=`<div class="empty-state">${tr('noReviews')}</div>`;return;}
+  const stars=n=>'★'.repeat(n)+'☆'.repeat(5-n);
+  cont.innerHTML=`<table class="dtable">
+    <thead><tr><th>${tr('rating')}</th><th>${tr('reviewerName')}</th><th>${tr('reviewText')}</th><th>${tr('reviewDate')}</th><th>${tr('actions')}</th></tr></thead>
+    <tbody>${list.map(rv=>`
+      <tr>
+        <td><span style="color:#c9a84c;letter-spacing:1px">${stars(rv.rating||5)}</span></td>
+        <td><strong>${rv.name||'-'}</strong>${rv.location?`<br><span style="font-size:11px;color:var(--text-muted)">📍 ${rv.location}</span>`:''}</td>
+        <td style="max-width:340px"><div style="font-size:13px;color:var(--text-muted);line-height:1.5">${(rv.text||'').slice(0,140)}${rv.text&&rv.text.length>140?'…':''}</div>${rv.imgs&&rv.imgs.length?`<div style="font-size:11px;margin-top:4px">📷 ${rv.imgs.length}</div>`:''}</td>
+        <td>${rv.date||'-'}</td>
+        <td><button class="btn-edit" onclick="editReview(${rv.id})">${tr('edit')}</button> <button class="btn-del" onclick="deleteReview(${rv.id})">${tr('del')}</button></td>
+      </tr>`).join('')}</tbody></table>`;
+}
+function saveReviewsSection(){
+  const db=getDB();
+  // Preserve existing reviews object, just update its fields
+  const cur = db.settings.reviews || {};
+  db.settings.reviews = {
+    ...cur,
+    enabled: document.getElementById('rev_enabled').checked,
+    title:   document.getElementById('rev_title').value,
+    sub:     document.getElementById('rev_sub').value,
+    showOnHome: document.getElementById('rev_showOnHome').checked,
+    homeTitle:  document.getElementById('rev_homeTitle').value,
+    homeSub:    document.getElementById('rev_homeSub').value,
+    homeCount:  parseInt(document.getElementById('rev_homeCount').value, 10) || 3,
+    homeMode:   document.getElementById('rev_homeMode').value || 'top',
+  };
+  saveDB(db);showToast(tr('saved'));
+}
+function saveReview(){
+  const name=document.getElementById('r_name').value.trim();
+  const text=document.getElementById('r_text').value.trim();
+  const imgs=tempImgs['r_imgs']||[];
+  if(!name){showToast(tr('needName'));return;}
+  if(!text && !imgs.length){
+    showToast(lang==='th'?'ต้องมีข้อความหรือรูปอย่างน้อย 1 อย่าง':'Need at least review text OR a photo');
+    return;
+  }
+  const db=getDB();
+  if(!db.reviews)db.reviews=[];
+  const data={
+    name,
+    location:document.getElementById('r_loc').value.trim(),
+    rating:Number(document.getElementById('r_rating').value)||5,
+    date:document.getElementById('r_date').value.trim(),
+    text,
+    imgs:imgs.slice(),
+  };
+  if(editingReviewId){
+    const it=db.reviews.find(x=>x.id===editingReviewId);
+    if(it)Object.assign(it,data);
+  } else {
+    db.reviews.push({id:genId(db.reviews),...data});
+  }
+  saveDB(db);tempImgs['r_imgs']=[];
+  cancelEditReview();loadReviewsList();showToast(tr('reviewSaved'));
+}
+function editReview(id){
+  const rv=(getDB().reviews||[]).find(x=>x.id===id);if(!rv)return;
+  editingReviewId=id;
+  document.getElementById('r_name').value=rv.name||'';
+  document.getElementById('r_loc').value=rv.location||'';
+  document.getElementById('r_rating').value=String(rv.rating||5);
+  document.getElementById('r_date').value=rv.date||'';
+  document.getElementById('r_text').value=rv.text||'';
+  tempImgs['r_imgs']=[...(rv.imgs||[])];renderPrev('r_imgs');
+  document.getElementById('r_form_title').textContent=lang==='th'?'✏️ แก้ไขรีวิว':'✏️ Edit Review';
+  document.getElementById('r_save_btn').textContent=lang==='th'?'✅ บันทึกการแก้ไข':'✅ Update Review';
+  document.getElementById('r_cancel_btn').style.display='inline-block';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function cancelEditReview(){
+  editingReviewId=null;
+  ['r_name','r_loc','r_date','r_text'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('r_rating').value='5';
+  tempImgs['r_imgs']=[];renderPrev('r_imgs');
+  document.getElementById('r_form_title').textContent=lang==='th'?'➕ เพิ่มรีวิวใหม่':'➕ Add New Review';
+  document.getElementById('r_save_btn').textContent=lang==='th'?'✅ บันทึกรีวิว':'✅ Save Review';
+  document.getElementById('r_cancel_btn').style.display='none';
+}
+function deleteReview(id){
+  if(!tConfirm('confirmDelete'))return;
+  const db=getDB();db.reviews=(db.reviews||[]).filter(r=>r.id!==id);
+  saveDB(db);loadReviewsList();showToast(tr('reviewDeleted'));
+}
+
+// ITEMS
+function loadList(type){
+  const db=getDB();const items=db[type];
+  const cid={amulets:'a_list',accessories:'ac_list',projects:'p_list'}[type];
+  const icons={amulets:'📿',accessories:'⛓️',projects:'🎯'};
+  const editFn={amulets:'editAmulet',accessories:'editAccess',projects:'editProject'}[type];
+  // Populate categories datalist
+  if(type==='amulets'||type==='accessories'){
+    const dl=document.getElementById(type==='amulets'?'a_cat_list':'ac_cat_list');
+    if(dl){
+      const cats=[...new Set(items.map(i=>i.cat).filter(Boolean))];
+      dl.innerHTML=cats.map(c=>`<option value="${c}">`).join('');
+    }
+  }
+  const c=document.getElementById(cid);
+  if(!items.length){c.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);border-radius:12px">${tr('noItems')}</div>`;return;}
+  // status pretty name
+  const statusLabels={active:'🟢 In Progress',done:'✅ Completed',soon:'🔵 Coming Soon',open:'🔁 Open All Year'};
+  const statusLabelsTh={active:'🟢 กำลังดำเนินการ',done:'✅ เสร็จสิ้น',soon:'🔵 เร็วๆ นี้',open:'🔁 เปิดรับตลอด'};
+  c.innerHTML=`<table class="dtable">
+    <thead><tr><th>${tr('image')}</th><th>${tr('name')}</th><th>${type==='projects'?tr('status'):tr('category')}</th><th>${type==='projects'?tr('year'):tr('price')}</th><th>${tr('actions')}</th></tr></thead>
+    <tbody>${items.map(item=>`
+      <tr>
+        <td>${item.imgs&&item.imgs[0]?`<img class="thumb" src="${item.imgs[0]}">`:`<div class="no-img">${icons[type]}</div>`}</td>
+        <td><strong>${item.name}</strong></td>
+        <td>${type==='projects'?`<span class="tag">${(lang==='th'?statusLabelsTh:statusLabels)[item.status]||item.status}</span>`:`<span class="tag">${item.cat||'-'}</span>`}</td>
+        <td>${type==='projects'?(item.date||'-'):`S$${Number(item.price||0).toLocaleString()}`}</td>
+        <td><div class="row-actions">
+          <button class="btn-edit" onclick="${editFn}(${item.id})">${tr('edit')}</button>
+          <button class="btn-del" onclick="delItem('${type}',${item.id})">${tr('del')}</button>
+        </div></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+let curEditTypeId=null,curEditVariantId=null;
+
+function loadCasingTypes(){
+  const types=getDB().casingTypes||[];
+  const c=document.getElementById('typesList');
+  if(!types.length){c.innerHTML=`<div style="text-align:center;padding:50px;background:var(--surface);border:1px dashed var(--border);border-radius:12px;color:var(--text-muted)">${tr('noTypes')}</div>`;return;}
+  c.innerHTML=types.map(ty=>`
+    <div class="type-tile">
+      <div class="type-tile-img">${ty.bannerImg?`<img src="${ty.bannerImg}">`:'🪬'}</div>
+      <div class="type-tile-info">
+        <div class="type-tile-name">${ty.name}</div>
+        <div class="type-tile-desc">${(ty.desc||'').slice(0,120)}${ty.desc&&ty.desc.length>120?'...':''}</div>
+        <div class="type-tile-meta">${(ty.variants||[]).length} ${tr('styles')} · ${ty.priceRange?`S$${ty.priceRange}`:(ty.price?`S$${Number(ty.price).toLocaleString()}`:tr('noPriceSet'))}</div>
+      </div>
+      <div class="type-tile-actions">
+        <button class="btn-sm" onclick="enterTypeView(${ty.id})">${tr('manageStyles')}</button>
+        <button class="btn-edit" onclick="openTypeForm(${ty.id})">${tr('edit')}</button>
+        <button class="btn-del" onclick="delType(${ty.id})">${tr('del')}</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openTypeForm(typeId){
+  curEditTypeId=typeId||null;
+  const ty=typeId?(getDB().casingTypes||[]).find(t=>t.id===typeId):null;
+  document.getElementById('typeModalTitle').textContent=lang==='th'?(typeId?'แก้ไขประเภทกรอบ':'เพิ่มประเภทกรอบ'):(typeId?'Edit Casing Type':'Add Casing Type');
+  document.getElementById('ft_name').value=ty?ty.name:'';
+  document.getElementById('ft_price').value=ty?(ty.priceRange||(ty.price?String(ty.price):'')):'';
+  document.getElementById('ft_desc').value=ty?(ty.desc||''):'';
+  tempImgs['ft_banner']=ty&&ty.bannerImg?[ty.bannerImg]:[];
+  renderPrev('ft_banner');
+  document.getElementById('typeModal').classList.add('open');
+}
+
+function saveType(){
+  const name=document.getElementById('ft_name').value.trim();
+  const price=document.getElementById('ft_price').value.trim();
+  if(!name){showToast(tr('needName'));return;}
+  const db=getDB();if(!db.casingTypes)db.casingTypes=[];
+  if(curEditTypeId){
+    const ty=db.casingTypes.find(t=>t.id===curEditTypeId);
+    if(ty){ty.name=name;ty.priceRange=price;ty.desc=document.getElementById('ft_desc').value;ty.bannerImg=(tempImgs['ft_banner']||[])[0]||'';delete ty.price;}
+  } else {
+    db.casingTypes.push({id:genId(db.casingTypes),name,priceRange:price,desc:document.getElementById('ft_desc').value,bannerImg:(tempImgs['ft_banner']||[])[0]||'',variants:[]});
+  }
+  saveDB(db);tempImgs={};closeModal('typeModal');showToast(tr('saved'));loadCasingTypes();loadDash();
+}
+
+function delType(typeId){
+  if(!tConfirm('confirmDeleteType'))return;
+  const db=getDB();db.casingTypes=db.casingTypes.filter(t=>t.id!==typeId);
+  saveDB(db);loadCasingTypes();loadDash();showToast(tr('deleted'));
+}
+
+function enterTypeView(typeId){
+  curEditTypeId=typeId;
+  const ty=(getDB().casingTypes||[]).find(t=>t.id===typeId);if(!ty)return;
+  document.getElementById('casingTypesView').style.display='none';
+  document.getElementById('casingVariantsView').style.display='block';
+  document.getElementById('vCrumbName').textContent=ty.name;
+  document.getElementById('vTypeName').textContent=ty.name;
+  loadVariants();
+}
+
+function exitTypeView(){
+  curEditTypeId=null;
+  document.getElementById('casingTypesView').style.display='block';
+  document.getElementById('casingVariantsView').style.display='none';
+}
+
+function loadVariants(){
+  const ty=(getDB().casingTypes||[]).find(t=>t.id===curEditTypeId);if(!ty)return;
+  const c=document.getElementById('variantsList');
+  const vars=ty.variants||[];
+  if(!vars.length){c.innerHTML=`<div style="text-align:center;padding:50px;background:var(--surface);border:1px dashed var(--border);border-radius:12px;color:var(--text-muted)">${tr('noStyles')}</div>`;return;}
+  c.innerHTML=`<table class="dtable">
+    <thead><tr><th>${tr('image')}</th><th>${tr('name')}</th><th>${tr('price')}</th><th>${tr('photos')}</th><th>${tr('actions')}</th></tr></thead>
+    <tbody>${vars.map(v=>`
+      <tr>
+        <td>${v.imgs&&v.imgs[0]?`<img class="thumb" src="${v.imgs[0]}">`:`<div class="no-img">🪬</div>`}</td>
+        <td><strong>${v.name}</strong></td>
+        <td>${v.price?`S$${Number(v.price).toLocaleString()}`:'-'}</td>
+        <td><span class="tag">${(v.imgs||[]).length} ${tr('images')}</span></td>
+        <td><div class="row-actions">
+          <button class="btn-edit" onclick="openVariantForm(${v.id})">✏️</button>
+          <button class="btn-del" onclick="delVariant(${v.id})">🗑</button>
+        </div></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+function openVariantForm(varId){
+  curEditVariantId=varId||null;
+  const ty=(getDB().casingTypes||[]).find(t=>t.id===curEditTypeId);if(!ty)return;
+  const v=varId?(ty.variants||[]).find(x=>x.id===varId):null;
+  document.getElementById('variantModalTitle').textContent=lang==='th'?(varId?'แก้ไขแบบ':'เพิ่มแบบ'):(varId?'Edit Style':'Add Style');
+  document.getElementById('fv_name').value=v?v.name:'';
+  document.getElementById('fv_price').value=v?(v.price||''):'';
+  tempImgs['fv_imgs']=v?[...(v.imgs||[])]:[];
+  renderPrev('fv_imgs');
+  document.getElementById('variantModal').classList.add('open');
+}
+
+function saveVariant(){
+  const name=document.getElementById('fv_name').value.trim();
+  const price=document.getElementById('fv_price').value;
+  if(!name||!price){showToast(tr('needNamePrice'));return;}
+  const db=getDB();const ty=(db.casingTypes||[]).find(t=>t.id===curEditTypeId);if(!ty)return;
+  if(!ty.variants)ty.variants=[];
+  const data={name,price:Number(price),imgs:tempImgs['fv_imgs']||[]};
+  if(curEditVariantId){
+    const v=ty.variants.find(x=>x.id===curEditVariantId);
+    if(v)Object.assign(v,data);
+  } else {
+    ty.variants.push({id:genId(ty.variants),...data});
+  }
+  saveDB(db);tempImgs={};closeModal('variantModal');showToast(tr('saved'));loadVariants();
+}
+
+function delVariant(varId){
+  if(!tConfirm('confirmDeleteStyle'))return;
+  const db=getDB();const ty=(db.casingTypes||[]).find(t=>t.id===curEditTypeId);if(!ty)return;
+  ty.variants=ty.variants.filter(v=>v.id!==varId);saveDB(db);loadVariants();showToast(tr('deleted'));
+}
+
+let tempImgs={};
+let editingItemId={amulets:null,accessories:null,projects:null};
+
+function saveAmulet(){
+  const name=document.getElementById('a_name').value.trim();
+  const price=document.getElementById('a_price').value;
+  if(!name||!price){showToast(tr('needNamePrice'));return;}
+  const db=getDB();
+  const data={
+    name,
+    price:Number(price),
+    cat:document.getElementById('a_cat').value.trim()||'Other',
+    badge:document.getElementById('a_badge').value,
+    temple:document.getElementById('a_temple').value,
+    year:document.getElementById('a_year').value,
+    desc:document.getElementById('a_desc').value,
+    status:document.getElementById('a_status').value||'available',
+    hidePrice:document.getElementById('a_hidePrice').checked,
+    featured:document.getElementById('a_featured').checked,
+    imgs:tempImgs['a_imgs']||[]
+  };
+  if(editingItemId.amulets){
+    const it=db.amulets.find(x=>x.id===editingItemId.amulets);
+    if(it)Object.assign(it,data);
+  } else {
+    db.amulets.push({id:genId(db.amulets),...data});
+  }
+  saveDB(db);tempImgs['a_imgs']=[];showToast(tr('saved'));
+  cancelEditAmulet();
+  loadList('amulets');loadDash();
+}
+
+function editAmulet(id){
+  const it=getDB().amulets.find(x=>x.id===id);if(!it)return;
+  editingItemId.amulets=id;
+  document.getElementById('a_name').value=it.name||'';
+  document.getElementById('a_price').value=it.price||'';
+  document.getElementById('a_cat').value=it.cat||'';
+  document.getElementById('a_badge').value=it.badge||'';
+  document.getElementById('a_temple').value=it.temple||'';
+  document.getElementById('a_year').value=it.year||'';
+  document.getElementById('a_desc').value=it.desc||'';
+  document.getElementById('a_status').value=it.status||'available';
+  document.getElementById('a_hidePrice').checked=!!it.hidePrice;
+  document.getElementById('a_featured').checked=!!it.featured;
+  tempImgs['a_imgs']=[...(it.imgs||[])];renderPrev('a_imgs');
+  document.getElementById('a_form_title').textContent=lang==='th'?'✏️ แก้ไขพระเครื่อง':'✏️ Edit Amulet';
+  document.getElementById('a_save_btn').textContent=lang==='th'?'✅ บันทึกการแก้ไข':'✅ Update Amulet';
+  document.getElementById('a_cancel_btn').style.display='inline-block';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function cancelEditAmulet(){
+  editingItemId.amulets=null;
+  clearF(['a_name','a_price','a_cat','a_badge','a_temple','a_year','a_desc'],'a_imgs');
+  document.getElementById('a_status').value='available';
+  document.getElementById('a_hidePrice').checked=false;
+  document.getElementById('a_featured').checked=false;
+  document.getElementById('a_form_title').textContent=lang==='th'?'➕ เพิ่มพระเครื่องใหม่':'➕ Add New Amulet';
+  document.getElementById('a_save_btn').textContent=lang==='th'?'✅ บันทึก':'✅ Save Amulet';
+  document.getElementById('a_cancel_btn').style.display='none';
+}
+
+function saveAccess(){
+  const name=document.getElementById('ac_name').value.trim();
+  const price=document.getElementById('ac_price').value;
+  if(!name||!price){showToast(tr('needNamePrice'));return;}
+  const db=getDB();
+  const data={
+    name,
+    price:Number(price),
+    cat:document.getElementById('ac_cat').value.trim()||'Other',
+    badge:document.getElementById('ac_badge').value,
+    desc:document.getElementById('ac_desc').value,
+    status:document.getElementById('ac_status').value||'available',
+    hidePrice:document.getElementById('ac_hidePrice').checked,
+    featured:document.getElementById('ac_featured').checked,
+    imgs:tempImgs['ac_imgs']||[]
+  };
+  if(editingItemId.accessories){
+    const it=db.accessories.find(x=>x.id===editingItemId.accessories);
+    if(it)Object.assign(it,data);
+  } else {
+    db.accessories.push({id:genId(db.accessories),...data});
+  }
+  saveDB(db);tempImgs['ac_imgs']=[];showToast(tr('saved'));
+  cancelEditAccess();
+  loadList('accessories');loadDash();
+}
+
+function editAccess(id){
+  const it=getDB().accessories.find(x=>x.id===id);if(!it)return;
+  editingItemId.accessories=id;
+  document.getElementById('ac_name').value=it.name||'';
+  document.getElementById('ac_price').value=it.price||'';
+  document.getElementById('ac_cat').value=it.cat||'';
+  document.getElementById('ac_badge').value=it.badge||'';
+  document.getElementById('ac_desc').value=it.desc||'';
+  document.getElementById('ac_status').value=it.status||'available';
+  document.getElementById('ac_hidePrice').checked=!!it.hidePrice;
+  document.getElementById('ac_featured').checked=!!it.featured;
+  tempImgs['ac_imgs']=[...(it.imgs||[])];renderPrev('ac_imgs');
+  document.getElementById('ac_form_title').textContent=lang==='th'?'✏️ แก้ไขอุปกรณ์':'✏️ Edit Accessory';
+  document.getElementById('ac_save_btn').textContent=lang==='th'?'✅ บันทึกการแก้ไข':'✅ Update';
+  document.getElementById('ac_cancel_btn').style.display='inline-block';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function cancelEditAccess(){
+  editingItemId.accessories=null;
+  clearF(['ac_name','ac_price','ac_cat','ac_badge','ac_desc'],'ac_imgs');
+  document.getElementById('ac_status').value='available';
+  document.getElementById('ac_hidePrice').checked=false;
+  document.getElementById('ac_featured').checked=false;
+  document.getElementById('ac_form_title').textContent=lang==='th'?'➕ เพิ่มอุปกรณ์ใหม่':'➕ Add New Accessory';
+  document.getElementById('ac_save_btn').textContent=lang==='th'?'✅ บันทึก':'✅ Save';
+  document.getElementById('ac_cancel_btn').style.display='none';
+}
+
+function saveProject(){
+  const name=document.getElementById('p_name').value.trim();
+  if(!name){showToast(tr('needName'));return;}
+  const db=getDB();
+  const data={name,status:document.getElementById('p_status').value,date:document.getElementById('p_date').value||'',desc:document.getElementById('p_desc').value,imgs:tempImgs['p_imgs']||[]};
+  if(editingItemId.projects){
+    const it=db.projects.find(x=>x.id===editingItemId.projects);
+    if(it)Object.assign(it,data);
+  } else {
+    db.projects.push({id:genId(db.projects),...data});
+  }
+  saveDB(db);tempImgs['p_imgs']=[];showToast(tr('saved'));
+  cancelEditProject();
+  loadList('projects');loadDash();
+}
+
+function editProject(id){
+  const it=getDB().projects.find(x=>x.id===id);if(!it)return;
+  editingItemId.projects=id;
+  document.getElementById('p_name').value=it.name||'';
+  document.getElementById('p_status').value=it.status||'active';
+  document.getElementById('p_date').value=it.date||'';
+  document.getElementById('p_desc').value=it.desc||'';
+  tempImgs['p_imgs']=[...(it.imgs||[])];renderPrev('p_imgs');
+  document.getElementById('p_form_title').textContent=lang==='th'?'✏️ แก้ไขโปรเจกต์':'✏️ Edit Project';
+  document.getElementById('p_save_btn').textContent=lang==='th'?'✅ บันทึกการแก้ไข':'✅ Update Project';
+  document.getElementById('p_cancel_btn').style.display='inline-block';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function cancelEditProject(){
+  editingItemId.projects=null;
+  clearF(['p_name','p_date','p_desc'],'p_imgs');
+  document.getElementById('p_status').value='active';
+  document.getElementById('p_form_title').textContent=lang==='th'?'➕ เพิ่มโปรเจกต์ใหม่':'➕ Add New Project';
+  document.getElementById('p_save_btn').textContent=lang==='th'?'✅ บันทึกโปรเจกต์':'✅ Save Project';
+  document.getElementById('p_cancel_btn').style.display='none';
+}
+
+function delItem(type,id){
+  if(!tConfirm('confirmDelete'))return;
+  const db=getDB();db[type]=db[type].filter(i=>i.id!==id);saveDB(db);
+  showToast(tr('deleted'));loadList(type);loadDash();
+}
+
+// Upload a single File to Firebase Storage, returning the public URL.
+// Shows a temporary "loading" placeholder while uploading so the user sees
+// something happen immediately.
+async function uploadOne(file, key, isSingle){
+  if(!tempImgs[key]) tempImgs[key] = [];
+  // Add a placeholder so the user gets immediate feedback
+  const placeholder = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="120" height="120" fill="%23e8d9b0"/><text x="50%" y="50%" font-family="sans-serif" font-size="13" fill="%238b6914" text-anchor="middle" dominant-baseline="middle">Uploading…</text></svg>'
+  );
+  let slot;
+  if(isSingle){
+    tempImgs[key] = [placeholder];
+    slot = 0;
+  } else {
+    slot = tempImgs[key].length;
+    tempImgs[key].push(placeholder);
+  }
+  renderPrev(key);
+  try {
+    const url = await FB.uploadFile(file, file.name || key);
+    tempImgs[key][slot] = url;
+    renderPrev(key);
+  } catch(err){
+    console.error('upload failed:', err);
+    // Remove the placeholder on failure
+    tempImgs[key].splice(slot, 1);
+    renderPrev(key);
+    showToast((lang === 'th' ? 'อัปโหลดล้มเหลว: ' : 'Upload failed: ') + (err.message || 'unknown'));
+  }
+}
+
+function handleImgs(event, key){
+  const files = [...event.target.files];
+  files.forEach(file => uploadOne(file, key, false));
+}
+
+function handleSingleImg(event, key){
+  const file = event.target.files[0];
+  if(!file) return;
+  uploadOne(file, key, true);
+}
+
+function renderPrev(key){
+  const el=document.getElementById(key+'_p');if(!el)return;
+  el.innerHTML=(tempImgs[key]||[]).map((src,i)=>`<div class="prev-item"><img src="${src}"><button class="prev-rm" onclick="rmImg('${key}',${i})">✕</button></div>`).join('');
+}
+
+function rmImg(key, idx){
+  const url = tempImgs[key][idx];
+  tempImgs[key].splice(idx, 1);
+  renderPrev(key);
+  // Best-effort cleanup of the file on Storage so we don't leak orphans.
+  // (Won't run if the URL is still a data: placeholder for an in-flight upload.)
+  if(url && typeof url === 'string' && url.startsWith('http')){
+    FB.deleteFile(url).catch(() => {});
+  }
+}
+
+// Paste images from clipboard (Ctrl+V) — upload each one to Storage
+function pasteImagesFromClipboard(e, key){
+  const items = (e.clipboardData && e.clipboardData.items) ? e.clipboardData.items : [];
+  if(!items.length) return 0;
+  let added = 0;
+  for(const item of items){
+    if(item.kind === 'file' && item.type.startsWith('image/')){
+      const file = item.getAsFile();
+      if(!file) continue;
+      uploadOne(file, key, false);
+      added++;
+    }
+  }
+  return added;
+}
+
+// Wire paste support for the review form. We attach to the document so user
+// can paste from any focus position while the reviews panel is open. We
+// double-check the reviews panel is active to avoid stealing pastes elsewhere.
+document.addEventListener('paste', function(e){
+  const reviewsPanel = document.getElementById('panel-reviews');
+  if(!reviewsPanel || !reviewsPanel.classList.contains('active')) return;
+  // Avoid hijacking pastes into URL/text fields where the user intends to paste text
+  const tgt = e.target;
+  const tag = tgt && tgt.tagName;
+  if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT'){
+    // Only paste images if clipboard *only* has image data (no text overlap)
+    const hasText = [...(e.clipboardData ? e.clipboardData.items : [])]
+      .some(i => i.kind === 'string' && i.type === 'text/plain');
+    if(hasText) return;  // let normal text paste happen
+  }
+  const added = pasteImagesFromClipboard(e, 'r_imgs');
+  if(added){
+    e.preventDefault();
+    showToast(
+      (lang === 'th' ? '📷 วางรูปแล้ว ' : '📷 Pasted ') +
+      added + (lang === 'th' ? ' รูป' : (added === 1 ? ' image' : ' images'))
+    );
+  }
+});
+
+function dov(e,el){e.preventDefault();el.classList.add('dov');}
+function dol(el){el.classList.remove('dov');}
+function ddr(e,key,single){
+  e.preventDefault();e.currentTarget.classList.remove('dov');
+  if(!tempImgs[key])tempImgs[key]=[];
+  const files=[...e.dataTransfer.files].filter(f=>f.type.startsWith('image/'));
+  if(single && files[0]){
+    const r=new FileReader();r.onload=ev=>{tempImgs[key]=[ev.target.result];renderPrev(key);};r.readAsDataURL(files[0]);
+  } else {
+    files.forEach(file=>{
+      const r=new FileReader();r.onload=ev=>{tempImgs[key].push(ev.target.result);renderPrev(key);};r.readAsDataURL(file);
+    });
+  }
+}
+
+function clearF(ids,imgKey){
+  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  if(imgKey){tempImgs[imgKey]=[];const p=document.getElementById(imgKey+'_p');if(p)p.innerHTML='';}
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+function exportDB(){
+  const blob=new Blob([JSON.stringify(getDB(),null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download='yyy_backup_'+Date.now()+'.json';a.click();URL.revokeObjectURL(url);
+  showToast(tr('exported'));
+}
+function importDB(event){
+  const file=event.target.files[0];if(!file)return;
+  const r=new FileReader();r.onload=e=>{
+    try{const data=JSON.parse(e.target.result);
+      if(!data.casingTypes && data.frameTypes){data.casingTypes=data.frameTypes;}
+      if(!data.casingTypes)data.casingTypes=[];
+      if(!data.settings)data.settings=defaultSettings();
+      if(data.amulets&&data.accessories&&data.projects){saveDB(data);loadDash();showToast(tr('imported'));}
+      else showToast(tr('invalidFile'));
+    }catch(err){showToast(tr('cantRead'));}
+  };r.readAsText(file);event.target.value='';
+}
+function confirmReset(){if(tConfirm('confirmReset')){localStorage.removeItem(DB_KEY);loadDash();showToast(tr('reset'));}}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+
+// INIT
+applyLang();
+
+// Wait for Firebase to be ready, then route based on auth state
+async function bootAdmin(){
+  // Wait for the firebase-shared module to attach FB to window
+  let tries = 0;
+  while(!window.FB && tries < 100){ await new Promise(r => setTimeout(r, 50)); tries++; }
+  if(!window.FB){
+    showToast('Firebase failed to load — check internet connection');
+    return;
+  }
+
+  // Subscribe to auth changes — drives login/logout UI
+  FB.onAuthChange(async (user) => {
+    if(user){
+      // User is signed in. Wait for first DB load, then show admin.
+      await FB.ready();
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('adminScreen').style.display = 'block';
+      document.getElementById('adminUser').textContent = '👤 ' + (user.email || 'admin');
+      // If the DB doc doesn't exist yet (first run), create it with defaults
+      if(!FB.getDB() || !Object.keys(FB.getDB()).length){
+        const seed = {settings:defaultSettings(),amulets:[],accessories:[],casingTypes:[],projects:[],reviews:[]};
+        try { await FB.saveDB(seed); console.log('[admin] seeded empty DB with defaults'); }
+        catch(e){ console.error('[admin] failed to seed DB:', e); }
+      }
+      loadDash();
+    } else {
+      // Signed out
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('adminScreen').style.display = 'none';
+    }
+  });
+
+  // Re-render the dashboard whenever the underlying DB changes (e.g. another
+  // admin tab saved something) so we always show fresh data.
+  FB.onDBChange(() => {
+    if(FB.currentUser()){
+      const active = document.querySelector('.panel.active');
+      if(!active || active.id === 'panel-dashboard'){
+        // Soft refresh dashboard counts only — heavier panels keep their state
+        if(typeof loadDash === 'function') loadDash();
+      }
+    }
+  });
+}
+
+bootAdmin();
+
+
+// ══════════════════════════════════════════════════════════════
+//  LIVE EDITOR — split-screen WYSIWYG
+// ══════════════════════════════════════════════════════════════
+//
+//  Maps element clicks in the live preview → admin panel + scrolls to
+//  the matching field. The iframe receives an injection script after load
+//  that adds hover outlines + click → postMessage('le-click', selector).
+//
+//  Element-to-panel mapping is defined in EDIT_MAP below. Each entry
+//  describes which panel to open, an optional field id to focus, and
+//  optional context (e.g. item id for product cards).
+
+// Each entry: panel = which admin panel to open; field = optional element id
+// in that panel to scroll to + flash; label = friendly name to show in header.
+//
+// KEY = ANY ONE selector. We do NOT use comma-lists here — match is exact.
+// If multiple selectors should point to the same panel, list them separately.
+const EDIT_MAP = {
+  // ─── Top bar / branding ───
+  '.topbar':        {panel:'content-branding', field:'b_topbar',   label:'Top bar message'},
+  '.logo':          {panel:'content-branding', field:'b_logoIcon', label:'Shop logo'},
+  '.logo-icon':     {panel:'content-branding', field:'b_logoIcon', label:'Logo icon'},
+  '.logo-text':     {panel:'content-branding', field:'b_logoText', label:'Shop name'},
+  '.logo-sub':      {panel:'content-branding', field:'b_logoSub',  label:'Shop tagline'},
+
+  // ─── Navigation ───
+  'nav':            {panel:'content-nav',  label:'Navigation menu'},
+  '.nav-links':     {panel:'content-nav',  label:'Navigation links'},
+  '.nav-inner':     {panel:'content-nav',  label:'Navigation bar'},
+
+  // ─── Hero section ───
+  '#heroEyebrow':   {panel:'content-hero', field:'h_eyebrow',      label:'Hero eyebrow'},
+  '#heroTitle':     {panel:'content-hero', field:'h_titleHL',      label:'Hero title'},
+  '#heroSub':       {panel:'content-hero', field:'h_sub',          label:'Hero subtitle'},
+  '#heroDesc':      {panel:'content-hero', field:'h_desc',         label:'Hero description'},
+  '#heroBtns':      {panel:'content-hero', field:'heroBtnList',    label:'Hero buttons'},
+  '#heroStats':     {panel:'content-hero', field:'heroStatList',   label:'Hero stats'},
+  '#heroBg':        {panel:'content-hero', field:'h_bg_p',         label:'Hero background image'},
+  '.hero':          {panel:'content-hero',                          label:'Hero section'},
+  '.hero-3d':       {panel:'content-hero', field:'h_phra_front_p', label:'Phra Somdej 3D'},
+  '#phra3d':        {panel:'content-hero', field:'h_phra_front_p', label:'Phra Somdej 3D'},
+
+  // ─── Homepage sections ───
+  '.featured-section':{panel:'content-featured', label:'Featured items'},
+  '#featuredSection': {panel:'content-featured', label:'Featured items'},
+  '#featuredGrid':    {panel:'content-featured', label:'Featured items'},
+  '.home-reviews-section': {panel:'reviews', label:'Homepage reviews preview'},
+  '#homeReviewsSection':   {panel:'reviews', label:'Homepage reviews preview'},
+  '#homeRevGrid':          {panel:'reviews', label:'Homepage reviews preview'},
+  '#homeRevTitle':         {panel:'reviews', field:'rev_homeTitle', label:'Reviews homepage title'},
+  '#homeRevSub':           {panel:'reviews', field:'rev_homeSub',   label:'Reviews homepage subtitle'},
+  '.home-services-section':{panel:'content-homeLayout', label:'Homepage layout (service cards)'},
+  '#homeServicesSection':  {panel:'content-homeLayout', label:'Homepage layout'},
+  '.trust-grid':      {panel:'content-trust',    label:'Trust badges'},
+  '#trustGrid':       {panel:'content-trust',    label:'Trust badges'},
+
+  // ─── Section headers (page titles) ───
+  '.sec-head':        {panel:'content-sections', label:'Section header'},
+  '#amuletsTitle':    {panel:'content-sections', field:'sec_a_title',  label:'Amulets header'},
+  '#amuletsDesc':     {panel:'content-sections', field:'sec_a_desc',   label:'Amulets header'},
+  '#accTitle':        {panel:'content-sections', field:'sec_ac_title', label:'Accessories header'},
+  '#accDesc':         {panel:'content-sections', field:'sec_ac_desc',  label:'Accessories header'},
+  '#casingTitle':     {panel:'content-sections', field:'sec_c_title',  label:'Casing header'},
+  '#casingDesc':      {panel:'content-sections', field:'sec_c_desc',   label:'Casing header'},
+  '#projTitle':       {panel:'content-sections', field:'sec_p_title',  label:'Projects header'},
+  '#projDesc':        {panel:'content-sections', field:'sec_p_desc',   label:'Projects header'},
+  '#revTitle':        {panel:'reviews',           label:'Reviews header'},
+  '#revSub':          {panel:'reviews',           label:'Reviews header'},
+  '#payTitle':        {panel:'content-payment',   label:'Payment & shipping'},
+  '#paySub':          {panel:'content-payment',   label:'Payment & shipping'},
+
+  // ─── Cards/grids by section ───
+  '#aGrid':           {panel:'amulets',     label:'Amulets list'},
+  '#acGrid':          {panel:'accessories', label:'Accessories list'},
+  '#cTypeGrid':       {panel:'casing',      label:'Casing types'},
+
+  // ─── Contact ───
+  '.contact-group':   {panel:'content-contact', label:'Contact section'},
+
+  // ─── Product cards (the card class is used for everything) ───
+  '.card':            {panel:'amulets',     label:'Product item'},  // overridden by data-le-product-page
+};
+
+// Reverse mapping for product cards (clicked card → which panel)
+const PRODUCT_PANEL_BY_PAGE = {
+  amulets:'amulets', accessories:'accessories', casing:'casing',
+  projects:'projects', reviews:'reviews'
+};
+
+let _liveOpen = false;
+
+window.openLiveEditor = function(){
+  console.log('[LE-parent] openLiveEditor called');
+  const ed = document.getElementById('liveEditor');
+  ed.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  _liveOpen = true;
+  const iframe = document.getElementById('liveIframe');
+  // Derive the index filename from this admin file's filename.
+  // Examples:
+  //   admin.html        → index.html
+  //   admin_15.html     → index_15.html
+  //   admin (3).html    → index (3).html
+  //   /path/admin.html  → /path/index.html
+  const here = location.pathname;
+  const fname = here.substring(here.lastIndexOf('/') + 1);
+  let indexFname = 'index.html';
+  if(fname.toLowerCase().startsWith('admin')){
+    indexFname = 'index' + fname.substring(5); // keep suffix like "_15.html" or " (3).html"
+  }
+  const url = indexFname + '?liveedit=1&t=' + Date.now();
+  console.log('[LE-parent] this file:', fname, '→ loading iframe:', url);
+  iframe.src = url;
+  // Listen for messages from iframe
+  if(!window._leListenerAttached){
+    window.addEventListener('message', handleLiveMessage);
+    window._leListenerAttached = true;
+    console.log('[LE-parent] message listener attached');
+  }
+};
+
+window.reloadLivePreview = function(){
+  const iframe = document.getElementById('liveIframe');
+  const here = location.pathname;
+  const fname = here.substring(here.lastIndexOf('/') + 1);
+  let indexFname = 'index.html';
+  if(fname.toLowerCase().startsWith('admin')){
+    indexFname = 'index' + fname.substring(5);
+  }
+  iframe.src = indexFname + '?liveedit=1&t=' + Date.now();
+};
+
+window.closeLiveEditor = function(){
+  document.getElementById('liveEditor').classList.remove('open');
+  document.body.style.overflow = '';
+  _liveOpen = false;
+};
+
+function handleLiveMessage(e){
+  console.log('[LE-parent] received message:', e.data);
+  if(!e.data || typeof e.data !== 'object') return;
+  if(e.data.type === 'le-ready'){
+    console.log('[LE-parent] iframe is ready');
+    injectEditorScript();
+    return;
+  }
+  if(e.data.type === 'le-click'){
+    console.log('[LE-parent] element clicked:', e.data);
+    handleElementClick(e.data);
+    return;
+  }
+}
+
+// Inject the editor overlay script into the iframe AFTER it loads.
+// We do this via postMessage handshake so we know the page is ready.
+document.getElementById('liveIframe').addEventListener('load', function(){
+  // Wait one tick then send init message
+  setTimeout(() => {
+    try {
+      this.contentWindow.postMessage({type:'le-init', map: Object.keys(EDIT_MAP)}, '*');
+    } catch(err){}
+  }, 100);
+});
+
+function injectEditorScript(){
+  // The script is already injected by index.html when ?liveedit=1 is in URL.
+  // This is a no-op stub for future use.
+}
+
+// Mapping from page id (built-in) → admin panel to open.
+// Used when user clicks a nav link in live preview.
+const PAGE_TO_PANEL = {
+  home:         'content-hero',          // home page → edit hero
+  amulets:      'amulets',
+  accessories:  'accessories',
+  casing:       'casing',
+  projects:     'projects',
+  reviews:      'reviews',
+  contact:      'content-contact',
+  payment:      'content-payment',
+  about:        'content-sections',      // about page → its section header
+};
+
+function handleElementClick(data){
+  // data = {type:'le-click', selectors:[...], selector, label, page}
+  const tryList = (data.selectors && data.selectors.length) ? data.selectors
+                : [data.selector].filter(Boolean);
+  let target = null;
+  let matchedKey = null;
+  let navigateTo = null;  // page id to navigate iframe to, if any
+
+  // 1) Nav-link synthetic selector → route to that page's manage panel
+  //    AND tell the iframe to actually navigate to that page so the preview matches.
+  for(const sel of tryList){
+    if(typeof sel === 'string' && sel.startsWith('nav-link:')){
+      const pageId = sel.split(':')[1];
+      navigateTo = pageId;
+      // Built-in page mapping
+      if(PAGE_TO_PANEL[pageId]){
+        target = {panel: PAGE_TO_PANEL[pageId], label: data.label || ('Manage ' + pageId)};
+        matchedKey = sel;
+        break;
+      }
+      // Custom page — open custom-pages editor and try to scroll to that page
+      target = {panel: 'content-nav', label: 'Custom page: ' + pageId};
+      matchedKey = sel;
+      break;
+    }
+  }
+
+  // 2) Normal selector lookup
+  if(!target){
+    for(const sel of tryList){
+      if(EDIT_MAP[sel]){
+        target = EDIT_MAP[sel];
+        matchedKey = sel;
+        break;
+      }
+    }
+  }
+
+  // 3) Product card → page-specific panel
+  if(!target && data.page && PRODUCT_PANEL_BY_PAGE[data.page]){
+    target = {panel: PRODUCT_PANEL_BY_PAGE[data.page], label: (data.page.charAt(0).toUpperCase() + data.page.slice(1))};
+  }
+
+  console.log('[LE-parent] tried selectors:', tryList, '→ matched:', matchedKey, '→ target:', target);
+
+  if(!target){
+    showLePanelMessage('Not editable yet: "' + (data.label || tryList[0] || 'unknown') + '"',
+      'Tried: ' + tryList.join(', ') + '. Tell Claude to add this to the editor map.');
+    return;
+  }
+
+  // If we picked up a navigation hint, tell the iframe to go there.
+  if(navigateTo){
+    try {
+      const iframe = document.getElementById('liveIframe');
+      iframe.contentWindow.postMessage({type:'le-goto', page: navigateTo}, '*');
+    } catch(err){ console.warn('[LE-parent] could not send goto to iframe:', err); }
+  }
+
+  showPanel(target.panel, null);
+  setTimeout(() => populateLeSidePanel(target), 50);
+}
+
+function showLePanelMessage(title, text){
+  const panel = document.getElementById('leSidePanel');
+  panel.innerHTML = `
+    <div class="le-panel-empty">
+      <div class="le-panel-empty-icon">🚧</div>
+      <div class="le-panel-empty-title">${escapeHtml(title)}</div>
+      <div class="le-panel-empty-text">${escapeHtml(text)}</div>
+    </div>`;
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// Restore any previously-moved panel back to its original location.
+// Called BEFORE we move a new panel into the side, so only one panel is
+// ever displaced at a time.
+function restoreMovedPanels(){
+  document.querySelectorAll('.panel').forEach(p => {
+    if(p._leOriginalParent){
+      try {
+        p._leOriginalParent.insertBefore(p, p._leOriginalNext || null);
+      } catch(err){
+        // _leOriginalNext may have been removed; just append
+        p._leOriginalParent.appendChild(p);
+      }
+      p.classList.remove('active');
+      p._leOriginalParent = null;
+      p._leOriginalNext = null;
+    }
+  });
+}
+
+function populateLeSidePanel(target){
+  // STEP 1: restore any panel that was previously moved into the side
+  restoreMovedPanels();
+
+  // STEP 2: locate the new source panel
+  const sourcePanel = document.getElementById('panel-' + target.panel);
+  const leSide = document.getElementById('leSidePanel');
+  if(!sourcePanel){
+    showLePanelMessage('Panel not found', 'The "' + target.panel + '" panel could not be loaded.');
+    return;
+  }
+
+  // STEP 3: remember where this panel came from so we can put it back later
+  sourcePanel._leOriginalParent = sourcePanel.parentNode;
+  sourcePanel._leOriginalNext   = sourcePanel.nextSibling;
+
+  // STEP 4: build the side-panel header + move the real panel inside
+  leSide.innerHTML = '';
+  const header = document.createElement('div');
+  header.className = 'le-panel-header';
+  header.innerHTML = `<div style="display:flex;align-items:center;gap:10px;color:var(--gold-dark);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase">
+    <span>📍 Editing:</span> <span style="color:var(--text)">${escapeHtml(target.label || target.panel)}</span>
+  </div>`;
+  const wrap = document.createElement('div');
+  wrap.className = 'le-panel-inner';
+  wrap.appendChild(header);
+  sourcePanel.classList.add('active');
+  wrap.appendChild(sourcePanel);
+  leSide.appendChild(wrap);
+
+  // STEP 5: scroll to + flash the target field, if specified
+  if(target.field){
+    setTimeout(() => {
+      const fld = document.getElementById(target.field);
+      if(fld){
+        fld.scrollIntoView({behavior:'smooth', block:'center'});
+        const flashTarget = fld.closest('.fg, .form-card') || fld;
+        flashTarget.classList.remove('le-focused-field');
+        void flashTarget.offsetWidth;
+        flashTarget.classList.add('le-focused-field');
+        if(fld.tagName === 'INPUT' || fld.tagName === 'TEXTAREA') fld.focus();
+      }
+    }, 200);
+  }
+}
+
+// When live editor closes, return any moved panels to their original parents
+const _origCloseLE = window.closeLiveEditor;
+window.closeLiveEditor = function(){
+  restoreMovedPanels();
+  showPanel('dashboard', null);
+  const leSide = document.getElementById('leSidePanel');
+  leSide.innerHTML = `
+    <div class="le-panel-empty" id="leEmpty">
+      <div class="le-panel-empty-icon">👈</div>
+      <div class="le-panel-empty-title">Click any element on the left</div>
+      <div class="le-panel-empty-text">Hover over text, images, buttons, or cards in the preview. The matching editor form will open here.</div>
+    </div>`;
+  _origCloseLE();
+};
+
+// Auto-reload preview after save — wrap the saveDB function in place.
+// `function saveDB(){}` declarations create a property on the global object
+// in non-strict scripts, so we can replace it via the global handle.
+(function hookSave(){
+  if(typeof saveDB !== 'function'){
+    // Try again shortly if not loaded yet
+    setTimeout(hookSave, 100);
+    return;
+  }
+  const orig = saveDB;
+  // Override globally — works for both `saveDB(x)` direct calls AND
+  // `window.saveDB(x)` reference calls because they resolve to the same slot.
+  saveDB = function(db){
+    orig.call(this, db);
+    if(_liveOpen){
+      // Soft reload preview so the user sees the change
+      setTimeout(() => reloadLivePreview(), 150);
+      // Also show a confirmation toast inside the live editor
+      showLiveToast('💾 ' + (lang==='th' ? 'บันทึกแล้ว — รีเฟรช preview...' : 'Saved — refreshing preview...'));
+    }
+  };
+  // Make sure window.saveDB points to the wrapped version too
+  window.saveDB = saveDB;
+  console.log('[LE-parent] saveDB hooked successfully');
+})();
+
+// A toast that lives INSIDE the live editor (so it shows above the overlay)
+function showLiveToast(msg){
+  let t = document.getElementById('leToast');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'leToast';
+    t.style.cssText = 'position:fixed;top:70px;right:24px;background:linear-gradient(135deg,#c9a84c,#e8c96a);color:#12100a;padding:12px 22px;border-radius:10px;font-size:14px;font-weight:700;z-index:999999;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:opacity .3s, transform .3s;font-family:Inter,sans-serif;letter-spacing:.3px;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  t.style.transform = 'translateY(0)';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translateY(-10px)';
+  }, 2200);
+}
+
+</script>
+</body>
+</html>
