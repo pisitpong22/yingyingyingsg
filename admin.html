@@ -474,8 +474,14 @@
         <div class="form-card">
           <div class="form-grid">
             <div class="fg full"><label class="fl" data-en="Browser Tab Title" data-th="ชื่อแท็บเบราว์เซอร์">Browser Tab Title</label><input class="fi" id="b_pageTitle"></div>
-            <div class="fg"><label class="fl" data-en="Logo Icon (emoji)" data-th="ไอคอนโลโก้ (อีโมจิ)">Logo Icon (emoji)</label><input class="fi" id="b_logoIcon" maxlength="4"></div>
-            <div class="fg"><label class="fl" data-en="Logo Text (shop name)" data-th="ข้อความโลโก้ (ชื่อร้าน)">Logo Text (shop name)</label><input class="fi" id="b_logoText"></div>
+            <div class="fg full">
+              <label class="fl" data-en="Logo Icon — emoji OR image path" data-th="ไอคอนโลโก้ — อีโมจิ หรือ path รูป">Logo Icon — emoji OR image path</label>
+              <input class="fi" id="b_logoIcon" placeholder="📿  or  /favicon/apple-touch-icon.png">
+              <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px;line-height:1.5">
+                <span data-en-html="Examples: <code>📿</code> (emoji) or <code>/favicon/apple-touch-icon.png</code> (image). Recommended size for image: <strong>square</strong>, at least 96×96 px." data-th-html="ตัวอย่าง: <code>📿</code> (อีโมจิ) หรือ <code>/favicon/apple-touch-icon.png</code> (รูป) ขนาดรูปแนะนำ: <strong>สี่เหลี่ยมจัตุรัส</strong> อย่างน้อย 96×96 px"></span>
+              </div>
+            </div>
+            <div class="fg full"><label class="fl" data-en="Logo Text (shop name)" data-th="ข้อความโลโก้ (ชื่อร้าน)">Logo Text (shop name)</label><input class="fi" id="b_logoText"></div>
             <div class="fg full"><label class="fl" data-en="Logo Subtitle" data-th="คำบรรยายใต้โลโก้">Logo Subtitle</label><input class="fi" id="b_logoSub"></div>
             <div class="fg full"><label class="fl" data-en="Top Bar Banner" data-th="แบนเนอร์แถบบน">Top Bar Banner</label><input class="fi" id="b_topbar"></div>
           </div>
@@ -1288,7 +1294,7 @@ function tConfirm(key){return _confirm(tr(key));}
 function defaultSettings(){
   return {
     pageTitle:'Yingyingying Amulet | Authentic Thai Amulets',
-    logoIcon:'📿',logoText:'Yingyingying Amulet',logoSub:'AUTHENTIC THAI AMULETS',
+    logoIcon:'/favicon/apple-touch-icon.png',logoText:'Yingyingying Amulet',logoSub:'AUTHENTIC THAI AMULETS',
     topbar:'📿 Yingyingying Amulet — Authentic Thai Amulets · Certified Genuine · Worldwide Shipping 📿',
     nav:[
       {id:'home',label:'Home',visible:true,enabled:true,builtin:true},
@@ -1450,6 +1456,8 @@ function applyDbMigrations(d){
   if(d.settings.searchPlaceholder===undefined)d.settings.searchPlaceholder=def.searchPlaceholder;
   if(d.settings.contactPmText===undefined)d.settings.contactPmText=def.contactPmText;
   if(d.settings.displayFont===undefined)d.settings.displayFont=def.displayFont;
+  // Auto-upgrade old emoji logo to the favicon image
+  if(d.settings.logoIcon === '📿') d.settings.logoIcon = def.logoIcon;
   if(!Array.isArray(d.settings.homeOrder)){
     d.settings.homeOrder = def.homeOrder.slice();
   } else {

@@ -932,6 +932,10 @@ function applyDbMigrations(d){
   if(d.settings.searchPlaceholder===undefined)d.settings.searchPlaceholder=def.searchPlaceholder;
   if(d.settings.contactPmText===undefined)d.settings.contactPmText=def.contactPmText;
   if(d.settings.displayFont===undefined)d.settings.displayFont=def.displayFont;
+  // Auto-upgrade old emoji logo to the favicon image now that we have one.
+  // Only does this once — if the user has set anything other than the legacy
+  // default emoji, we respect their choice.
+  if(d.settings.logoIcon === '📿') d.settings.logoIcon = def.logoIcon;
   if(!Array.isArray(d.settings.homeOrder)){
     d.settings.homeOrder = def.homeOrder.slice();
   } else {
