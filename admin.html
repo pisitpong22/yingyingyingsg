@@ -177,7 +177,33 @@
   .u-icon{font-size:30px;margin-bottom:7px}
   .u-text{color:var(--text-muted);font-size:14px}
   .u-hint{color:#bbb;font-size:12px;margin-top:3px}
-  /* ───── UPLOAD BANNER ─────
+  /* ───── RICH TEXT EDITOR ─────
+     Used wherever we want admin to format descriptions (bold, italic, color,
+     line breaks). Renders as an editable div with a small toolbar above. */
+  .rte-wrap{border:1.5px solid var(--border);border-radius:9px;background:var(--surface);overflow:visible;transition:border-color .15s}
+  .rte-wrap:focus-within{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.12)}
+  .rte-toolbar{display:flex;align-items:center;gap:2px;padding:6px 8px;background:rgba(201,168,76,.08);border-bottom:1px solid var(--border);border-radius:9px 9px 0 0;flex-wrap:wrap}
+  .rte-btn{background:transparent;border:none;color:var(--text);width:30px;height:28px;border-radius:5px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:14px;transition:background .15s;font-family:inherit;padding:0}
+  .rte-btn:hover{background:rgba(201,168,76,.18)}
+  .rte-btn.active{background:var(--gold);color:var(--deep)}
+  .rte-sep{width:1px;height:18px;background:var(--border);margin:0 4px}
+  .rte-color-picker{position:relative}
+  .rte-color-btn{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:32px;padding:2px 0}
+  .rte-color-letter{line-height:1;font-weight:700;font-size:13px}
+  .rte-color-bar{display:block;width:18px;height:3px;border-radius:2px;background:#2c1a06;border:1px solid rgba(0,0,0,.15)}
+  .rte-color-pop{display:none;position:absolute;top:32px;left:0;z-index:1000;background:var(--surface);border:1.5px solid var(--border);border-radius:9px;padding:8px;box-shadow:0 8px 22px rgba(0,0,0,.18)}
+  .rte-color-pop.open{display:block}
+  .rte-color-grid{display:grid;grid-template-columns:repeat(5,22px);gap:5px}
+  .rte-swatch{width:22px;height:22px;border-radius:5px;border:1.5px solid rgba(0,0,0,.1);cursor:pointer;transition:transform .12s;padding:0}
+  .rte-swatch:hover{transform:scale(1.15);border-color:var(--gold)}
+  .rte-color-input{width:22px;height:22px;border:1.5px solid var(--border);border-radius:5px;cursor:pointer;background:transparent;padding:0}
+  .rte-editor{min-height:90px;padding:12px 14px;outline:none;font-size:13.5px;color:var(--text);line-height:1.55;font-family:inherit}
+  .rte-editor:empty::before{content:attr(data-placeholder);color:var(--text-muted);pointer-events:none;font-style:italic}
+  .rte-editor strong,.rte-editor b{font-weight:700}
+  .rte-editor em,.rte-editor i{font-style:italic}
+  .rte-editor p{margin:0 0 6px;min-height:1em}
+  .rte-editor br{line-height:1.55}
+
      Sticky banner at top while files are uploading. Hard to miss so users
      don't accidentally hit Save before files finish. */
   .upload-banner{
@@ -205,48 +231,48 @@
     .ub-text{line-height:1.4}
   }
  */
-  .prev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:11px}
-  .prev-item{position:relative;border-radius:10px;overflow:hidden;background:var(--surface);border:1.5px solid var(--border);transition:all .2s;display:flex;flex-direction:column}
-  .prev-item:hover{border-color:var(--gold);transform:translateY(-1px);box-shadow:0 4px 14px rgba(201,168,76,.12)}
+  .prev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px;margin-top:10px}
+  .prev-item{position:relative;border-radius:8px;overflow:hidden;background:var(--surface);border:1.5px solid var(--border);transition:all .2s;display:flex;flex-direction:column}
+  .prev-item:hover{border-color:var(--gold);transform:translateY(-1px);box-shadow:0 3px 10px rgba(201,168,76,.12)}
   .prev-item.is-primary{border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,168,76,.25)}
-  .prev-item.is-uploading{border-color:rgba(201,168,76,.5);background:rgba(201,168,76,.05);padding:10px;flex-direction:row;align-items:center;gap:10px;grid-column:span 2}
-  .prev-item.is-error{border-color:rgba(139,0,0,.5);background:rgba(139,0,0,.05);padding:10px;flex-direction:row;align-items:center;gap:10px;grid-column:span 2}
+  .prev-item.is-uploading{border-color:rgba(201,168,76,.5);background:rgba(201,168,76,.05);padding:7px;flex-direction:row;align-items:center;gap:8px;grid-column:span 2}
+  .prev-item.is-error{border-color:rgba(139,0,0,.5);background:rgba(139,0,0,.05);padding:7px;flex-direction:row;align-items:center;gap:8px;grid-column:span 2}
 
   .pi-thumb{width:100%;aspect-ratio:1;background:#f0e8d0;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
   .pi-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-  .pi-thumb-loading,.pi-thumb-error{width:54px;height:54px;aspect-ratio:1;border-radius:8px;font-size:22px}
+  .pi-thumb-loading,.pi-thumb-error{width:40px;height:40px;aspect-ratio:1;border-radius:6px;font-size:17px}
   .pi-thumb-loading{background:rgba(201,168,76,.12)}
   .pi-thumb-error{background:rgba(139,0,0,.12)}
 
   .pi-spinner{
-    width:24px;height:24px;border:2.5px solid rgba(201,168,76,.25);
+    width:18px;height:18px;border:2.5px solid rgba(201,168,76,.25);
     border-top-color:var(--gold);border-radius:50%;
     animation:piSpin .8s linear infinite;
   }
   @keyframes piSpin{to{transform:rotate(360deg)}}
 
-  .pi-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;padding-right:24px}
-  .pi-name{font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .pi-meta{font-size:11px;color:var(--text-muted)}
+  .pi-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;padding-right:20px}
+  .pi-name{font-size:11px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pi-meta{font-size:10px;color:var(--text-muted)}
   .pi-status{color:var(--gold-dark);font-weight:600}
   .pi-error-text{color:#a55;font-weight:600}
 
-  .pi-bar{height:4px;background:rgba(201,168,76,.12);border-radius:2px;overflow:hidden;margin-top:5px}
+  .pi-bar{height:3px;background:rgba(201,168,76,.12);border-radius:2px;overflow:hidden;margin-top:3px}
   .pi-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold-light),var(--gold));border-radius:2px;transition:width .3s ease-out}
 
-  .pi-badge{position:absolute;top:6px;left:6px;background:var(--gold);color:var(--deep);font-size:10px;font-weight:700;padding:3px 8px;border-radius:11px;letter-spacing:.5px;box-shadow:0 2px 6px rgba(0,0,0,.2);pointer-events:none}
+  .pi-badge{position:absolute;top:3px;left:3px;background:var(--gold);color:var(--deep);font-size:8.5px;font-weight:700;padding:1.5px 5px;border-radius:8px;letter-spacing:.4px;box-shadow:0 1px 4px rgba(0,0,0,.2);pointer-events:none;line-height:1.3}
 
-  .pi-reorder{position:absolute;bottom:6px;left:6px;display:flex;gap:3px;opacity:0;transition:opacity .2s;pointer-events:none}
+  .pi-reorder{position:absolute;bottom:3px;left:3px;display:flex;gap:2px;opacity:0;transition:opacity .2s;pointer-events:none}
   .prev-item:hover .pi-reorder{opacity:1;pointer-events:auto}
-  .pi-move{background:rgba(18,16,10,.85);color:var(--gold-light);border:none;width:24px;height:24px;border-radius:6px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .pi-move{background:rgba(18,16,10,.85);color:var(--gold-light);border:none;width:18px;height:18px;border-radius:4px;font-size:8.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
   .pi-move:hover:not(:disabled){background:var(--gold);color:var(--deep)}
   .pi-move:disabled{opacity:.35;cursor:not-allowed}
 
-  .pi-rm{position:absolute;top:6px;right:6px;background:rgba(139,0,0,.85);color:white;border:none;border-radius:50%;width:24px;height:24px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:2}
+  .pi-rm{position:absolute;top:3px;right:3px;background:rgba(139,0,0,.85);color:white;border:none;border-radius:50%;width:18px;height:18px;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:2}
   .pi-rm:hover{background:#a00;transform:scale(1.1)}
 
-  /* Legacy support — old code might still query these */
-  .prev-rm{position:absolute;top:3px;right:3px;background:rgba(139,0,0,.85);color:white;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  /* Legacy support */
+  .prev-rm{position:absolute;top:3px;right:3px;background:rgba(139,0,0,.85);color:white;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 
   .dtable{width:100%;border-collapse:collapse;background:white;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.05)}
   .dtable th{background:var(--deep);color:var(--gold-light);padding:11px 15px;text-align:left;font-size:13px;font-weight:600}
@@ -1107,7 +1133,40 @@
     <div class="form-grid">
       <div class="fg"><label class="fl" data-en="Type Name *" data-th="ชื่อประเภท *">Type Name *</label><input class="fi" id="ft_name"></div>
       <div class="fg"><label class="fl" data-en="Price Range (SGD)" data-th="ช่วงราคา (SGD)">Price Range (SGD)</label><input class="fi" id="ft_price" placeholder="e.g. 15-25 or starts from 15"></div>
-      <div class="fg full"><label class="fl" data-en="Description" data-th="คำอธิบาย">Description</label><textarea class="fta" id="ft_desc"></textarea></div>
+      <div class="fg full">
+        <label class="fl" data-en="Description" data-th="คำอธิบาย">Description</label>
+        <div class="rte-wrap">
+          <div class="rte-toolbar">
+            <button type="button" class="rte-btn" onclick="rteExec('ft_desc','bold')" title="Bold (Ctrl+B)"><strong>B</strong></button>
+            <button type="button" class="rte-btn" onclick="rteExec('ft_desc','italic')" title="Italic (Ctrl+I)"><em>I</em></button>
+            <button type="button" class="rte-btn" onclick="rteExec('ft_desc','underline')" title="Underline (Ctrl+U)"><u>U</u></button>
+            <span class="rte-sep"></span>
+            <div class="rte-color-picker">
+              <button type="button" class="rte-btn rte-color-btn" onclick="rteToggleColors('ft_desc')" title="Text color">
+                <span class="rte-color-letter">A</span>
+                <span class="rte-color-bar" id="ft_desc_colorbar"></span>
+              </button>
+              <div class="rte-color-pop" id="ft_desc_colorpop">
+                <div class="rte-color-grid">
+                  <button type="button" class="rte-swatch" style="background:#2c1a06" onclick="rteSetColor('ft_desc','#2c1a06')" title="Default"></button>
+                  <button type="button" class="rte-swatch" style="background:#8b6914" onclick="rteSetColor('ft_desc','#8b6914')" title="Gold dark"></button>
+                  <button type="button" class="rte-swatch" style="background:#c9a84c" onclick="rteSetColor('ft_desc','#c9a84c')" title="Gold"></button>
+                  <button type="button" class="rte-swatch" style="background:#e8c96a" onclick="rteSetColor('ft_desc','#e8c96a')" title="Gold light"></button>
+                  <button type="button" class="rte-swatch" style="background:#8b0000" onclick="rteSetColor('ft_desc','#8b0000')" title="Crimson"></button>
+                  <button type="button" class="rte-swatch" style="background:#a55" onclick="rteSetColor('ft_desc','#a55')" title="Rose"></button>
+                  <button type="button" class="rte-swatch" style="background:#2e6b3a" onclick="rteSetColor('ft_desc','#2e6b3a')" title="Forest"></button>
+                  <button type="button" class="rte-swatch" style="background:#1f4e7a" onclick="rteSetColor('ft_desc','#1f4e7a')" title="Deep blue"></button>
+                  <button type="button" class="rte-swatch" style="background:#666" onclick="rteSetColor('ft_desc','#666')" title="Grey"></button>
+                  <input type="color" class="rte-color-input" oninput="rteSetColor('ft_desc',this.value)" title="Custom color">
+                </div>
+              </div>
+            </div>
+            <span class="rte-sep"></span>
+            <button type="button" class="rte-btn" onclick="rteExec('ft_desc','removeFormat')" title="Clear formatting">⌫</button>
+          </div>
+          <div class="rte-editor" id="ft_desc" contenteditable="true" data-placeholder="Enter description... use the toolbar above to format."></div>
+        </div>
+      </div>
       <div class="fg full">
         <label class="fl" data-en="Banner Image" data-th="รูปแบนเนอร์">Banner Image</label>
         <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'ft_banner',true)">
@@ -2601,7 +2660,7 @@ function openTypeForm(typeId){
   document.getElementById('typeModalTitle').textContent=lang==='th'?(typeId?'แก้ไขประเภทกรอบ':'เพิ่มประเภทกรอบ'):(typeId?'Edit Casing Type':'Add Casing Type');
   document.getElementById('ft_name').value=ty?ty.name:'';
   document.getElementById('ft_price').value=ty?(ty.priceRange||(ty.price?String(ty.price):'')):'';
-  document.getElementById('ft_desc').value=ty?(ty.desc||''):'';
+  rteSetHtml('ft_desc', ty ? (ty.desc || '') : '');
   tempImgs['ft_banner']=ty&&ty.bannerImg?[ty.bannerImg]:[];
   renderPrev('ft_banner');
   document.getElementById('typeModal').classList.add('open');
@@ -2615,9 +2674,9 @@ function saveType(){
   const db=getDB();if(!db.casingTypes)db.casingTypes=[];
   if(curEditTypeId){
     const ty=db.casingTypes.find(t=>t.id===curEditTypeId);
-    if(ty){ty.name=name;ty.priceRange=price;ty.desc=document.getElementById('ft_desc').value;ty.bannerImg=(captureImgs('ft_banner')[0]||'');delete ty.price;}
+    if(ty){ty.name=name;ty.priceRange=price;ty.desc=rteGetHtml('ft_desc');ty.bannerImg=(captureImgs('ft_banner')[0]||'');delete ty.price;}
   } else {
-    db.casingTypes.push({id:genId(db.casingTypes),name,priceRange:price,desc:document.getElementById('ft_desc').value,bannerImg:(captureImgs('ft_banner')[0]||''),variants:[]});
+    db.casingTypes.push({id:genId(db.casingTypes),name,priceRange:price,desc:rteGetHtml('ft_desc'),bannerImg:(captureImgs('ft_banner')[0]||''),variants:[]});
   }
   saveDB(db);tempImgs={};closeModal('typeModal');showToast(tr('saved'));loadCasingTypes();loadDash();
 }
@@ -3145,6 +3204,65 @@ function rmImg(key, idx){
   renderPrev(key);
   if(url && typeof url === 'string' && url.startsWith('http')){
     FB.deleteFile(url).catch(() => {});
+  }
+}
+
+// ─── RICH TEXT EDITOR ────────────────────────────────────────────────────
+// Uses the legacy document.execCommand API — it's "deprecated" but still
+// works in all browsers and is by far the simplest way to do contenteditable
+// formatting without a heavy library.
+// Track each editor's current colour so the toolbar swatch reflects it.
+const _rteColors = {};
+
+function rteExec(editorId, cmd, value){
+  const el = document.getElementById(editorId);
+  if(!el) return;
+  el.focus();
+  try { document.execCommand(cmd, false, value || null); } catch(_){}
+}
+
+function rteToggleColors(editorId){
+  const pop = document.getElementById(editorId + '_colorpop');
+  if(!pop) return;
+  // Close any other open pops first
+  document.querySelectorAll('.rte-color-pop.open').forEach(p => {
+    if(p !== pop) p.classList.remove('open');
+  });
+  pop.classList.toggle('open');
+}
+
+function rteSetColor(editorId, color){
+  rteExec(editorId, 'foreColor', color);
+  _rteColors[editorId] = color;
+  const bar = document.getElementById(editorId + '_colorbar');
+  if(bar) bar.style.background = color;
+  const pop = document.getElementById(editorId + '_colorpop');
+  if(pop) pop.classList.remove('open');
+}
+
+// Close color popovers on outside click
+document.addEventListener('click', (e) => {
+  if(e.target.closest('.rte-color-picker')) return;
+  document.querySelectorAll('.rte-color-pop.open').forEach(p => p.classList.remove('open'));
+});
+
+// Read formatted content from a rich text editor
+function rteGetHtml(editorId){
+  const el = document.getElementById(editorId);
+  return el ? el.innerHTML.trim() : '';
+}
+
+// Write content into a rich text editor (used when loading existing data)
+function rteSetHtml(editorId, html){
+  const el = document.getElementById(editorId);
+  if(!el) return;
+  // If the stored value is plain text with line breaks, convert to <br>
+  // so existing data (saved before we had RTE) renders properly.
+  const isAlreadyHtml = /<[a-z][^>]*>/i.test(html || '');
+  if(isAlreadyHtml){
+    el.innerHTML = html;
+  } else {
+    el.innerHTML = String(html || '').replace(/\n/g, '<br>');
   }
 }
 
