@@ -77,19 +77,69 @@
   .page.active{display:block}
   @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 
-  /* HERO with optional bg image */
-  .hero{
-    min-height:100vh;
+  /* ───── INITIAL LOAD SPLASH ─────
+     Cover the screen with the brand colour until Firebase data arrives,
+     so users don't see seed/default values flash in for a beat.
+     The splash is removed once <html class="fb-ready"> is set. */
+  .fb-splash{
+    position:fixed;inset:0;z-index:99999;
+    background:#0a0805;
+    display:flex;align-items:center;justify-content:center;
+    transition:opacity .35s ease-out;
+    pointer-events:auto;
+  }
+  .fb-splash-inner{
+    display:flex;flex-direction:column;align-items:center;gap:16px;
+    opacity:.85;
+  }
+  .fb-splash-logo{
+    width:54px;height:54px;border-radius:50%;
+    background:linear-gradient(135deg,var(--gold-light,#e8c96a),var(--gold-dark,#8b6914));
+    box-shadow:0 0 30px rgba(201,168,76,.35);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .fb-splash-logo img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+  .fb-splash-dots{display:flex;gap:6px}
+  .fb-splash-dot{
+    width:6px;height:6px;border-radius:50%;background:#c9a84c;
+    animation:fbDot 1.2s ease-in-out infinite both;
+  }
+  .fb-splash-dot:nth-child(2){animation-delay:.15s}
+  .fb-splash-dot:nth-child(3){animation-delay:.3s}
+  @keyframes fbDot{
+    0%,80%,100%{opacity:.3;transform:scale(.85)}
+    40%{opacity:1;transform:scale(1)}
+  }
+  html.fb-ready .fb-splash{opacity:0;pointer-events:none}
+
+  /* While Firebase isn't ready yet, hide content that would otherwise
+     flash with seed data. We show them once <html class="fb-ready"> set. */
+  html:not(.fb-ready) .nav-links,
+  html:not(.fb-ready) .topbar,
+  html:not(.fb-ready) .home-section{
+    visibility:hidden;
+  }
+  /* Outer wrapper: full-bleed dark gradient. Inner .hero is constrained. */
+  .hero-wrap{
     background:
       radial-gradient(ellipse at 20% 70%,rgba(201,168,76,.08) 0%,transparent 50%),
       radial-gradient(ellipse at 80% 30%,rgba(139,0,0,.05) 0%,transparent 45%),
       linear-gradient(165deg,#0a0805 0%,#1a1208 30%,#231700 60%,#0d0a06 100%);
+    position:relative;
+    overflow:hidden;
+  }
+  .hero{
+    min-height:100vh;
     display:grid;grid-template-columns:1.05fr 1fr;
     align-items:center;
-    padding:0 60px;position:relative;overflow:hidden;
+    gap:40px;
+    padding:0 60px;position:relative;
+    /* Constrain content on large/ultrawide screens */
+    max-width:1400px;
+    margin:0 auto;
   }
   /* When no 3D model is uploaded, hero is single-column full width */
-  .hero.no-3d{grid-template-columns:1fr;padding:0 80px}
+  .hero.no-3d{grid-template-columns:1fr;padding:0 80px;max-width:1200px}
   .hero.no-3d .hero-inner{max-width:900px;margin:0 auto;text-align:center;padding:80px 0}
   .hero.no-3d .hero-title{text-align:center}
   .hero.no-3d .hero-sub{text-align:center}
@@ -601,6 +651,13 @@
 </head>
 <body>
 
+<div class="fb-splash" id="fbSplash">
+  <div class="fb-splash-inner">
+    <div class="fb-splash-logo"><img src="/favicon/apple-touch-icon.png" alt=""></div>
+    <div class="fb-splash-dots"><span class="fb-splash-dot"></span><span class="fb-splash-dot"></span><span class="fb-splash-dot"></span></div>
+  </div>
+</div>
+
 <div class="topbar" id="topbar"></div>
 
 <nav>
@@ -621,6 +678,7 @@
 
 <!-- HOME -->
 <div id="page-home" class="page active">
+  <div class="hero-wrap">
   <section class="hero">
     <div class="hero-bg" id="heroBg"></div>
     <div class="hero-bg-overlay" id="heroBgOverlay" style="display:none"></div>
@@ -640,6 +698,7 @@
     </div>
     <div class="scroll-cue">Scroll to explore</div>
   </section>
+  </div>
 
   <div id="homeSections">
   <!-- REVIEWS PREVIEW (homepage) -->
@@ -1783,10 +1842,25 @@ applySettings();
 async function bootIndex(){
   let tries = 0;
   while(!window.FB && tries < 100){ await new Promise(r => setTimeout(r, 50)); tries++; }
-  if(!window.FB) return;
+  if(!window.FB){
+    // Even if Firebase failed to load, drop the splash so the page is usable
+    document.documentElement.classList.add('fb-ready');
+    setTimeout(() => {
+      const s = document.getElementById('fbSplash');
+      if(s) s.remove();
+    }, 400);
+    return;
+  }
   // Wait for first DB load from Firestore
   await window.FB.ready();
   applySettings();
+  // Now reveal the page — adds fb-ready class which fades out the splash
+  // and shows any elements that were hidden to avoid the FOUC flash.
+  document.documentElement.classList.add('fb-ready');
+  setTimeout(() => {
+    const s = document.getElementById('fbSplash');
+    if(s) s.remove();
+  }, 400);
   // Subscribe to live updates — if admin changes something, the visible
   // site updates without a refresh.
   window.FB.onDBChange(() => {
@@ -2029,45 +2103,64 @@ window.addEventListener('appinstalled',()=>{
       console.warn('[phra3d] GLTFLoader not available');
       return;
     }
-    console.log('[phra3d] loading glb (' + Math.round(url.length / 1024) + ' KB encoded)');
+    console.log('[phra3d] loading glb:', url.slice(0, 80) + (url.length > 80 ? '...' : ''));
     const loader = new THREE.GLTFLoader();
-    loader.load(
-      url,
-      (gltf) => {
-        // Remove previous model children (keep halo etc. which are on scene, not group)
-        while(phraGroup.children.length) phraGroup.remove(phraGroup.children[0]);
 
-        const model = gltf.scene || gltf.scenes[0];
+    // Helper: take a parsed glTF and add it to the scene with auto-fit + recentre.
+    const onParsed = (gltf) => {
+      // Remove previous model children (keep halo etc. which are on scene, not group)
+      while(phraGroup.children.length) phraGroup.remove(phraGroup.children[0]);
 
-        // Auto-fit: compute bounding box, scale to fit ~3 units tall, recentre
-        const box = new THREE.Box3().setFromObject(model);
-        const size = new THREE.Vector3(); box.getSize(size);
-        const center = new THREE.Vector3(); box.getCenter(center);
-        const maxDim = Math.max(size.x, size.y, size.z) || 1;
-        const targetSize = 3.5;
-        const scale = targetSize / maxDim;
-        model.scale.setScalar(scale);
-        model.position.x = -center.x * scale;
-        model.position.y = -center.y * scale;
-        model.position.z = -center.z * scale;
+      const model = gltf.scene || gltf.scenes[0];
 
-        phraGroup.add(model);
-        console.log('[phra3d] glb loaded. dims (pre-scale):',
-                    size.x.toFixed(2), size.y.toFixed(2), size.z.toFixed(2),
-                    '→ scale:', scale.toFixed(3));
-      },
-      undefined,
-      (err) => {
-        console.error('[phra3d] glb load failed:', err);
-        // Fallback: try to render images instead, if available
-        if(window.PHRA_FRONT_IMG && window.PHRA_BACK_IMG){
-          console.log('[phra3d] falling back to tablet textures');
-          currentMode = 'tablet';
-          buildTabletGeometry();
-          loadTabletTextures();
-        }
+      // Auto-fit: compute bounding box, scale to fit ~3 units tall, recentre
+      const box = new THREE.Box3().setFromObject(model);
+      const size = new THREE.Vector3(); box.getSize(size);
+      const center = new THREE.Vector3(); box.getCenter(center);
+      const maxDim = Math.max(size.x, size.y, size.z) || 1;
+      const targetSize = 3.5;
+      const scale = targetSize / maxDim;
+      model.scale.setScalar(scale);
+      model.position.x = -center.x * scale;
+      model.position.y = -center.y * scale;
+      model.position.z = -center.z * scale;
+
+      phraGroup.add(model);
+      console.log('[phra3d] glb loaded. dims (pre-scale):',
+                  size.x.toFixed(2), size.y.toFixed(2), size.z.toFixed(2),
+                  '→ scale:', scale.toFixed(3));
+    };
+
+    const onLoadError = (err) => {
+      console.error('[phra3d] glb load failed:', err);
+      // Fallback: try to render images instead, if available
+      if(window.PHRA_FRONT_IMG && window.PHRA_BACK_IMG){
+        console.log('[phra3d] falling back to tablet textures');
+        currentMode = 'tablet';
+        buildTabletGeometry();
+        loadTabletTextures();
       }
-    );
+    };
+
+    // Workaround for Firebase Storage CORS issue with GLTFLoader's XHR.
+    // We fetch the file as a Blob first (fetch() handles CORS differently
+    // and Firebase Storage's signed URLs are accessible to fetch), then
+    // hand the ArrayBuffer directly to GLTFLoader.parse().
+    if(/^https?:\/\//i.test(url)){
+      fetch(url)
+        .then(r => {
+          if(!r.ok) throw new Error('HTTP ' + r.status);
+          return r.arrayBuffer();
+        })
+        .then(buf => {
+          // parse(data, path, onLoad, onError)
+          loader.parse(buf, '', onParsed, onLoadError);
+        })
+        .catch(onLoadError);
+    } else {
+      // data: URL or local path — use the loader's built-in load
+      loader.load(url, onParsed, undefined, onLoadError);
+    }
   }
 
   // ──────────────────────────────────────────────────────────────────────
