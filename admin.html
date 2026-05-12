@@ -177,7 +177,34 @@
   .u-icon{font-size:30px;margin-bottom:7px}
   .u-text{color:var(--text-muted);font-size:14px}
   .u-hint{color:#bbb;font-size:12px;margin-top:3px}
-  /* ───── IMAGE PREVIEW GRID ───── */
+  /* ───── UPLOAD BANNER ─────
+     Sticky banner at top while files are uploading. Hard to miss so users
+     don't accidentally hit Save before files finish. */
+  .upload-banner{
+    position:fixed;top:0;left:0;right:0;z-index:99998;
+    background:linear-gradient(90deg,var(--gold-dark),var(--gold));
+    color:var(--deep);
+    padding:12px 22px;
+    display:flex;align-items:center;justify-content:center;gap:14px;
+    font-weight:600;font-size:14px;letter-spacing:.3px;
+    box-shadow:0 4px 14px rgba(0,0,0,.25);
+    animation:ubSlide .3s ease-out;
+  }
+  .upload-banner strong{color:var(--deep);font-weight:800}
+  .ub-spinner{
+    width:18px;height:18px;
+    border:2.5px solid rgba(18,16,10,.25);
+    border-top-color:var(--deep);
+    border-radius:50%;
+    animation:piSpin .8s linear infinite;
+    flex-shrink:0;
+  }
+  @keyframes ubSlide{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+  @media(max-width:680px){
+    .upload-banner{padding:10px 14px;font-size:12.5px;gap:10px}
+    .ub-text{line-height:1.4}
+  }
+ */
   .prev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:11px}
   .prev-item{position:relative;border-radius:10px;overflow:hidden;background:var(--surface);border:1.5px solid var(--border);transition:all .2s;display:flex;flex-direction:column}
   .prev-item:hover{border-color:var(--gold);transform:translateY(-1px);box-shadow:0 4px 14px rgba(201,168,76,.12)}
@@ -1991,6 +2018,7 @@ function addHeroStat(){const cur=captureHeroStats();cur.push({label:'New Stat',v
 function rmHeroStat(idx){const cur=captureHeroStats();cur.splice(idx,1);renderHeroStats(cur);}
 
 function saveHero(){
+  if(!ensureUploadsDone()) return;
   const db=getDB();
   db.settings.hero.bgImage=(captureImgs('h_bg')[0]||'');
   db.settings.hero.phra3dGlb=_tempGlb||'';
@@ -2333,6 +2361,7 @@ function loadPayment(){
   renderPrev('pay_qr');
 }
 function savePayment(){
+  if(!ensureUploadsDone()) return;
   const db=getDB();
   db.settings.payment={
     enabled:true,
@@ -2431,6 +2460,7 @@ function saveReviewsSection(){
   saveDB(db);showToast(tr('saved'));
 }
 function saveReview(){
+  if(!ensureUploadsDone()) return;
   const name=document.getElementById('r_name').value.trim();
   const text=document.getElementById('r_text').value.trim();
   const imgs=captureImgs('r_imgs');
@@ -2578,6 +2608,7 @@ function openTypeForm(typeId){
 }
 
 function saveType(){
+  if(!ensureUploadsDone()) return;
   const name=document.getElementById('ft_name').value.trim();
   const price=document.getElementById('ft_price').value.trim();
   if(!name){showToast(tr('needName'));return;}
@@ -2670,6 +2701,7 @@ function openVariantForm(varId){
 }
 
 function saveVariant(){
+  if(!ensureUploadsDone()) return;
   const name=document.getElementById('fv_name').value.trim();
   const price=document.getElementById('fv_price').value;
   if(!name||!price){showToast(tr('needNamePrice'));return;}
@@ -2695,6 +2727,7 @@ let tempImgs={};
 let editingItemId={amulets:null,accessories:null,projects:null};
 
 function saveAmulet(){
+  if(!ensureUploadsDone()) return;
   const name=document.getElementById('a_name').value.trim();
   const price=document.getElementById('a_price').value;
   if(!name||!price){showToast(tr('needNamePrice'));return;}
@@ -2755,6 +2788,7 @@ function cancelEditAmulet(){
 }
 
 function saveAccess(){
+  if(!ensureUploadsDone()) return;
   const name=document.getElementById('ac_name').value.trim();
   const price=document.getElementById('ac_price').value;
   if(!name||!price){showToast(tr('needNamePrice'));return;}
@@ -2811,6 +2845,7 @@ function cancelEditAccess(){
 }
 
 function saveProject(){
+  if(!ensureUploadsDone()) return;
   const name=document.getElementById('p_name').value.trim();
   if(!name){showToast(tr('needName'));return;}
   const db=getDB();
@@ -2872,6 +2907,80 @@ function captureImgs(key){
     .filter(Boolean);
 }
 
+// Count uploads currently in-flight (any tempImgs slot with status='uploading').
+// Used to warn the user if they try to Save while files are still being sent.
+function countPendingUploads(){
+  let n = 0;
+  for(const key in tempImgs){
+    const arr = tempImgs[key] || [];
+    for(const e of arr){
+      if(e && typeof e === 'object' && e.status === 'uploading') n++;
+    }
+  }
+  return n;
+}
+
+// Block-and-warn guard: every save function should call this first.
+// Returns true if it's safe to proceed; otherwise shows a toast and returns false.
+function ensureUploadsDone(){
+  const pending = countPendingUploads();
+  if(pending > 0){
+    showToast(lang === 'th'
+      ? `⏳ ยังมีรูป ${pending} รูปกำลังอัปโหลด — รอจนเสร็จก่อนค่อยบันทึก`
+      : `⏳ ${pending} image${pending===1?'':'s'} still uploading — please wait`);
+    return false;
+  }
+  return true;
+}
+
+// Visual cue: when uploads are pending, dim all "Save" buttons on the page
+// and change their text. Re-evaluated whenever uploads start/finish.
+function refreshSaveButtonState(){
+  const pending = countPendingUploads();
+
+  // Top banner — large, hard to miss
+  let banner = document.getElementById('uploadBanner');
+  if(pending > 0){
+    if(!banner){
+      banner = document.createElement('div');
+      banner.id = 'uploadBanner';
+      banner.className = 'upload-banner';
+      document.body.appendChild(banner);
+    }
+    banner.innerHTML = `
+      <div class="ub-spinner"></div>
+      <div class="ub-text">${lang === 'th'
+        ? `กำลังอัปโหลด <strong>${pending}</strong> รูป — กรุณารอจนเสร็จก่อนกดบันทึก`
+        : `Uploading <strong>${pending}</strong> image${pending===1?'':'s'} — wait until done before saving`}</div>
+    `;
+  } else if(banner){
+    banner.remove();
+  }
+
+  // Save buttons
+  document.querySelectorAll('.btn-gold').forEach(btn => {
+    const txt = (btn.dataset._origSaveText || btn.textContent || '').trim();
+    const isSave = /save|บันทึก/i.test(txt) || txt.includes('💾') || btn.dataset._origSaveText;
+    if(!isSave) return;
+    if(!btn.dataset._origSaveText){
+      btn.dataset._origSaveText = btn.textContent;
+    }
+    if(pending > 0){
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+      btn.style.cursor = 'not-allowed';
+      btn.textContent = lang === 'th'
+        ? `⏳ กำลังอัปโหลด ${pending} รูป…`
+        : `⏳ Uploading ${pending} image${pending===1?'':'s'}…`;
+    } else {
+      btn.disabled = false;
+      btn.style.opacity = '';
+      btn.style.cursor = '';
+      btn.textContent = btn.dataset._origSaveText;
+    }
+  });
+}
+
 // Upload one File. `isSingle` replaces the list (used for single-slot fields
 // like hero front/back images), `false` appends.
 async function uploadOne(file, key, isSingle){
@@ -2900,6 +3009,7 @@ async function uploadOne(file, key, isSingle){
     tempImgs[key].push(entry);
   }
   renderPrev(key);
+  refreshSaveButtonState();
 
   // Animate the indeterminate progress bar (we don't have real progress
   // from Firebase Storage's uploadBytes, but a slow fake is better than
@@ -2925,6 +3035,7 @@ async function uploadOne(file, key, isSingle){
       entry.progress = 100;
     }
     renderPrev(key);
+    refreshSaveButtonState();
   } catch(err){
     console.error('upload failed:', err);
     if(tempImgs[key] && tempImgs[key][slot] === entry){
@@ -2932,6 +3043,7 @@ async function uploadOne(file, key, isSingle){
       entry.error = err.message || 'unknown';
     }
     renderPrev(key);
+    refreshSaveButtonState();
     showToast((lang === 'th' ? 'อัปโหลดล้มเหลว: ' : 'Upload failed: ') + (err.message || 'unknown'));
   }
 }
