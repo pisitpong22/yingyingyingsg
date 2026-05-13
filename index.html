@@ -406,68 +406,52 @@
   }
   #phra3d{width:100%;height:100%;cursor:grab}
   #phra3d:active{cursor:grabbing}
-  /* ─── HERO STILL IMAGE — studio-lit look ───
-     Goals: make the centerpiece image look as bright and rich as the
-     original photo, never darkened by overlays sitting behind/above.
-     Strategy:
-       1. z-index 10 — definitively above all hero overlays
-       2. isolation:isolate — creates a new stacking context, prevents
-          any parent blend/filter from leaking onto the image
-       3. position:relative — required for z-index to work
-       4. NO blend mode, NO opacity inheritance
-       5. drop-shadow gives a soft floor shadow without dimming pixels
-       6. brightness(1.08) saturate(1.1) gives a "studio-lit" gold pop
-          — subtle but compensates for any q-95 compression
-       7. Floating animation uses transform on the IMG itself only */
+  /* ─── HERO STILL IMAGE — absolute pass-through, zero interference ───
+     Show the uploaded image EXACTLY. No filter, no shadow underneath
+     that might overlap, no glow behind that might darken edges. */
   .hero-still-img{
     max-width:100%;max-height:100%;
     width:auto;height:auto;
     object-fit:contain;
     position:relative;
     z-index:10;
-    isolation:isolate;
     opacity:1 !important;
-    mix-blend-mode:normal !important;
-    /* drop-shadow = outer shadow only, doesn't touch image pixels;
-       brightness + saturate = studio-lit boost (gold looks richer) */
-    filter:
-      brightness(1.08)
-      saturate(1.12)
-      drop-shadow(0 14px 40px rgba(0,0,0,.5))
-      drop-shadow(0 0 40px rgba(232,201,106,.28));
-    animation:heroImgFloat 6s ease-in-out infinite;
   }
-  /* Container behind the image — radial gold glow for a "spotlight" feel.
-     This sits BEHIND the image (z-index < 10) but inside .hero-3d so it
-     never gets darkened by the hero-bg-overlay either. */
-  .hero-3d::before{
-    content:'';
-    position:absolute;
-    inset:0;
-    background:radial-gradient(ellipse 60% 70% at 50% 50%,
-      rgba(232,201,106,.18) 0%,
-      rgba(201,168,76,.08) 35%,
-      transparent 70%);
-    pointer-events:none;
-    z-index:1;
-    /* Subtle pulse so the spotlight feels alive */
-    animation:heroSpotlight 5s ease-in-out infinite;
+
+  /* ─── HAS-HERO-IMAGE MODE ───
+     When admin uploads a still photo as hero, we kill ALL overlays and
+     gradient layers that would tint or darken the centerpiece, and give
+     the image a clean studio-style backdrop (deep neutral grey, just like
+     a product-photo lightroom). This isolates the photo entirely from
+     the rest of the site's gold/cream theme so its colours come through
+     exactly as uploaded. */
+  .hero.has-hero-image::before,
+  .hero.has-hero-image::after{display:none !important}
+  .hero.has-hero-image .hero-bg-overlay{display:none !important}
+  .hero.has-hero-image .hero-bg{
+    /* Replace the bg image (if any) with a clean studio gradient */
+    background-image:radial-gradient(ellipse at center,
+      #3a3a42 0%,
+      #25252a 45%,
+      #15151a 100%) !important;
+    opacity:1 !important;
   }
-  @keyframes heroSpotlight{
-    0%,100%{opacity:.7;transform:scale(1)}
-    50%{opacity:1;transform:scale(1.05)}
-  }
-  @keyframes heroImgFloat{
-    0%,100%{transform:translateY(0)}
-    50%{transform:translateY(-12px)}
-  }
-  @media(prefers-reduced-motion:reduce){
-    .hero-still-img{animation:none}
-    .hero-3d::before{animation:none}
+  /* The 3D block holds the image — also paint a studio backdrop here so
+     that even if .hero-bg fails, the area immediately behind the image
+     stays neutral (never the page's cream colour bleeding through). */
+  .hero.has-hero-image .hero-3d{
+    background:radial-gradient(ellipse at center,
+      rgba(58,58,66,.6) 0%,
+      rgba(37,37,42,.4) 50%,
+      transparent 80%);
+    border-radius:24px;
   }
   .phra-hint{position:absolute;bottom:-10px;left:0;right:0;text-align:center;color:rgba(201,168,76,.6);font-size:10.5px;letter-spacing:2px;text-transform:uppercase;z-index:5;font-weight:500;pointer-events:none;padding:0 10px;line-height:1.4}
-  /* glow halo behind the 3D model */
-  .hero-3d::before{
+  /* glow halo — ONLY for 3D mode (not hero still image). Adding the
+     .has-3d class to .hero-3d when a GLB/canvas is rendering keeps the
+     glow from showing behind a still image (which already has its own
+     shadow/colour built in). */
+  .hero-3d.has-3d::before{
     content:'';position:absolute;width:60%;height:60%;
     top:50%;left:50%;transform:translate(-50%,-50%);
     background:radial-gradient(circle,rgba(201,168,76,.25) 0%,rgba(139,0,0,.08) 35%,transparent 70%);
@@ -1813,13 +1797,21 @@ function applySettings(){
         hero3dBlock.appendChild(img);
       }
       hero3dBlock.style.display = '';
-      if(heroSection) heroSection.classList.remove('no-3d');
+      hero3dBlock.classList.remove('has-3d'); // suppress 3D glow halo for still images
+      if(heroSection){
+        heroSection.classList.remove('no-3d');
+        heroSection.classList.add('has-hero-image'); // suppress overlays
+      }
     } else if(has3D){
       // 3D mode — remove still image if it was there, show canvas
       if(existingImg) existingImg.remove();
       if(canvas) canvas.style.display = '';
       hero3dBlock.style.display = '';
-      if(heroSection) heroSection.classList.remove('no-3d');
+      hero3dBlock.classList.add('has-3d'); // enable 3D glow halo
+      if(heroSection){
+        heroSection.classList.remove('no-3d');
+        heroSection.classList.remove('has-hero-image');
+      }
       if(typeof window.initPhra3D === 'function'){
         window.initPhra3D();
       } else if(typeof window.refreshPhra3DTextures === 'function'){
@@ -1829,7 +1821,11 @@ function applySettings(){
       // No visual — hide the right column entirely
       if(existingImg) existingImg.remove();
       hero3dBlock.style.display = 'none';
-      if(heroSection) heroSection.classList.add('no-3d');
+      hero3dBlock.classList.remove('has-3d');
+      if(heroSection){
+        heroSection.classList.add('no-3d');
+        heroSection.classList.remove('has-hero-image');
+      }
     }
   }
 
