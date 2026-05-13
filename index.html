@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Speed up first byte to Firebase Storage / Google fonts by opening TCP
+     + TLS connections immediately, in parallel with the HTML parse. -->
+<link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://firebasestorage.googleapis.com">
+<link rel="dns-prefetch" href="https://www.gstatic.com">
 <title id="pageTitle">Yingyingying Amulet</title>
 <!-- Favicons & PWA manifest -->
 <link rel="icon" type="image/png" href="/favicon/favicon-96x96.png" sizes="96x96">
@@ -469,12 +476,40 @@
   .card:hover{transform:translateY(-5px);box-shadow:0 14px 44px rgba(201,168,76,.16);border-color:var(--gold)}
   .card-img{width:100%;height:225px;background:linear-gradient(135deg,#2d1e06,#12100a);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
   .card-img img{width:100%;height:100%;object-fit:cover}
-  /* Smooth fade-in for lazy-loaded images — img.is-loading is the initial
-     state (opacity 0 + shimmer placeholder), removed by JS once the image
-     has decoded successfully. Avoids the visual "pop" when deferred images
-     finish downloading mid-scroll. */
-  img.is-loading{opacity:0}
-  img.is-loaded{opacity:1;transition:opacity .3s ease-out}
+  /* ───── IMAGE LAZY LOAD + SKELETON ─────
+     Subtle shimmer placeholder while loading — blends with the cream/gold
+     palette so it doesn't look out of place. */
+  img.is-loading{
+    opacity:0;
+    background:
+      linear-gradient(90deg,
+        rgba(201,168,76,.04) 0%,
+        rgba(232,201,106,.10) 50%,
+        rgba(201,168,76,.04) 100%),
+      linear-gradient(135deg, #2d1e06 0%, #1a1408 100%);
+    background-size:200% 100%, 100% 100%;
+    background-blend-mode:overlay, normal;
+    animation:imgShimmer 1.6s ease-in-out infinite;
+    min-height:60px;
+  }
+  img.is-loaded{
+    opacity:1;
+    transition:opacity .35s ease-out;
+    background:none;
+    animation:none;
+  }
+  @keyframes imgShimmer{
+    0%{background-position:200% 0, 0 0}
+    100%{background-position:-200% 0, 0 0}
+  }
+  /* Hint browser to skip layout for off-screen sections — paints faster */
+  .home-section,
+  #page-amulets,#page-accessories,#page-casing,#page-projects,#page-reviews{
+    content-visibility:auto;
+    contain-intrinsic-size:auto 800px;
+  }
+  /* The hero is always visible — opt OUT so it never has to be re-painted */
+  #page-home .hero-wrap{content-visibility:visible}
   .card-ph{display:flex;flex-direction:column;align-items:center;gap:7px;color:#6a5030}
   .card-ph span{font-size:13px}
   .cbadge{position:absolute;top:11px;right:11px;background:var(--accent);color:white;font-size:11px;font-weight:700;padding:4px 11px;border-radius:25px}
@@ -1463,6 +1498,10 @@ function applySettings(){
       } else {
         const img = document.createElement('img');
         img.className = 'hero-still-img';
+        // Hero is above-the-fold — load with highest priority, not lazy
+        img.setAttribute('loading', 'eager');
+        img.setAttribute('fetchpriority', 'high');
+        img.setAttribute('decoding', 'async');
         img.src = heroImage;
         img.alt = '';
         hero3dBlock.appendChild(img);
@@ -2227,48 +2266,95 @@ function closeModal(e){if(!e||e.target===document.getElementById('modal'))docume
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3000);}
 
-// Auto fade-in for lazy-loaded images. We use event delegation on the
-// document body so we catch <img> tags that get added dynamically by
-// renderAmulets()/renderFeatured()/etc. without having to wire up each one.
-function setupImageFadeIn(){
-  document.body.addEventListener('load', (e) => {
-    const t = e.target;
-    if(t && t.tagName === 'IMG' && t.getAttribute('loading') === 'lazy'){
-      t.classList.remove('is-loading');
-      t.classList.add('is-loaded');
-    }
-  }, true);  // useCapture: 'load' doesn't bubble, so we capture instead
+// ─── IMAGE LOADING — IntersectionObserver-based ────────────────────────────
+// Native loading="lazy" only kicks in when the image is very close to the
+// viewport (usually ~100px). For a richer experience we use our own
+// observer with a 250px rootMargin — images start downloading earlier, so
+// by the time the user scrolls there they're already visible.
+//
+// Workflow per image:
+//   1. On insertion: tag .is-loading (shimmer placeholder shows immediately)
+//   2. Move actual `src` into `data-src`, leave src empty until observer fires
+//   3. When 250px from viewport: set src, then listen for load event
+//   4. On load: swap classes to .is-loaded (fade in)
+//
+// We don't strip `loading="lazy"` — it acts as a fallback if our JS is
+// disabled or fails to run.
+const _imgObserver = ('IntersectionObserver' in window)
+  ? new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if(!entry.isIntersecting) return;
+        const img = entry.target;
+        const realSrc = img.dataset.src;
+        if(realSrc){
+          img.src = realSrc;
+          img.removeAttribute('data-src');
+        }
+        obs.unobserve(img);
+      });
+    }, { rootMargin: '250px 0px', threshold: 0.01 })
+  : null;
 
-  // Also process images that are ALREADY in DOM by the time this runs.
-  // Some (cached / above-the-fold) might fire their load event before our
-  // listener is attached.
-  document.querySelectorAll('img[loading="lazy"]').forEach(img => {
+function watchImage(img){
+  if(!img || img.dataset._watched) return;
+  img.dataset._watched = '1';
+
+  // Eager (above-the-fold) images: keep native loading, just listen for load
+  if(img.getAttribute('loading') !== 'lazy'){
     if(img.complete && img.naturalWidth > 0){
       img.classList.add('is-loaded');
     } else {
       img.classList.add('is-loading');
+      img.addEventListener('load', () => {
+        img.classList.remove('is-loading');
+        img.classList.add('is-loaded');
+      }, {once:true});
+      img.addEventListener('error', () => {
+        img.classList.remove('is-loading');
+      }, {once:true});
+    }
+    return;
+  }
+
+  // Lazy images: defer the network request until observer fires
+  img.classList.add('is-loading');
+  img.addEventListener('load', () => {
+    if(img.naturalWidth > 0){
+      img.classList.remove('is-loading');
+      img.classList.add('is-loaded');
     }
   });
+  img.addEventListener('error', () => {
+    img.classList.remove('is-loading');
+  });
+  if(_imgObserver && img.src){
+    // Move src → data-src so the network request waits for the observer
+    const src = img.src;
+    img.removeAttribute('src');
+    img.dataset.src = src;
+    _imgObserver.observe(img);
+  } else if(img.complete && img.naturalWidth > 0){
+    img.classList.remove('is-loading');
+    img.classList.add('is-loaded');
+  }
+}
+
+function setupImageFadeIn(){
+  document.querySelectorAll('img').forEach(watchImage);
 }
 setupImageFadeIn();
 
-// Re-tag newly-added images as "is-loading" so they get the fade transition.
-// MutationObserver fires whenever the page is re-rendered (applySettings etc.)
+// Process images added dynamically by render functions (applySettings etc).
 new MutationObserver(muts => {
   muts.forEach(mut => {
     mut.addedNodes && mut.addedNodes.forEach(node => {
       if(node.nodeType !== 1) return;
-      const imgs = node.tagName === 'IMG' ? [node] : node.querySelectorAll && [...node.querySelectorAll('img[loading="lazy"]')];
-      (imgs || []).forEach(img => {
-        if(img.complete && img.naturalWidth > 0){
-          img.classList.add('is-loaded');
-        } else if(!img.classList.contains('is-loaded')){
-          img.classList.add('is-loading');
-        }
-      });
+      const imgs = node.tagName === 'IMG' ? [node] : (node.querySelectorAll ? [...node.querySelectorAll('img')] : []);
+      imgs.forEach(watchImage);
     });
   });
 }).observe(document.body, {childList: true, subtree: true});
+
 
 
 // Apply settings once now using whatever data is currently in the FB cache
@@ -2305,6 +2391,19 @@ async function bootIndex(){
   });
 }
 bootIndex();
+
+// ─── SERVICE WORKER ────────────────────────────────────────────────────────
+// Registers /sw.js which caches Firebase Storage images. After the first
+// page load, every image becomes effectively instant on repeat visits.
+// We register late (after main content paints) so it never blocks initial
+// rendering — registration is non-critical.
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(err => {
+      console.warn('[SW] registration failed:', err);
+    });
+  });
+}
 
 // ── DEEP LINK on load (from share buttons) ──
 (function handleHash(){
