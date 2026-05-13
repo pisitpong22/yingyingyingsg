@@ -3033,6 +3033,19 @@ window.addEventListener('appinstalled',()=>{
     renderer = new THREE.WebGLRenderer({canvas, alpha: true, antialias: true});
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x000000, 0);
+    // Studio-quality colour & exposure for metallic models (gold/brass).
+    // outputColorSpace = sRGB ensures colours render as the artist intended
+    // (without this, dark areas crush to near-black).
+    // ACESFilmic toneMapping gives a soft "studio photo" exposure curve.
+    // Exposure 1.6 lifts the overall brightness without blowing highlights.
+    if(THREE.SRGBColorSpace !== undefined){
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+    } else if(THREE.sRGBEncoding !== undefined){
+      // Older three.js fallback
+      renderer.outputEncoding = THREE.sRGBEncoding;
+    }
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.6;
 
     function resize(){
       const w = canvas.clientWidth;
@@ -3062,18 +3075,75 @@ window.addEventListener('appinstalled',()=>{
     halo.position.z = -0.6;
     scene.add(halo);
 
-    // Neutral, balanced lighting — no warm/golden tint so 3D models display
-    // in their true colours rather than being washed yellow.
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.0);
-    keyLight.position.set(3, 4, 5);
+    // ─── STUDIO LIGHTING — designed for shiny gold/brass models ───
+     // Strong key + fill + rim from multiple angles, plus high ambient,
+     // so metallic surfaces catch light from every direction (mimics a
+     // softbox setup). Without enough light, polished gold reads as black
+     // (it's a perfect mirror — black background reflects in).
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
+    keyLight.position.set(3, 5, 5);
     scene.add(keyLight);
-    const rimLight = new THREE.DirectionalLight(0xffffff, 0.55);
-    rimLight.position.set(-2, 3, -5);
+
+    const rimLight = new THREE.DirectionalLight(0xfff4d6, 1.4);
+    rimLight.position.set(-3, 4, -4);
     scene.add(rimLight);
-    const fillLight = new THREE.DirectionalLight(0xffffff, 0.35);
+
+    const fillLight = new THREE.DirectionalLight(0xffffff, 1.2);
     fillLight.position.set(-4, 1, 3);
     scene.add(fillLight);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+
+    // Bottom light — catches the base of the model so the lower half
+    // doesn't fall into shadow
+    const bottomLight = new THREE.DirectionalLight(0xfff0c8, 0.8);
+    bottomLight.position.set(0, -3, 2);
+    scene.add(bottomLight);
+
+    // High ambient — so even surfaces facing away from any light still
+    // pick up gold colour rather than going black.
+    scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+
+    // HEMISPHERE LIGHT — adds soft "sky+ground" tinting, perfect for
+    // making metallic gold pop without looking flat.
+    const hemi = new THREE.HemisphereLight(0xfff4d6, 0x4a3818, 1.0);
+    scene.add(hemi);
+
+    // ─── ENVIRONMENT MAP — synthetic studio environment ───
+    // Without an envMap, polished metal (high metalness, low roughness)
+    // has nothing to reflect and renders BLACK. Generate a soft warm-tinted
+    // procedural environment using PMREMGenerator so gold catches highlights.
+    try {
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      pmrem.compileEquirectangularShader();
+
+      // Build a small studio-light scene to capture into an env map
+      const envScene = new THREE.Scene();
+      // Warm key (top-right)
+      const envKey = new THREE.Mesh(
+        new THREE.SphereGeometry(2, 16, 16),
+        new THREE.MeshBasicMaterial({color: 0xfff4d6, side: THREE.BackSide})
+      );
+      envScene.add(envKey);
+      // Add some bright "lights" as visible spheres so they reflect onto metal
+      [
+        {pos:[ 5, 4,  3], color:0xffffff, size:1.5},
+        {pos:[-4, 3, -2], color:0xffd88a, size:1.2},
+        {pos:[ 2,-2,  4], color:0xfff0c8, size:1.0},
+        {pos:[-3,-1,  3], color:0xffffff, size:0.8},
+      ].forEach(L => {
+        const m = new THREE.Mesh(
+          new THREE.SphereGeometry(L.size, 8, 8),
+          new THREE.MeshBasicMaterial({color: L.color})
+        );
+        m.position.set(L.pos[0], L.pos[1], L.pos[2]);
+        envScene.add(m);
+      });
+
+      const envTexture = pmrem.fromScene(envScene, 0.04).texture;
+      scene.environment = envTexture;
+      pmrem.dispose();
+    } catch(e){
+      console.warn('[phra3d] PMREM env map failed (ok, will use lights only):', e);
+    }
 
     setupInteractionAndAnimation();
   }
@@ -3126,6 +3196,36 @@ window.addEventListener('appinstalled',()=>{
       model.position.x = -center.x * scale;
       model.position.y = -center.y * scale;
       model.position.z = -center.z * scale;
+
+      // ─── Boost metallic materials so gold/brass surfaces show their
+      // true colour. Many 3D models exported from Trellis/photogrammetry
+      // come with low metallic and high roughness, which makes shiny gold
+      // appear dark and matte. Walk every mesh and tune the material. ───
+      model.traverse(obj => {
+        if(obj.isMesh && obj.material){
+          const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+          mats.forEach(mat => {
+            // Only tweak PBR materials (MeshStandardMaterial / MeshPhysicalMaterial)
+            if(mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial){
+              // Studio environment so metal reflects something, not black
+              if(scene.environment) mat.envMap = scene.environment;
+              mat.envMapIntensity = 1.4;
+              // Detect "looks like gold" — high R, mid G, low B in baseColor
+              const col = mat.color;
+              const looksGold = col && col.r > 0.4 && col.g > 0.25 && col.b < 0.4;
+              if(looksGold){
+                // Boost gold to look polished
+                mat.metalness = Math.max(mat.metalness ?? 0, 0.85);
+                mat.roughness = Math.min(mat.roughness ?? 1, 0.35);
+              } else {
+                // Generic boost — just lower roughness so light catches
+                mat.roughness = Math.min(mat.roughness ?? 1, 0.55);
+              }
+              mat.needsUpdate = true;
+            }
+          });
+        }
+      });
 
       phraGroup.add(model);
       console.log('[phra3d] glb loaded. dims (pre-scale):',
