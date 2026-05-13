@@ -555,7 +555,51 @@
     box-shadow:0 4px 14px rgba(139,0,0,.5);
   }
 
-  /* Legacy .prev-rm — kept for any old call sites */
+  /* ─── HORIZONTAL TABS INSIDE A PANEL ───
+     Used by composite panels (Homepage, Store Setup) that bundle multiple
+     related sub-screens. Each tab button toggles which .tab-content is
+     shown. Markup convention:
+       <div class="tab-bar">
+         <button class="tab-btn active" data-tab="hero">⭐ Hero</button>
+         <button class="tab-btn" data-tab="layout">🏠 Layout</button>
+       </div>
+       <div class="tab-content active" data-tab-content="hero">…</div>
+       <div class="tab-content" data-tab-content="layout">…</div>
+   */
+  .tab-bar{
+    display:flex;gap:4px;
+    margin:-6px 0 26px;padding:5px;
+    background:rgba(201,168,76,.07);
+    border-radius:14px;
+    overflow-x:auto;
+    border:1px solid rgba(201,168,76,.15);
+  }
+  .tab-bar::-webkit-scrollbar{height:0}
+  .tab-btn{
+    flex:1;min-width:fit-content;
+    background:transparent;border:none;
+    padding:11px 18px;
+    font-size:13.5px;font-weight:600;
+    color:var(--text-muted);
+    cursor:pointer;
+    border-radius:10px;
+    white-space:nowrap;
+    transition:all .2s;
+    font-family:inherit;
+  }
+  .tab-btn:hover{color:var(--text);background:rgba(201,168,76,.08)}
+  .tab-btn.active{
+    background:#fff;color:var(--text);
+    box-shadow:0 2px 8px rgba(139,105,20,.12), inset 0 1px 0 rgba(255,255,255,.6);
+    border:1px solid rgba(201,168,76,.25);
+  }
+  body.th .tab-btn{font-family:'Sarabun',sans-serif !important}
+  .tab-content{display:none;animation:fadeUp .25s ease}
+  .tab-content.active{display:block}
+  @media(max-width:680px){
+    .tab-bar{margin:-2px 0 18px;border-radius:12px}
+    .tab-btn{padding:9px 12px;font-size:12.5px}
+  }
   .prev-rm{
     position:absolute;top:-8px;right:-8px;
     background:#c93030;color:white;border:2px solid white;
@@ -873,28 +917,40 @@
 
   <div class="admin-body">
     <div class="sidebar">
+
+      <!-- ─── OVERVIEW ─── -->
       <div class="sidebar-label" data-en="Overview" data-th="ภาพรวม">Overview</div>
       <div class="side-item active" onclick="showPanel('dashboard',this)" data-en="📊 Dashboard" data-th="📊 แดชบอร์ด">📊 Dashboard</div>
+
       <div class="side-div"></div>
-      <div class="sidebar-label" data-en="Site Content" data-th="เนื้อหาเว็บไซต์">Site Content</div>
-      <div class="side-item" onclick="showPanel('content-branding',this)" data-en="🏷️ Branding & Logo" data-th="🏷️ แบรนด์ & โลโก้">🏷️ Branding & Logo</div>
-      <div class="side-item" onclick="showPanel('content-nav',this)" data-en="🧭 Navigation Menu" data-th="🧭 เมนูนำทาง">🧭 Navigation Menu</div>
-      <div class="side-item" onclick="showPanel('content-hero',this)" data-en="⭐ Hero Section" data-th="⭐ ส่วน Hero">⭐ Hero Section</div>
-      <div class="side-item" onclick="showPanel('content-homeLayout',this)" data-en="🏠 Homepage Layout" data-th="🏠 จัดเลย์เอาท์หน้าแรก">🏠 Homepage Layout</div>
-      <div class="side-item" onclick="showPanel('content-services',this)" data-en="🎯 Service Cards" data-th="🎯 การ์ดบริการ">🎯 Service Cards</div>
-      <div class="side-item" onclick="showPanel('content-sections',this)" data-en="📄 Section Headers" data-th="📄 หัวข้อหน้า">📄 Section Headers</div>
-      <div class="side-item" onclick="showPanel('content-trust',this)" data-en="🏆 Trust Cards" data-th="🏆 การ์ดน่าเชื่อถือ">🏆 Trust Cards</div>
-      <div class="side-item" onclick="showPanel('content-contact',this)" data-en="💬 Contact Buttons" data-th="💬 ปุ่มติดต่อ">💬 Contact Buttons</div>
-      <div class="side-item" onclick="showPanel('content-payment',this)" data-en="💳 Payment & Shipping" data-th="💳 ชำระเงิน & จัดส่ง">💳 Payment & Shipping</div>
-      <div class="side-item" onclick="showPanel('content-featured',this)" data-en="✨ Featured on Home" data-th="✨ แนะนำหน้าแรก">✨ Featured on Home</div>
+
+      <!-- ─── HOMEPAGE — single panel with tabs for everything that
+                 shows on the home page (hero, services, layout, trust,
+                 featured products) ─── -->
+      <div class="sidebar-label" data-en="Homepage" data-th="หน้าแรก">Homepage</div>
+      <div class="side-item" onclick="showPanel('home',this)" data-en="🏠 Homepage Editor" data-th="🏠 แก้ไขหน้าแรก">🏠 Homepage Editor</div>
+
       <div class="side-div"></div>
-      <div class="sidebar-label" data-en="Manage Items" data-th="จัดการสินค้า">Manage Items</div>
+
+      <!-- ─── CATALOG ─── -->
+      <div class="sidebar-label" data-en="Catalog" data-th="แคตตาล็อก">Catalog</div>
       <div class="side-item" onclick="showPanel('amulets',this)" data-en="📿 Amulets" data-th="📿 พระเครื่อง">📿 Amulets</div>
       <div class="side-item" onclick="showPanel('accessories',this)" data-en="⛓️ Accessories" data-th="⛓️ อุปกรณ์เสริม">⛓️ Accessories</div>
       <div class="side-item" onclick="showPanel('casing',this)" data-en="🪬 Casing Service" data-th="🪬 บริการกรอบพระ">🪬 Casing Service</div>
       <div class="side-item" onclick="showPanel('projects',this)" data-en="🎯 Projects" data-th="🎯 โปรเจกต์">🎯 Projects</div>
       <div class="side-item" onclick="showPanel('reviews',this)" data-en="🙏 Reviews" data-th="🙏 รีวิว">🙏 Reviews</div>
+
       <div class="side-div"></div>
+
+      <!-- ─── STORE SETUP — branding, nav, contact, payment ─── -->
+      <div class="sidebar-label" data-en="Store Setup" data-th="ตั้งค่าร้าน">Store Setup</div>
+      <div class="side-item" onclick="showPanel('store',this)" data-en="🏷️ Store Identity" data-th="🏷️ ข้อมูลร้าน">🏷️ Store Identity</div>
+      <div class="side-item" onclick="showPanel('navigation',this)" data-en="🧭 Navigation & Pages" data-th="🧭 เมนู & หน้า">🧭 Navigation & Pages</div>
+      <div class="side-item" onclick="showPanel('checkout',this)" data-en="💳 Payment & Contact" data-th="💳 ชำระเงิน & ติดต่อ">💳 Payment & Contact</div>
+
+      <div class="side-div"></div>
+
+      <!-- ─── SYSTEM ─── -->
       <div class="sidebar-label" data-en="System" data-th="ระบบ">System</div>
       <div class="side-item" onclick="showPanel('settings',this)" data-en="⚙️ Settings" data-th="⚙️ ตั้งค่า">⚙️ Settings</div>
     </div>
@@ -913,7 +969,7 @@
       </div>
 
       <!-- BRANDING -->
-      <div class="panel" id="panel-content-branding">
+      <div class="tab-content" data-tab-content="branding" data-parent="store">
         <div class="panel-title" data-en="🏷️ Branding & Logo" data-th="🏷️ แบรนด์ & โลโก้">🏷️ Branding & Logo</div>
         <div class="panel-sub" data-en="Shop name, top bar message, and logo display." data-th="ชื่อร้าน, ข้อความแถบบน, และการแสดงโลโก้">Shop name, top bar message, and logo display.</div>
         <div class="form-card">
@@ -941,7 +997,7 @@
       </div>
 
       <!-- NAV -->
-      <div class="panel" id="panel-content-nav">
+      <div class="tab-content" data-tab-content="menu" data-parent="navigation">
         <div class="panel-title" data-en="🧭 Navigation Menu" data-th="🧭 เมนูนำทาง">🧭 Navigation Menu</div>
         <div class="panel-sub" data-en="Rename, reorder, hide, disable, or add custom pages. Built-in pages can be hidden but not deleted." data-th="แก้ชื่อ, เรียงลำดับ, ซ่อน, ปิดใช้งาน, หรือเพิ่มหน้าใหม่ได้ หน้าเริ่มต้นซ่อนได้แต่ลบไม่ได้">Rename, reorder, hide, disable, or add custom pages. Built-in pages can be hidden but not deleted.</div>
         <div class="form-card">
@@ -958,7 +1014,7 @@
       </div>
 
       <!-- HERO -->
-      <div class="panel" id="panel-content-hero">
+      <div class="tab-content" data-tab-content="hero" data-parent="home">
         <div class="panel-title" data-en="⭐ Hero Section" data-th="⭐ ส่วน Hero">⭐ Hero Section</div>
         <div class="panel-sub" data-en="The big banner on the homepage." data-th="แบนเนอร์ใหญ่บนหน้าแรก">The big banner on the homepage.</div>
 
@@ -1072,7 +1128,7 @@
       </div>
 
       <!-- HOMEPAGE LAYOUT (section order) -->
-      <div class="panel" id="panel-content-homeLayout">
+      <div class="tab-content" data-tab-content="layout" data-parent="home">
         <div class="panel-title" data-en="🏠 Homepage Layout" data-th="🏠 จัดเลย์เอาท์หน้าแรก">🏠 Homepage Layout</div>
         <div class="panel-sub" data-en-html="Drag the sections below to reorder how they appear on the homepage, or use the arrow buttons. Toggle a section off to hide it from the homepage (you can still edit its content from its own panel)." data-th-html="ลากส่วนต่างๆ ด้านล่างเพื่อจัดลำดับใหม่ในหน้าแรก หรือใช้ปุ่มลูกศร ปิดสวิตช์เพื่อซ่อนส่วนนั้นจากหน้าแรก (ยังแก้ไขเนื้อหาได้จาก panel ของส่วนนั้นๆ)">Drag sections to reorder. Toggle off to hide a section from the homepage.</div>
         <div class="form-card">
@@ -1088,7 +1144,7 @@
       </div>
 
       <!-- SERVICES -->
-      <div class="panel" id="panel-content-services">
+      <div class="tab-content" data-tab-content="services" data-parent="home">
         <div class="panel-title" data-en="🎯 Homepage Service Cards" data-th="🎯 การ์ดบริการหน้าแรก">🎯 Homepage Service Cards</div>
         <div class="panel-sub" data-en="The cards on the homepage that link to each section." data-th="การ์ดในหน้าแรกที่ลิงก์ไปแต่ละส่วน">The cards on the homepage that link to each section.</div>
         <div class="form-card">
@@ -1100,7 +1156,7 @@
       </div>
 
       <!-- SECTIONS -->
-      <div class="panel" id="panel-content-sections">
+      <div class="tab-content" data-tab-content="headers" data-parent="navigation">
         <div class="panel-title" data-en="📄 Section Headers" data-th="📄 หัวข้อหน้า">📄 Section Headers</div>
         <div class="panel-sub" data-en="Title and description for each page." data-th="ชื่อและคำอธิบายของแต่ละหน้า">Title and description for each page.</div>
         <div class="form-card">
@@ -1142,7 +1198,7 @@
       </div>
 
       <!-- TRUST -->
-      <div class="panel" id="panel-content-trust">
+      <div class="tab-content" data-tab-content="trust" data-parent="home">
         <div class="panel-title" data-en="🏆 Trust Cards" data-th="🏆 การ์ดน่าเชื่อถือ">🏆 Trust Cards</div>
         <div class="panel-sub" data-en="Highlight features shown on the About page." data-th="ฟีเจอร์ที่แสดงบนหน้าเกี่ยวกับ">Highlight features shown on the About page.</div>
         <div class="form-card">
@@ -1153,7 +1209,7 @@
       </div>
 
       <!-- CONTACT -->
-      <div class="panel" id="panel-content-contact">
+      <div class="tab-content" data-tab-content="contact" data-parent="checkout">
         <div class="panel-title" data-en="💬 Contact Buttons" data-th="💬 ปุ่มติดต่อ">💬 Contact Buttons</div>
         <div class="form-card">
           <div class="form-section-title" data-en="🔘 Floating Contact Buttons" data-th="🔘 ปุ่มติดต่อลอย">🔘 Floating Contact Buttons</div>
@@ -1178,7 +1234,7 @@
       </div>
 
       <!-- PAYMENT -->
-      <div class="panel" id="panel-content-payment">
+      <div class="tab-content" data-tab-content="payment" data-parent="checkout">
         <div class="panel-title" data-en="💳 Payment & Shipping" data-th="💳 ชำระเงิน & จัดส่ง">💳 Payment & Shipping</div>
         <div class="panel-sub" data-en="Edit the customer-facing Payment page (PayNow UEN, shipping fees, order policy)." data-th="แก้ไขหน้าชำระเงินที่ลูกค้าเห็น (UEN, ค่าจัดส่ง, นโยบายสั่งซื้อ)">Edit the customer-facing Payment page.</div>
         <div class="form-card">
@@ -1203,7 +1259,7 @@
       </div>
 
       <!-- FEATURED -->
-      <div class="panel" id="panel-content-featured">
+      <div class="tab-content" data-tab-content="featured" data-parent="home">
         <div class="panel-title" data-en="✨ Featured on Home" data-th="✨ แนะนำหน้าแรก">✨ Featured on Home</div>
         <div class="panel-sub" data-en="Showcase highlighted pieces in a special section on the home page. Mark items as Featured in their detail page below." data-th="โชว์สินค้าแนะนำในส่วนพิเศษบนหน้าแรก เลือก ‘แสดง Featured’ ที่หน้าแก้ไขสินค้า">Showcase highlighted pieces on the home page.</div>
         <div class="form-card">
@@ -1603,7 +1659,38 @@
       <div class="fg"><label class="fl" data-en="Page ID" data-th="ID หน้า">Page ID</label><input class="fi" id="cp_id" disabled style="background:#f0e8d0"></div>
       <div class="fg full"><label class="fl" data-en="Page Title" data-th="ชื่อหน้า">Page Title</label><input class="fi" id="cp_title"></div>
       <div class="fg full"><label class="fl" data-en="Subtitle / Description" data-th="คำโปรย / คำอธิบาย">Subtitle / Description</label><input class="fi" id="cp_desc"></div>
-      <div class="fg full"><label class="fl" data-en="Page Content (HTML allowed)" data-th="เนื้อหาหน้า (รองรับ HTML)">Page Content (HTML allowed)</label><textarea class="fta" id="cp_content" style="min-height:180px"></textarea></div>
+      <div class="fg full">
+        <label class="fl" data-en="Page Content" data-th="เนื้อหาหน้า">Page Content</label>
+        <div class="rte-wrap">
+          <div class="rte-toolbar">
+            <button type="button" class="rte-btn" onclick="rteExec('bold')" title="Bold"><b>B</b></button>
+            <button type="button" class="rte-btn" onclick="rteExec('italic')" title="Italic"><i>I</i></button>
+            <button type="button" class="rte-btn" onclick="rteExec('underline')" title="Underline"><u>U</u></button>
+            <span class="rte-sep"></span>
+            <button type="button" class="rte-btn" onclick="rteExec('formatBlock','<h2>')" title="Heading">H</button>
+            <button type="button" class="rte-btn" onclick="rteExec('formatBlock','<p>')" title="Paragraph">¶</button>
+            <span class="rte-sep"></span>
+            <button type="button" class="rte-btn" onclick="rteExec('insertUnorderedList')" title="Bullet list">• ≡</button>
+            <button type="button" class="rte-btn" onclick="rteExec('insertOrderedList')" title="Numbered list">1. ≡</button>
+            <span class="rte-sep"></span>
+            <button type="button" class="rte-btn" onclick="rteLink('cp_content')" title="Insert link">🔗</button>
+            <button type="button" class="rte-btn" onclick="rteToggleColors('cp_content')" title="Text color"><span style="color:var(--gold-dark);font-weight:700">A</span></button>
+            <button type="button" class="rte-btn" onclick="rteExec('removeFormat')" title="Clear formatting">⌫</button>
+          </div>
+          <div class="rte-colors" id="cp_content_colors">
+            <button type="button" class="rte-color" style="background:#2c1a06" onclick="rteSetColor('cp_content','#2c1a06')" title="Brown"></button>
+            <button type="button" class="rte-color" style="background:#c9a84c" onclick="rteSetColor('cp_content','#c9a84c')" title="Gold"></button>
+            <button type="button" class="rte-color" style="background:#8b6914" onclick="rteSetColor('cp_content','#8b6914')" title="Dark gold"></button>
+            <button type="button" class="rte-color" style="background:#8b0000" onclick="rteSetColor('cp_content','#8b0000')" title="Red"></button>
+            <button type="button" class="rte-color" style="background:#1a5b3a" onclick="rteSetColor('cp_content','#1a5b3a')" title="Green"></button>
+            <button type="button" class="rte-color" style="background:#1a4d8b" onclick="rteSetColor('cp_content','#1a4d8b')" title="Blue"></button>
+            <button type="button" class="rte-color" style="background:#7a6040" onclick="rteSetColor('cp_content','#7a6040')" title="Muted brown"></button>
+            <button type="button" class="rte-color" style="background:#222" onclick="rteSetColor('cp_content','#222')" title="Black"></button>
+            <input type="color" class="rte-color-picker" id="cp_content_picker" oninput="rteSetColor('cp_content',this.value)" title="Custom color">
+          </div>
+          <div class="rte-editor" id="cp_content" contenteditable="true" data-placeholder="Write your page content here..."></div>
+        </div>
+      </div>
     </div>
     <div style="margin-top:22px;display:flex;gap:12px">
       <button class="btn-gold" onclick="saveCustomPage()" data-en="✅ Save Page" data-th="✅ บันทึกหน้า">✅ Save Page</button>
@@ -2072,30 +2159,81 @@ function saveDB(db){
 }
 function genId(arr){return arr.length?Math.max(...arr.map(i=>i.id))+1:1;}
 
-function showPanel(name,el){
+// ─── PANEL SHORTCUT REDIRECTS ──────────────────────────────────────────────
+// Old sidebar items pointed at granular panels (content-hero, content-services,
+// etc.). We've since consolidated them into composite panels with tabs.
+// This map redirects any legacy panel name to the new (panel, tab) pair so
+// in-app links and saved state keep working.
+const PANEL_REDIRECTS = {
+  'content-branding':   ['store', 'branding'],
+  'content-nav':        ['navigation', 'menu'],
+  'content-hero':       ['home', 'hero'],
+  'content-homeLayout': ['home', 'layout'],
+  'content-services':   ['home', 'services'],
+  'content-sections':   ['navigation', 'headers'],
+  'content-trust':      ['home', 'trust'],
+  'content-contact':    ['checkout', 'contact'],
+  'content-payment':    ['checkout', 'payment'],
+  'content-featured':   ['home', 'featured'],
+};
+
+function showPanel(name, el){
+  // Redirect legacy panel names → new (panel, tab)
+  if(PANEL_REDIRECTS[name]){
+    const [newPanel, newTab] = PANEL_REDIRECTS[name];
+    showPanel(newPanel);
+    showTab(newPanel, newTab);
+    return;
+  }
+
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.side-item').forEach(i=>i.classList.remove('active'));
-  document.getElementById('panel-'+name).classList.add('active');
-  if(el)el.classList.add('active');
+  const panelEl = document.getElementById('panel-'+name);
+  if(!panelEl){ console.warn('No panel:', name); return; }
+  panelEl.classList.add('active');
+  if(el){ el.classList.add('active'); }
+  else {
+    // Find the side-item that owns this panel and mark it active (for redirects)
+    const owner = document.querySelector(`.side-item[onclick*="showPanel('${name}'"]`);
+    if(owner) owner.classList.add('active');
+  }
   // close mobile sidebar
   document.querySelector('.sidebar').classList.remove('open');
   document.getElementById('mobileOverlay').classList.remove('open');
+
+  // Load data for each panel
   if(name==='dashboard')loadDash();
   if(name==='amulets')loadList('amulets');
   if(name==='accessories')loadList('accessories');
   if(name==='casing'){exitTypeView();loadCasingTypes();}
   if(name==='projects')loadList('projects');
-  if(name==='content-branding')loadBranding();
-  if(name==='content-nav')loadNav();
-  if(name==='content-hero')loadHero();
-  if(name==='content-homeLayout')loadHomeLayout();
-  if(name==='content-services')loadServices();
-  if(name==='content-sections')loadSections();
-  if(name==='content-trust')loadTrust();
-  if(name==='content-contact')loadContact();
-  if(name==='content-payment')loadPayment();
-  if(name==='content-featured')loadFeatured();
   if(name==='reviews')loadReviewsPanel();
+  // Composite panels — load all their sub-screens once when entered
+  if(name==='home'){
+    loadHero(); loadHomeLayout(); loadServices(); loadTrust(); loadFeatured();
+  }
+  if(name==='store'){
+    loadBranding();
+  }
+  if(name==='navigation'){
+    loadNav(); loadSections();
+  }
+  if(name==='checkout'){
+    loadPayment(); loadContact();
+  }
+}
+
+// Switch tab within a composite panel.
+// Markup convention: buttons have data-tab="key", content has data-tab-content="key".
+function showTab(panelName, tabKey){
+  const panel = document.getElementById('panel-'+panelName);
+  if(!panel) return;
+  panel.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tabKey);
+  });
+  panel.querySelectorAll('.tab-content').forEach(c => {
+    c.classList.toggle('active', c.dataset.tabContent === tabKey);
+  });
 }
 
 function toggleSidebar(){
@@ -2257,7 +2395,7 @@ function addCustomPage(){
   document.getElementById('cp_id').value=lang==='th'?'(สร้างอัตโนมัติ)':'(auto-generated)';
   document.getElementById('cp_title').value='';
   document.getElementById('cp_desc').value='';
-  document.getElementById('cp_content').value='';
+  rteSetHtml('cp_content', '');
   document.getElementById('pageModal').classList.add('open');
 }
 
@@ -2269,7 +2407,7 @@ function editCustomPage(id){
   document.getElementById('cp_id').value=p.id;
   document.getElementById('cp_title').value=p.title||'';
   document.getElementById('cp_desc').value=p.desc||'';
-  document.getElementById('cp_content').value=p.content||'';
+  rteSetHtml('cp_content', p.content||'');
   document.getElementById('pageModal').classList.add('open');
 }
 
@@ -2283,7 +2421,7 @@ function saveCustomPage(){
       p.label=label;
       p.title=document.getElementById('cp_title').value;
       p.desc=document.getElementById('cp_desc').value;
-      p.content=document.getElementById('cp_content').value;
+      p.content=rteGetHtml('cp_content');
       const navItem=db.settings.nav.find(n=>n.id===editingPageId);if(navItem)navItem.label=label;
     }
   } else {
@@ -2293,7 +2431,7 @@ function saveCustomPage(){
       id=baseId+'-'+i;i++;
     }
     if(!db.settings.customPages)db.settings.customPages=[];
-    db.settings.customPages.push({id,label,title:document.getElementById('cp_title').value,desc:document.getElementById('cp_desc').value,content:document.getElementById('cp_content').value});
+    db.settings.customPages.push({id,label,title:document.getElementById('cp_title').value,desc:document.getElementById('cp_desc').value,content:rteGetHtml('cp_content')});
     db.settings.nav.push({id,label,visible:true,enabled:true,builtin:false});
   }
   saveDB(db);closeModal('pageModal');showToast(tr('pageSaved'));loadNav();
@@ -3674,6 +3812,19 @@ function rteSetColor(editorId, color){
   if(pop) pop.classList.remove('open');
 }
 
+// Insert a hyperlink at the current selection. Prompts for URL; if no text
+// is selected, the URL itself becomes the link text.
+function rteLink(editorId){
+  const el = document.getElementById(editorId);
+  if(!el) return;
+  el.focus();
+  const url = prompt(lang==='th' ? 'ลิงก์ URL (เช่น https://...)' : 'Link URL (e.g. https://...)');
+  if(!url) return;
+  // execCommand expects a fully-qualified URL
+  const fullUrl = /^[a-z]+:\/\//i.test(url) ? url : 'https://' + url;
+  try { document.execCommand('createLink', false, fullUrl); } catch(_){}
+}
+
 // Close color popovers on outside click
 document.addEventListener('click', (e) => {
   if(e.target.closest('.rte-color-picker')) return;
@@ -3899,7 +4050,98 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 applyLang();
 
 // Wait for Firebase to be ready, then route based on auth state
+// ─── BUILD COMPOSITE PANELS ────────────────────────────────────────────────
+// Wraps existing .tab-content blocks into composite .panel containers with
+// a tab bar at the top. Approach: at boot time, find every .tab-content[data-parent="X"],
+// group them by parent, build a panel-X wrapper, and move the tab contents
+// inside it. Tab buttons are rendered in the order of TAB_DEFS for each
+// parent.
+function buildCompositePanels(){
+  // ─── Tab definitions: order + label per (parent, tabKey) ───
+  const TAB_DEFS = {
+    home: [
+      {tab:'hero',     en:'⭐ Hero',         th:'⭐ ส่วน Hero'},
+      {tab:'layout',   en:'🏠 Layout',       th:'🏠 จัดเลย์เอาท์'},
+      {tab:'services', en:'🎯 Services',     th:'🎯 บริการ'},
+      {tab:'featured', en:'✨ Featured',     th:'✨ แนะนำ'},
+      {tab:'trust',    en:'🏆 Trust',        th:'🏆 น่าเชื่อถือ'},
+    ],
+    store: [
+      {tab:'branding', en:'🏷️ Branding & Logo', th:'🏷️ แบรนด์ & โลโก้'},
+    ],
+    navigation: [
+      {tab:'menu',     en:'🧭 Menu Items',   th:'🧭 รายการเมนู'},
+      {tab:'headers',  en:'📄 Page Headers', th:'📄 หัวข้อหน้า'},
+    ],
+    checkout: [
+      {tab:'payment',  en:'💳 Payment',      th:'💳 ชำระเงิน'},
+      {tab:'contact',  en:'💬 Contact',      th:'💬 ติดต่อ'},
+    ],
+  };
+
+  const PANEL_HEADERS = {
+    home:       {en:'🏠 Homepage Editor',     th:'🏠 แก้ไขหน้าแรก',     sub: {en:'Everything that shows on the home page — hero, layout, services, featured products, and trust badges.', th:'ทุกอย่างที่แสดงบนหน้าแรก — Hero, Layout, บริการ, สินค้าแนะนำ และจุดเด่น'}},
+    store:      {en:'🏷️ Store Identity',      th:'🏷️ ข้อมูลร้าน',       sub: {en:'Your shop name, logo, and topbar banner.', th:'ชื่อร้าน โลโก้ และแบนเนอร์ด้านบน'}},
+    navigation: {en:'🧭 Navigation & Pages',  th:'🧭 เมนู & หน้า',       sub: {en:'Menu items in the top navigation, custom pages, and section headers shown on each page.', th:'รายการเมนูด้านบน หน้าที่สร้างเอง และหัวข้อหน้าแต่ละหน้า'}},
+    checkout:   {en:'💳 Payment & Contact',   th:'💳 ชำระเงิน & ติดต่อ', sub: {en:'How customers pay you and reach you.', th:'วิธีให้ลูกค้าชำระเงินและติดต่อ'}},
+  };
+
+  const main = document.querySelector('.main');
+  if(!main) return;
+
+  Object.keys(TAB_DEFS).forEach(parent => {
+    // Find all tab-content blocks belonging to this parent
+    const tabContents = [...main.querySelectorAll(`.tab-content[data-parent="${parent}"]`)];
+    if(!tabContents.length) return;
+
+    // Build the wrapper panel
+    const panel = document.createElement('div');
+    panel.className = 'panel';
+    panel.id = 'panel-' + parent;
+
+    const header = PANEL_HEADERS[parent];
+    const tabs = TAB_DEFS[parent];
+
+    // Panel title + subtitle
+    const titleHtml = `
+      <div class="panel-title" data-en="${header.en}" data-th="${header.th}">${header.en}</div>
+      <div class="panel-sub" data-en="${header.sub.en}" data-th="${header.sub.th}">${header.sub.en}</div>
+    `;
+
+    // Tab bar — only show if more than one tab
+    const tabBarHtml = tabs.length > 1 ? `
+      <div class="tab-bar">
+        ${tabs.map((t, i) => `
+          <button class="tab-btn${i===0?' active':''}" data-tab="${t.tab}"
+                  onclick="showTab('${parent}', '${t.tab}')"
+                  data-en="${t.en}" data-th="${t.th}">${t.en}</button>
+        `).join('')}
+      </div>
+    ` : '';
+
+    panel.innerHTML = titleHtml + tabBarHtml;
+
+    // Insert the panel BEFORE the first tab-content of this parent in DOM order
+    main.insertBefore(panel, tabContents[0]);
+
+    // Move each tab-content into the panel, in the order defined by tabs[]
+    tabs.forEach((t, i) => {
+      const block = tabContents.find(tc => tc.dataset.tabContent === t.tab);
+      if(block){
+        panel.appendChild(block);
+        if(i === 0) block.classList.add('active');
+      }
+    });
+  });
+}
+
+
 async function bootAdmin(){
+  // Build composite panels (Homepage / Store / Navigation / Checkout) by
+  // wrapping the existing .tab-content blocks so we don't have to rewrite
+  // them piece-by-piece. Runs synchronously before login UI shows.
+  buildCompositePanels();
+
   // Wait for the firebase-shared module to attach FB to window
   let tries = 0;
   while(!window.FB && tries < 100){ await new Promise(r => setTimeout(r, 50)); tries++; }
