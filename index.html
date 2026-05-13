@@ -351,8 +351,8 @@
     bottom:0;
     left:calc(50% - 50vw);
     right:calc(50% - 50vw);
-    width:100vw;height:120px;
-    background:linear-gradient(180deg,transparent 0%,rgba(0,0,0,.4) 100%);
+    width:100vw;height:80px;
+    background:linear-gradient(180deg,transparent 0%,rgba(0,0,0,.15) 100%);
     pointer-events:none;z-index:1;
   }
   .hero-bg{
@@ -368,30 +368,40 @@
     opacity:0;transition:opacity .6s;
     z-index:0;
   }
-  .hero-bg.show{opacity:.25}
+  .hero-bg.show{opacity:.18}
   .hero-bg-overlay{
     position:absolute;
     top:0;bottom:0;
     left:calc(50% - 50vw);
     right:calc(50% - 50vw);
     width:100vw;
-    background:linear-gradient(180deg,rgba(18,16,10,.5) 0%,rgba(18,16,10,.65) 50%,rgba(18,16,10,.8) 100%);
+    /* Much lighter overlay — just enough to keep text readable over a
+       background photo, but doesn't darken the centerpiece hero image. */
+    background:linear-gradient(180deg,rgba(18,16,10,.2) 0%,rgba(18,16,10,.35) 60%,rgba(18,16,10,.55) 100%);
     z-index:1;
+    pointer-events:none;
   }
 
-  /* 3D canvas container */
-  .hero-3d{position:relative;width:100%;height:80vh;max-height:680px;z-index:2;display:flex;align-items:center;justify-content:center}
+  /* 3D canvas container — z-index:3 to sit above the hero-bg-overlay (1)
+     and any other gradient layers (1) so the centerpiece image is never
+     darkened by overlays meant for the background. */
+  .hero-3d{position:relative;width:100%;height:80vh;max-height:680px;z-index:3;display:flex;align-items:center;justify-content:center}
   #phra3d{width:100%;height:100%;cursor:grab}
   #phra3d:active{cursor:grabbing}
   /* Still-image hero mode — used instead of the 3D canvas when admin
-     uploads a plain image. Subtle drop shadow + gold glow underneath. */
+     uploads a plain image. Subtle drop shadow + gold glow underneath.
+     IMPORTANT: no `filter: brightness` here — that darkens the image. */
   .hero-still-img{
     max-width:100%;max-height:100%;
     width:auto;height:auto;
     object-fit:contain;
-    border-radius:8px;
+    /* Drop-shadow uses an SVG-style filter that adds an exterior shadow
+       without affecting the image's own pixels. Safe. */
     filter:drop-shadow(0 12px 32px rgba(0,0,0,.4)) drop-shadow(0 0 28px rgba(201,168,76,.18));
     animation:heroImgFloat 6s ease-in-out infinite;
+    /* Force the image to render with full opacity & no blending */
+    opacity:1 !important;
+    mix-blend-mode:normal !important;
   }
   @keyframes heroImgFloat{
     0%,100%{transform:translateY(0)}
@@ -417,7 +427,7 @@
 
   .ring{position:absolute;border-radius:50%;border:1px solid rgba(201,168,76,.07);top:50%;left:50%;transform:translate(-50%,-50%);animation:rp 5s ease-in-out infinite;z-index:1}
   @keyframes rp{0%,100%{opacity:.4;transform:translate(-50%,-50%) scale(1)}50%{opacity:.1;transform:translate(-50%,-50%) scale(1.025)}}
-  .hero-inner{position:relative;z-index:2;max-width:560px;text-align:left;padding:80px 0}
+  .hero-inner{position:relative;z-index:3;max-width:560px;text-align:left;padding:80px 0}
   .eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.35);color:var(--gold-light);font-size:11px;letter-spacing:3.5px;padding:7px 18px;border-radius:0;margin-bottom:30px;font-weight:600;backdrop-filter:blur(4px);position:relative}
   .eyebrow::before,.eyebrow::after{content:'';width:18px;height:1px;background:var(--gold);opacity:.6}
   .hero-title{font-family:var(--font-display);font-size:clamp(42px,5.5vw,72px);font-weight:700;color:#fff;line-height:1.05;margin-bottom:16px;text-shadow:0 2px 24px rgba(0,0,0,.4);letter-spacing:-1px}
@@ -2093,7 +2103,15 @@ function renderHomeReviews(){
 
   const grid = document.getElementById('homeRevGrid');
   grid.innerHTML = picks.map(rv => {
-    const stars = '★'.repeat(rv.rating||5) + '☆'.repeat(5-(rv.rating||5));
+    // Optional rating — show stars only if rating > 0
+    const rating = rv.rating || 0;
+    const starsHtml = rating > 0
+      ? `<div class="rev-stars">${'★'.repeat(rating)}${'☆'.repeat(5-rating)}</div>`
+      : '';
+    // Anonymous or display-name override
+    const displayName = rv.anonymous
+      ? (lang==='th' ? 'ลูกค้า' : 'Anonymous Customer')
+      : (rv.displayName || rv.name || (lang==='th' ? 'ลูกค้า' : 'Customer'));
     const imgsHtml = (rv.imgs && rv.imgs.length)
       ? `<div class="rev-imgs">${rv.imgs.slice(0,3).map((img,i)=>`<img loading="lazy" decoding="async" src="${img}" onclick="openReviewLightbox(${rv.id},${i})">`).join('')}</div>`
       : '';
@@ -2101,13 +2119,13 @@ function renderHomeReviews(){
     return `
       <div class="rev-card${rv.text ? '' : ' rev-card-imgonly'}">
         <div class="rev-quote">"</div>
-        <div class="rev-stars">${stars}</div>
+        ${starsHtml}
         ${textHtml}
         ${imgsHtml}
         <div class="rev-foot">
           <div>
-            <div class="rev-name">${rv.name||'Anonymous'}</div>
-            ${rv.location?`<div class="rev-loc">📍 ${rv.location}</div>`:''}
+            <div class="rev-name">${displayName}</div>
+            ${rv.location && !rv.anonymous?`<div class="rev-loc">📍 ${rv.location}</div>`:''}
           </div>
           ${rv.date?`<div class="rev-date">${rv.date}</div>`:''}
         </div>
@@ -2172,19 +2190,25 @@ function renderReviews(){
   const grid=document.getElementById('revGrid');
   if(!r.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">No reviews yet.</div>`;return;}
   grid.innerHTML=r.map(rv=>{
-    const stars='★'.repeat(rv.rating||5)+'☆'.repeat(5-(rv.rating||5));
+    const rating = rv.rating || 0;
+    const starsHtml = rating > 0
+      ? `<div class="rev-stars">${'★'.repeat(rating)}${'☆'.repeat(5-rating)}</div>`
+      : '';
+    const displayName = rv.anonymous
+      ? (lang==='th' ? 'ลูกค้า' : 'Anonymous Customer')
+      : (rv.displayName || rv.name || (lang==='th' ? 'ลูกค้า' : 'Customer'));
     const imgsHtml=(rv.imgs&&rv.imgs.length)?`<div class="rev-imgs">${rv.imgs.map((img,i)=>`<img loading="lazy" decoding="async" src="${img}" onclick="openReviewLightbox(${rv.id},${i})">`).join('')}</div>`:'';
     const textHtml = rv.text ? `<p class="rev-text">${rv.text}</p>` : '';
     return `
       <div class="rev-card${rv.text ? '' : ' rev-card-imgonly'}">
         <div class="rev-quote">"</div>
-        <div class="rev-stars">${stars}</div>
+        ${starsHtml}
         ${textHtml}
         ${imgsHtml}
         <div class="rev-foot">
           <div>
-            <div class="rev-name">${rv.name||'Anonymous'}</div>
-            ${rv.location?`<div class="rev-loc">📍 ${rv.location}</div>`:''}
+            <div class="rev-name">${displayName}</div>
+            ${rv.location && !rv.anonymous?`<div class="rev-loc">📍 ${rv.location}</div>`:''}
           </div>
           ${rv.date?`<div class="rev-date">${rv.date}</div>`:''}
         </div>
@@ -2646,10 +2670,16 @@ function applyImageKitResize(img){
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const target = targets.find(t => t >= displayW * dpr) || 1920;
 
-  // Build new URL: insert /tr:w-{target},q-80,f-auto/ before the path
+  // Hero images and other "showcase" images get a higher quality (95) so
+  // gold/brass tones don't compress to a muddy darkness. Other images use
+  // q-80 which is plenty for thumbnails. .hero-still-img is the main one.
+  const isShowcase = img.classList.contains('hero-still-img');
+  const quality = isShowcase ? 95 : 80;
+
+  // Build new URL: insert /tr:w-{target},q-{quality},f-auto/ before the path
   const newUrl = url.replace(
     /(\/yingyingyingsg\/yyy)\/(.+)$/,
-    `$1/tr:w-${target},q-80,f-auto/$2`
+    `$1/tr:w-${target},q-${quality},f-auto/$2`
   );
   if(img.dataset.src){
     img.dataset.src = newUrl;
