@@ -2339,9 +2339,46 @@ const _imgObserver = ('IntersectionObserver' in window)
     }, { rootMargin: '250px 0px', threshold: 0.01 })
   : null;
 
+// ─── IMAGEKIT AUTO-RESIZE ──────────────────────────────────────────────────
+// Inserts transformation params (resize, format, quality) into ImageKit URLs
+// based on the image's actual display size. A 240×240 card no longer
+// downloads a 1920×1920 source — it asks ImageKit to resize on the edge
+// before sending bytes over the wire. Typical reduction: 90%+.
+//
+// We use devicePixelRatio so retina screens get 2x assets (still small).
+function applyImageKitResize(img){
+  if(!img || !img.src && !img.dataset.src) return;
+  const url = img.src || img.dataset.src;
+  if(!url.includes('ik.imagekit.io')) return;
+  if(url.includes('/tr:')) return;  // already has transformation
+
+  // Measure displayed size (after CSS layout). Use the image's clientWidth
+  // if available, else its parent's, else fall back to 800px.
+  let displayW = img.clientWidth || (img.parentElement && img.parentElement.clientWidth) || 800;
+  // Cap and round to nice numbers — avoids cache fragmentation across slightly
+  // different sizes (e.g. 237px vs 241px would generate 2 cache entries).
+  const targets = [320, 480, 640, 800, 1024, 1280, 1600, 1920];
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const target = targets.find(t => t >= displayW * dpr) || 1920;
+
+  // Build new URL: insert /tr:w-{target},q-80,f-auto/ before the path
+  const newUrl = url.replace(
+    /(\/yingyingyingsg\/yyy)\/(.+)$/,
+    `$1/tr:w-${target},q-80,f-auto/$2`
+  );
+  if(img.dataset.src){
+    img.dataset.src = newUrl;
+  } else {
+    img.src = newUrl;
+  }
+}
+
 function watchImage(img){
   if(!img || img.dataset._watched) return;
   img.dataset._watched = '1';
+
+  // Apply ImageKit auto-resize BEFORE network request fires
+  applyImageKitResize(img);
 
   // Eager (above-the-fold) images: keep native loading, just listen for load
   if(img.getAttribute('loading') !== 'lazy'){
