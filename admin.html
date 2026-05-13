@@ -1230,44 +1230,10 @@
 
       <!-- SECTIONS -->
       <div class="tab-content" data-tab-content="headers" data-parent="navigation">
-        <h3 class="subsection-title" data-en="📄 Section Headers" data-th="📄 หัวข้อหน้า">📄 Section Headers</h3>
-        <div class="subsection-sub" data-en="Title and description for each page." data-th="ชื่อและคำอธิบายของแต่ละหน้า">Title and description for each page.</div>
-        <div class="form-card">
-          <div class="form-section-title" data-en="📿 Amulets Page" data-th="📿 หน้าพระเครื่อง">📿 Amulets Page</div>
-          <div class="form-grid">
-            <div class="fg"><label class="fl" data-en="Title" data-th="ชื่อ">Title</label><input class="fi" id="sec_a_title"></div>
-            <div class="fg"><label class="fl" data-en="Description" data-th="คำอธิบาย">Description</label><input class="fi" id="sec_a_desc"></div>
-          </div>
-        </div>
-        <div class="form-card">
-          <div class="form-section-title" data-en="⛓️ Accessories Page" data-th="⛓️ หน้าอุปกรณ์เสริม">⛓️ Accessories Page</div>
-          <div class="form-grid">
-            <div class="fg"><label class="fl" data-en="Title" data-th="ชื่อ">Title</label><input class="fi" id="sec_ac_title"></div>
-            <div class="fg"><label class="fl" data-en="Description" data-th="คำอธิบาย">Description</label><input class="fi" id="sec_ac_desc"></div>
-          </div>
-        </div>
-        <div class="form-card">
-          <div class="form-section-title" data-en="🪬 Casing Page" data-th="🪬 หน้ากรอบพระ">🪬 Casing Page</div>
-          <div class="form-grid">
-            <div class="fg"><label class="fl" data-en="Title" data-th="ชื่อ">Title</label><input class="fi" id="sec_c_title"></div>
-            <div class="fg"><label class="fl" data-en="Description" data-th="คำอธิบาย">Description</label><input class="fi" id="sec_c_desc"></div>
-          </div>
-        </div>
-        <div class="form-card">
-          <div class="form-section-title" data-en="🎯 Projects Page" data-th="🎯 หน้าโปรเจกต์">🎯 Projects Page</div>
-          <div class="form-grid">
-            <div class="fg"><label class="fl" data-en="Title" data-th="ชื่อ">Title</label><input class="fi" id="sec_p_title"></div>
-            <div class="fg"><label class="fl" data-en="Description" data-th="คำอธิบาย">Description</label><input class="fi" id="sec_p_desc"></div>
-          </div>
-        </div>
-        <div class="form-card">
-          <div class="form-section-title" data-en="👤 About Page" data-th="👤 หน้าเกี่ยวกับ">👤 About Page</div>
-          <div class="form-grid">
-            <div class="fg full"><label class="fl" data-en="Title" data-th="ชื่อ">Title</label><input class="fi" id="sec_ab_title"></div>
-            <div class="fg full"><label class="fl" data-en="Description" data-th="คำอธิบาย">Description</label><textarea class="fta" id="sec_ab_desc"></textarea></div>
-          </div>
-        </div>
-        <div class="save-bar"><button class="btn-gold" onclick="saveSections()" data-en="💾 Save Sections" data-th="💾 บันทึก">💾 Save Sections</button></div>
+        <h3 class="subsection-title" data-en="📄 Page Headers" data-th="📄 หัวข้อหน้า">📄 Page Headers</h3>
+        <div class="subsection-sub" data-en="Title and subtitle for each page in your menu. Headers below match your current menu items — including custom pages." data-th="ชื่อและคำโปรยของแต่ละหน้าในเมนู หัวข้อด้านล่างจะตรงกับรายการเมนูปัจจุบัน — รวมถึงหน้าที่สร้างเอง">Headers match your current menu items, including custom pages.</div>
+        <div id="sectionsList"></div>
+        <div class="save-bar"><button class="btn-gold" onclick="saveSections()" data-en="💾 Save Page Headers" data-th="💾 บันทึก">💾 Save Page Headers</button></div>
       </div>
 
       <!-- TRUST -->
@@ -1550,12 +1516,72 @@
 
         <div class="form-card">
           <div class="form-section-title" id="r_form_title" data-en="➕ Add New Review" data-th="➕ เพิ่มรีวิวใหม่">➕ Add New Review</div>
+          <div class="form-section-desc"
+               data-en="Quick way to add chat reviews: paste the screenshot below, optionally type the message, save. Name and rating are optional."
+               data-th="วิธีง่ายสุดในการเพิ่มรีวิวจากแชท: วางรูปแคปแชทด้านล่าง (ไม่บังคับใส่ข้อความ) แล้วบันทึก ชื่อและคะแนนดาวไม่บังคับ">
+            Quick workflow: paste chat screenshot below, optionally add text, save. Name & rating are optional.
+          </div>
           <div class="form-grid">
-            <div class="fg"><label class="fl" data-en="Reviewer Name *" data-th="ชื่อผู้รีวิว *">Reviewer Name *</label><input class="fi" id="r_name"></div>
-            <div class="fg"><label class="fl" data-en="Location" data-th="สถานที่">Location</label><input class="fi" id="r_loc" placeholder="e.g. Singapore"></div>
+            <!-- ① Photo / Chat Screenshot — most important field, comes first -->
+            <div class="fg full">
+              <label class="fl" data-en="📷 Chat Screenshot / Photo" data-th="📷 รูปแคปแชท / รูปภาพ">📷 Chat Screenshot / Photo</label>
+              <div class="upload-zone" id="r_imgs_zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'r_imgs')">
+                <input type="file" multiple accept="image/*" onchange="handleImgs(event,'r_imgs')">
+                <div class="u-icon">📷</div>
+                <div class="u-text" data-en="Click, drag, or paste with Ctrl+V" data-th="คลิก ลาก หรือวางด้วย Ctrl+V">Click, drag, or paste with Ctrl+V</div>
+                <div class="u-hint" data-en="Paste chat screenshots directly from your clipboard" data-th="วางรูปแคปแชทจาก clipboard ได้เลย">Paste chat screenshots directly from your clipboard</div>
+              </div>
+              <div class="prev-grid" id="r_imgs_p"></div>
+            </div>
+
+            <!-- ② Review Text — optional -->
+            <div class="fg full">
+              <label class="fl" data-en="✍️ Review Text (optional)" data-th="✍️ ข้อความรีวิว (ไม่บังคับ)">✍️ Review Text (optional)</label>
+              <textarea class="fta" id="r_text" style="min-height:100px" placeholder=""></textarea>
+              <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px"
+                   data-en="Leave empty if the screenshot already shows the message."
+                   data-th="ไม่ต้องใส่ถ้ารูปแคปแชทมีข้อความครบแล้ว">Leave empty if the screenshot has the message.</div>
+            </div>
+
+            <!-- ③ Anonymous toggle — prominent, defaults ON for quick chat reviews -->
+            <div class="fg full">
+              <label class="switch-label" style="padding:14px 16px;background:linear-gradient(135deg,rgba(232,201,106,.12) 0%,rgba(201,168,76,.06) 100%);border:1.5px solid rgba(201,168,76,.3);border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:12px">
+                <label class="switch"><input type="checkbox" id="r_anon" checked onchange="onAnonChange()"><span class="slider"></span></label>
+                <span style="flex:1">
+                  <strong style="font-size:14.5px" data-en="🕶 Anonymous Review (default ON)" data-th="🕶 รีวิวแบบไม่ระบุชื่อ (เปิดไว้ default)">🕶 Anonymous Review (default ON)</strong>
+                  <div style="font-size:12px;color:var(--text-muted);margin-top:3px;font-weight:400"
+                       data-en='Shows as "Anonymous Customer" on the site. Turn off only if the customer agreed to show their name.'
+                       data-th='แสดงเป็น "ลูกค้า" บนเว็บ ปิดเฉพาะเมื่อลูกค้ายินยอมให้แสดงชื่อ'>Shows as "Anonymous Customer". Turn off only if customer agreed to show name.</div>
+                </span>
+              </label>
+            </div>
+
+            <!-- ④ Optional fields — collapsed by default, expand when not anonymous -->
+            <div id="r_optional_fields" style="display:none;grid-column:1/-1">
+              <div class="form-grid" style="gap:14px">
+                <div class="fg">
+                  <label class="fl" data-en="Reviewer Name" data-th="ชื่อผู้รีวิว">Reviewer Name</label>
+                  <input class="fi" id="r_name" placeholder="e.g. Khun Somchai">
+                  <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px"
+                       data-en="Customer's real name — for your reference only."
+                       data-th="ชื่อจริงของลูกค้า เก็บไว้อ้างอิงเท่านั้น">For your reference only.</div>
+                </div>
+                <div class="fg">
+                  <label class="fl" data-en="Display Name (public)" data-th="ชื่อที่แสดง (สาธารณะ)">Display Name (public)</label>
+                  <input class="fi" id="r_display" placeholder='e.g. "S." or "Customer A"'>
+                  <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px"
+                       data-en='Leave empty to use Reviewer Name on the site.'
+                       data-th='เว้นว่างถ้าจะใช้ชื่อจริงในเว็บ'>Leave empty to use Reviewer Name.</div>
+                </div>
+                <div class="fg"><label class="fl" data-en="Location (optional)" data-th="สถานที่ (ไม่บังคับ)">Location (optional)</label><input class="fi" id="r_loc" placeholder="e.g. Singapore"></div>
+              </div>
+            </div>
+
+            <!-- ⑤ Rating & Date — collapsed, less common -->
             <div class="fg">
-              <label class="fl" data-en="Rating" data-th="คะแนน">Rating</label>
+              <label class="fl" data-en="⭐ Rating (optional)" data-th="⭐ คะแนน (ไม่บังคับ)">⭐ Rating (optional)</label>
               <select class="fsel" id="r_rating">
+                <option value="0" data-en="— No rating —" data-th="— ไม่ใส่คะแนน —">— No rating —</option>
                 <option value="5">★★★★★ (5)</option>
                 <option value="4">★★★★ (4)</option>
                 <option value="3">★★★ (3)</option>
@@ -1563,17 +1589,7 @@
                 <option value="1">★ (1)</option>
               </select>
             </div>
-            <div class="fg"><label class="fl" data-en="Date / Year" data-th="วันที่ / ปี">Date / Year</label><input class="fi" id="r_date" placeholder="e.g. 2024"></div>
-            <div class="fg full"><label class="fl" data-en="Review Text (optional if you have photos)" data-th="ข้อความรีวิว (ไม่บังคับถ้ามีรูป)">Review Text (optional if you have photos)</label><textarea class="fta" id="r_text" style="min-height:120px" placeholder="..."></textarea></div>
-            <div class="fg full">
-              <label class="fl" data-en="📷 Photos — paste with Ctrl+V, or click/drag" data-th="📷 รูปภาพ — วางด้วย Ctrl+V หรือคลิก/ลาก">📷 Photos — paste with Ctrl+V, or click/drag</label>
-              <div class="upload-zone" id="r_imgs_zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'r_imgs')">
-                <input type="file" multiple accept="image/*" onchange="handleImgs(event,'r_imgs')">
-                <div class="u-icon">📷</div>
-                <div class="u-text" data-en="Click, drag, or paste screenshots (Ctrl+V)" data-th="คลิก ลาก หรือวางรูปแคป (Ctrl+V)">Click, drag, or paste screenshots (Ctrl+V)</div>
-              </div>
-              <div class="prev-grid" id="r_imgs_p"></div>
-            </div>
+            <div class="fg"><label class="fl" data-en="Date / Year (optional)" data-th="วันที่ / ปี (ไม่บังคับ)">Date / Year (optional)</label><input class="fi" id="r_date" placeholder="e.g. 2024"></div>
           </div>
           <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap">
             <button class="btn-gold" id="r_save_btn" onclick="saveReview()" data-en="✅ Save Review" data-th="✅ บันทึกรีวิว">✅ Save Review</button>
@@ -2407,6 +2423,11 @@ function showTab(panelName, tabKey){
   panel.querySelectorAll('.tab-content').forEach(c => {
     c.classList.toggle('active', c.dataset.tabContent === tabKey);
   });
+  // Page Headers depends on the current nav — reload every time the tab is
+  // shown so newly-added custom pages appear in the editor immediately.
+  if(panelName === 'navigation' && tabKey === 'headers'){
+    loadSections();
+  }
 }
 
 function toggleSidebar(){
@@ -2535,6 +2556,7 @@ function rmNavItem(idx){
   db.settings.customPages=(db.settings.customPages||[]).filter(p=>p.id!==item.id);
   db.settings.nav.splice(idx,1);
   saveDB(db);loadNav();showToast(tr('deleted'));
+  if(typeof loadSections === 'function') loadSections();
 }
 
 function saveNav(){
@@ -2727,6 +2749,8 @@ function saveCustomPage(){
     db.settings.nav.push({id,label,visible:true,enabled:true,builtin:false});
   }
   saveDB(db);closeModal('pageModal');showToast(tr('pageSaved'));loadNav();
+  // Also refresh Page Headers tab in case admin is about to switch over to it
+  if(typeof loadSections === 'function') loadSections();
 }
 
 function delCustomPage(id){
@@ -2735,6 +2759,7 @@ function delCustomPage(id){
   db.settings.customPages=(db.settings.customPages||[]).filter(p=>p.id!==id);
   db.settings.nav=db.settings.nav.filter(n=>n.id!==id);
   saveDB(db);loadNav();showToast(tr('deleted'));
+  if(typeof loadSections === 'function') loadSections();
 }
 
 // HERO
@@ -3168,28 +3193,111 @@ function saveServices(){
 }
 
 // SECTIONS
+// ─── PAGE HEADERS — dynamic based on current nav ───────────────────────────
+// Builds an editor for the title + subtitle of every visible nav item
+// (including custom pages) instead of hard-coding the built-in pages.
+// Built-in titles live under settings.sections; custom-page titles live on
+// the customPages entry itself. We unify the read/write here.
+
+// Some pages don't have an editable header (home is a hero, payment has its
+// own UI) — skip those.
+const SECTION_SKIP_IDS = new Set(['home', 'payment']);
+
+// Map nav id → settings.sections key (only differs where the keys diverged
+// historically, e.g. id 'about' lives under sections.about — already aligned).
+const SECTION_KEY_BY_NAV_ID = {
+  amulets: 'amulets',
+  accessories: 'accessories',
+  casing: 'casing',
+  projects: 'projects',
+  about: 'about',
+  reviews: 'reviews',
+};
+
 function loadSections(){
-  const s=getDB().settings.sections;
-  document.getElementById('sec_a_title').value=s.amulets.title;
-  document.getElementById('sec_a_desc').value=s.amulets.desc;
-  document.getElementById('sec_ac_title').value=s.accessories.title;
-  document.getElementById('sec_ac_desc').value=s.accessories.desc;
-  document.getElementById('sec_c_title').value=s.casing.title;
-  document.getElementById('sec_c_desc').value=s.casing.desc;
-  document.getElementById('sec_p_title').value=s.projects.title;
-  document.getElementById('sec_p_desc').value=s.projects.desc;
-  document.getElementById('sec_ab_title').value=s.about.title;
-  document.getElementById('sec_ab_desc').value=s.about.desc;
+  const db = getDB();
+  const s = db.settings;
+  const list = document.getElementById('sectionsList');
+  if(!list) return;
+
+  // Ensure reviews section exists in settings (older DBs may not have it)
+  if(!s.sections.reviews){
+    s.sections.reviews = {title: s.reviews?.title || 'Customer Reviews', desc: s.reviews?.sub || ''};
+  }
+
+  const nav = s.nav || [];
+  const rows = nav
+    .filter(n => !SECTION_SKIP_IDS.has(n.id))
+    .map(n => {
+      const isCustom = !n.builtin;
+      let title, desc;
+      if(isCustom){
+        const p = (s.customPages || []).find(x => x.id === n.id);
+        title = p?.title || '';
+        desc  = p?.desc  || '';
+      } else {
+        const key = SECTION_KEY_BY_NAV_ID[n.id] || n.id;
+        title = s.sections[key]?.title || '';
+        desc  = s.sections[key]?.desc  || '';
+      }
+      return `
+        <div class="form-card">
+          <div class="form-section-title">
+            ${n.label}
+            ${isCustom?`<span style="font-size:11px;background:rgba(201,168,76,.15);color:var(--gold-dark);padding:3px 10px;border-radius:6px;font-weight:600;margin-left:8px">${lang==='th'?'หน้าที่สร้างเอง':'Custom Page'}</span>`:''}
+            ${!n.visible?`<span style="font-size:11px;background:rgba(0,0,0,.08);color:var(--text-muted);padding:3px 10px;border-radius:6px;font-weight:600;margin-left:8px">${lang==='th'?'ซ่อนอยู่':'Hidden'}</span>`:''}
+          </div>
+          <div class="form-grid">
+            <div class="fg full">
+              <label class="fl" data-en="Page Title" data-th="ชื่อหน้า">Page Title</label>
+              <input class="fi" data-sec-title="${n.id}" value="${escapeAttr(title)}">
+            </div>
+            <div class="fg full">
+              <label class="fl" data-en="Subtitle / Description" data-th="คำโปรย / คำอธิบาย">Subtitle / Description</label>
+              <textarea class="fta" data-sec-desc="${n.id}" style="min-height:60px">${escapeText(desc)}</textarea>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+  if(!rows){
+    list.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-muted);font-size:13px">${lang==='th'?'ไม่มีหน้าให้แก้ไข':'No pages to edit'}</div>`;
+  } else {
+    list.innerHTML = rows;
+  }
 }
+
 function saveSections(){
-  const db=getDB();const s=db.settings.sections;
-  s.amulets={title:document.getElementById('sec_a_title').value,desc:document.getElementById('sec_a_desc').value};
-  s.accessories={title:document.getElementById('sec_ac_title').value,desc:document.getElementById('sec_ac_desc').value};
-  s.casing={title:document.getElementById('sec_c_title').value,desc:document.getElementById('sec_c_desc').value};
-  s.projects={title:document.getElementById('sec_p_title').value,desc:document.getElementById('sec_p_desc').value};
-  s.about={title:document.getElementById('sec_ab_title').value,desc:document.getElementById('sec_ab_desc').value};
-  saveDB(db);showToast(tr('sectionsSaved'));
+  const db = getDB();
+  const s = db.settings;
+  if(!s.sections.reviews) s.sections.reviews = {title:'',desc:''};
+
+  // Read every section title/desc input and write back to the right place
+  document.querySelectorAll('[data-sec-title]').forEach(el => {
+    const id = el.getAttribute('data-sec-title');
+    const navItem = (s.nav || []).find(n => n.id === id);
+    if(!navItem) return;
+    const descEl = document.querySelector(`[data-sec-desc="${id}"]`);
+    const title = el.value;
+    const desc  = descEl ? descEl.value : '';
+    if(navItem.builtin){
+      const key = SECTION_KEY_BY_NAV_ID[id] || id;
+      if(!s.sections[key]) s.sections[key] = {title:'',desc:''};
+      s.sections[key].title = title;
+      s.sections[key].desc  = desc;
+    } else {
+      const p = (s.customPages || []).find(x => x.id === id);
+      if(p){
+        p.title = title;
+        p.desc  = desc;
+      }
+    }
+  });
+
+  saveDB(db); showToast(tr('sectionsSaved'));
 }
+
+// Helpers escapeAttr / escapeText defined elsewhere in this file
 
 // TRUST
 function loadTrust(){renderTrustList(getDB().settings.trustCards||[]);}
@@ -3345,17 +3453,31 @@ function loadReviewsList(){
   const db=getDB();const list=db.reviews||[];
   const cont=document.getElementById('r_list');
   if(!list.length){cont.innerHTML=`<div class="empty-state">${tr('noReviews')}</div>`;return;}
-  const stars=n=>'★'.repeat(n)+'☆'.repeat(5-n);
+  const stars=n=>n>0 ? '★'.repeat(n)+'☆'.repeat(5-n) : '—';
   cont.innerHTML=`<table class="dtable">
     <thead><tr><th>${tr('rating')}</th><th>${tr('reviewerName')}</th><th>${tr('reviewText')}</th><th>${tr('reviewDate')}</th><th>${tr('actions')}</th></tr></thead>
-    <tbody>${list.map(rv=>`
+    <tbody>${list.map(rv=>{
+      const realName = rv.name || '-';
+      const publicName = rv.anonymous
+        ? (lang==='th'?'ไม่ระบุชื่อ':'Anonymous')
+        : (rv.displayName || rv.name || '-');
+      const ratingDisplay = (rv.rating||0) > 0
+        ? `<span style="color:#c9a84c;letter-spacing:1px">${stars(rv.rating)}</span>`
+        : `<span style="color:var(--text-muted);font-size:11px">${lang==='th'?'ไม่มีคะแนน':'No rating'}</span>`;
+      return `
       <tr>
-        <td><span style="color:#c9a84c;letter-spacing:1px">${stars(rv.rating||5)}</span></td>
-        <td><strong>${rv.name||'-'}</strong>${rv.location?`<br><span style="font-size:11px;color:var(--text-muted)">📍 ${rv.location}</span>`:''}</td>
+        <td>${ratingDisplay}</td>
+        <td>
+          <strong>${publicName}</strong>
+          ${rv.anonymous?`<div style="font-size:10.5px;color:var(--text-muted);margin-top:2px">${lang==='th'?'(จริง: '+realName+')':'(real: '+realName+')'}</div>`:''}
+          ${!rv.anonymous && rv.displayName && rv.displayName!==rv.name?`<div style="font-size:10.5px;color:var(--text-muted);margin-top:2px">${lang==='th'?'(จริง: '+realName+')':'(real: '+realName+')'}</div>`:''}
+          ${rv.location?`<div style="font-size:11px;color:var(--text-muted);margin-top:2px">📍 ${rv.location}</div>`:''}
+        </td>
         <td style="max-width:340px"><div style="font-size:13px;color:var(--text-muted);line-height:1.5">${(rv.text||'').slice(0,140)}${rv.text&&rv.text.length>140?'…':''}</div>${rv.imgs&&rv.imgs.length?`<div style="font-size:11px;margin-top:4px">📷 ${rv.imgs.length}</div>`:''}</td>
         <td>${rv.date||'-'}</td>
         <td><button class="btn-edit" onclick="editReview(${rv.id})">${tr('edit')}</button> <button class="btn-del" onclick="deleteReview(${rv.id})">${tr('del')}</button></td>
-      </tr>`).join('')}</tbody></table>`;
+      </tr>`;
+    }).join('')}</tbody></table>`;
 }
 function saveReviewsSection(){
   const db=getDB();
@@ -3374,12 +3496,24 @@ function saveReviewsSection(){
   };
   saveDB(db);showToast(tr('saved'));
 }
+// Toggle visibility of name/display fields based on Anonymous switch.
+// When anon is on (default), the name fields are hidden — admin can skip
+// straight to paste + save.
+function onAnonChange(){
+  const anon = document.getElementById('r_anon').checked;
+  const optional = document.getElementById('r_optional_fields');
+  if(optional) optional.style.display = anon ? 'none' : 'block';
+}
+
 function saveReview(){
   if(!ensureUploadsDone()) return;
+  const anon = document.getElementById('r_anon').checked;
   const name=document.getElementById('r_name').value.trim();
   const text=document.getElementById('r_text').value.trim();
   const imgs=captureImgs('r_imgs');
-  if(!name){showToast(tr('needName'));return;}
+  // For anonymous reviews we don't need a name, but we still need either
+  // text or photos so there's *something* to show.
+  if(!anon && !name){showToast(tr('needName'));return;}
   if(!text && !imgs.length){
     showToast(lang==='th'?'ต้องมีข้อความหรือรูปอย่างน้อย 1 อย่าง':'Need at least review text OR a photo');
     return;
@@ -3388,8 +3522,10 @@ function saveReview(){
   if(!db.reviews)db.reviews=[];
   const data={
     name,
+    displayName: document.getElementById('r_display').value.trim(),
+    anonymous: anon,
     location:document.getElementById('r_loc').value.trim(),
-    rating:Number(document.getElementById('r_rating').value)||5,
+    rating:Number(document.getElementById('r_rating').value)||0,
     date:document.getElementById('r_date').value.trim(),
     text,
     imgs:imgs.slice(),
@@ -3407,11 +3543,16 @@ function editReview(id){
   const rv=(getDB().reviews||[]).find(x=>x.id===id);if(!rv)return;
   editingReviewId=id;
   document.getElementById('r_name').value=rv.name||'';
+  document.getElementById('r_display').value=rv.displayName||'';
+  // Existing reviews without an explicit anonymous flag default to NOT anon
+  // so we don't accidentally re-anonymise a review that was always public.
+  document.getElementById('r_anon').checked = !!rv.anonymous;
   document.getElementById('r_loc').value=rv.location||'';
-  document.getElementById('r_rating').value=String(rv.rating||5);
+  document.getElementById('r_rating').value=String(rv.rating||0);
   document.getElementById('r_date').value=rv.date||'';
   document.getElementById('r_text').value=rv.text||'';
   tempImgs['r_imgs']=[...(rv.imgs||[])];renderPrev('r_imgs');
+  onAnonChange();  // show/hide name fields based on flag
   document.getElementById('r_form_title').textContent=lang==='th'?'✏️ แก้ไขรีวิว':'✏️ Edit Review';
   document.getElementById('r_save_btn').textContent=lang==='th'?'✅ บันทึกการแก้ไข':'✅ Update Review';
   document.getElementById('r_cancel_btn').style.display='inline-block';
@@ -3419,9 +3560,12 @@ function editReview(id){
 }
 function cancelEditReview(){
   editingReviewId=null;
-  ['r_name','r_loc','r_date','r_text'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
-  document.getElementById('r_rating').value='5';
+  ['r_name','r_display','r_loc','r_date','r_text'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  // Default to Anonymous ON — most chat reviews want to stay anonymous
+  document.getElementById('r_anon').checked = true;
+  document.getElementById('r_rating').value='0';
   tempImgs['r_imgs']=[];renderPrev('r_imgs');
+  onAnonChange();
   document.getElementById('r_form_title').textContent=lang==='th'?'➕ เพิ่มรีวิวใหม่':'➕ Add New Review';
   document.getElementById('r_save_btn').textContent=lang==='th'?'✅ บันทึกรีวิว':'✅ Save Review';
   document.getElementById('r_cancel_btn').style.display='none';
@@ -4047,6 +4191,11 @@ function escapeAttr(s){
   return String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+// Same as escapeAttr but for text inside elements (no quote escaping needed)
+function escapeText(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 // Move an image left (dir=-1) or right (dir=1) within its preview list
