@@ -368,40 +368,94 @@
     opacity:0;transition:opacity .6s;
     z-index:0;
   }
-  .hero-bg.show{opacity:.18}
+  .hero-bg.show{opacity:.35}
   .hero-bg-overlay{
     position:absolute;
     top:0;bottom:0;
     left:calc(50% - 50vw);
     right:calc(50% - 50vw);
     width:100vw;
-    /* Much lighter overlay — just enough to keep text readable over a
-       background photo, but doesn't darken the centerpiece hero image. */
-    background:linear-gradient(180deg,rgba(18,16,10,.2) 0%,rgba(18,16,10,.35) 60%,rgba(18,16,10,.55) 100%);
+    /* Vignette-style overlay: dark at the edges (so text is readable) and
+       transparent in the middle (so the hero image and any centerpiece
+       isn't dimmed). Falls back to a top-bottom gradient on mobile via
+       blend with rgba layers. */
+    background:
+      radial-gradient(ellipse 80% 90% at 50% 50%,
+        transparent 0%,
+        transparent 30%,
+        rgba(18,16,10,.35) 75%,
+        rgba(18,16,10,.6) 100%),
+      linear-gradient(180deg,
+        rgba(18,16,10,.2) 0%,
+        rgba(18,16,10,.05) 30%,
+        rgba(18,16,10,.05) 70%,
+        rgba(18,16,10,.4) 100%);
     z-index:1;
     pointer-events:none;
   }
 
-  /* 3D canvas container — z-index:3 to sit above the hero-bg-overlay (1)
-     and any other gradient layers (1) so the centerpiece image is never
-     darkened by overlays meant for the background. */
-  .hero-3d{position:relative;width:100%;height:80vh;max-height:680px;z-index:3;display:flex;align-items:center;justify-content:center}
+  /* 3D canvas container — z-index:10 to definitively sit above ALL hero
+     overlays. isolation:isolate creates a stacking context so nothing
+     from .hero (background, overlays) can blend onto the image inside. */
+  .hero-3d{
+    position:relative;
+    width:100%;height:80vh;max-height:680px;
+    z-index:10;
+    isolation:isolate;
+    display:flex;align-items:center;justify-content:center;
+  }
   #phra3d{width:100%;height:100%;cursor:grab}
   #phra3d:active{cursor:grabbing}
-  /* Still-image hero mode — used instead of the 3D canvas when admin
-     uploads a plain image. Subtle drop shadow + gold glow underneath.
-     IMPORTANT: no `filter: brightness` here — that darkens the image. */
+  /* ─── HERO STILL IMAGE — studio-lit look ───
+     Goals: make the centerpiece image look as bright and rich as the
+     original photo, never darkened by overlays sitting behind/above.
+     Strategy:
+       1. z-index 10 — definitively above all hero overlays
+       2. isolation:isolate — creates a new stacking context, prevents
+          any parent blend/filter from leaking onto the image
+       3. position:relative — required for z-index to work
+       4. NO blend mode, NO opacity inheritance
+       5. drop-shadow gives a soft floor shadow without dimming pixels
+       6. brightness(1.08) saturate(1.1) gives a "studio-lit" gold pop
+          — subtle but compensates for any q-95 compression
+       7. Floating animation uses transform on the IMG itself only */
   .hero-still-img{
     max-width:100%;max-height:100%;
     width:auto;height:auto;
     object-fit:contain;
-    /* Drop-shadow uses an SVG-style filter that adds an exterior shadow
-       without affecting the image's own pixels. Safe. */
-    filter:drop-shadow(0 12px 32px rgba(0,0,0,.4)) drop-shadow(0 0 28px rgba(201,168,76,.18));
-    animation:heroImgFloat 6s ease-in-out infinite;
-    /* Force the image to render with full opacity & no blending */
+    position:relative;
+    z-index:10;
+    isolation:isolate;
     opacity:1 !important;
     mix-blend-mode:normal !important;
+    /* drop-shadow = outer shadow only, doesn't touch image pixels;
+       brightness + saturate = studio-lit boost (gold looks richer) */
+    filter:
+      brightness(1.08)
+      saturate(1.12)
+      drop-shadow(0 14px 40px rgba(0,0,0,.5))
+      drop-shadow(0 0 40px rgba(232,201,106,.28));
+    animation:heroImgFloat 6s ease-in-out infinite;
+  }
+  /* Container behind the image — radial gold glow for a "spotlight" feel.
+     This sits BEHIND the image (z-index < 10) but inside .hero-3d so it
+     never gets darkened by the hero-bg-overlay either. */
+  .hero-3d::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:radial-gradient(ellipse 60% 70% at 50% 50%,
+      rgba(232,201,106,.18) 0%,
+      rgba(201,168,76,.08) 35%,
+      transparent 70%);
+    pointer-events:none;
+    z-index:1;
+    /* Subtle pulse so the spotlight feels alive */
+    animation:heroSpotlight 5s ease-in-out infinite;
+  }
+  @keyframes heroSpotlight{
+    0%,100%{opacity:.7;transform:scale(1)}
+    50%{opacity:1;transform:scale(1.05)}
   }
   @keyframes heroImgFloat{
     0%,100%{transform:translateY(0)}
@@ -409,6 +463,7 @@
   }
   @media(prefers-reduced-motion:reduce){
     .hero-still-img{animation:none}
+    .hero-3d::before{animation:none}
   }
   .phra-hint{position:absolute;bottom:-10px;left:0;right:0;text-align:center;color:rgba(201,168,76,.6);font-size:10.5px;letter-spacing:2px;text-transform:uppercase;z-index:5;font-weight:500;pointer-events:none;padding:0 10px;line-height:1.4}
   /* glow halo behind the 3D model */
