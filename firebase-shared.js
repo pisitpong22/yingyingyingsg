@@ -152,8 +152,52 @@ async function uploadFile(fileOrBlob, pathHint){
     // random filename, so they never change after upload.
     cacheControl: 'public,max-age=31536000,immutable',
   } : undefined);
-  return await getDownloadURL(ref);
+  const fbUrl = await getDownloadURL(ref);
+  // Return the ImageKit-proxied URL so subsequent reads go through the CDN.
+  return toImageKitUrl(fbUrl);
 }
+
+// ─── IMAGEKIT CDN PROXY ────────────────────────────────────────────────────
+// We serve images through ImageKit instead of Firebase Storage directly so
+// they're cached on a CDN with edge nodes near our visitors (incl. Thailand
+// & SG). ImageKit also does on-the-fly resize + WebP conversion via URL
+// params, which we can apply with toImageKitUrl(fbUrl, {width: 400}).
+//
+// Endpoint structure (set up in ImageKit dashboard):
+//   https://ik.imagekit.io/{ACCOUNT}/{PATH-IDENTIFIER}/<file-path>
+//
+// We map Firebase URLs like:
+//   https://firebasestorage.googleapis.com/v0/b/<bucket>/o/<encoded-path>?alt=media&token=...
+// to:
+//   https://ik.imagekit.io/yingyingyingsg/yyy/<encoded-path>?alt=media&token=...
+//
+// The token query param is preserved so Firebase still allows the request
+// to fetch the underlying object — ImageKit forwards it transparently.
+const IMAGEKIT_ENDPOINT = 'https://ik.imagekit.io/yingyingyingsg/yyy';
+
+function toImageKitUrl(url, opts){
+  if(!url || typeof url !== 'string') return url;
+  // Only rewrite Firebase Storage download URLs
+  const m = url.match(/^https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/[^/]+\/o\/(.+)$/);
+  if(!m) return url;  // not a Firebase URL — leave alone
+  let pathAndQuery = m[1];
+  // Add transformation params (resize, format, quality) if requested
+  if(opts && (opts.width || opts.height || opts.quality)){
+    const tr = [];
+    if(opts.width)   tr.push('w-' + opts.width);
+    if(opts.height)  tr.push('h-' + opts.height);
+    if(opts.quality) tr.push('q-' + opts.quality);
+    tr.push('f-auto');  // auto WebP/AVIF
+    // ImageKit transformation param goes BEFORE the path
+    return `${IMAGEKIT_ENDPOINT}/tr:${tr.join(',')}/${pathAndQuery}`;
+  }
+  return `${IMAGEKIT_ENDPOINT}/${pathAndQuery}`;
+}
+
+// Expose so other scripts (index.html, admin.html) can rewrite URLs
+// stored from earlier uploads. Used by a post-process step that walks the
+// DB and rewrites every image URL to the proxied version.
+window._toImageKitUrl = toImageKitUrl;
 
 // Resize & re-encode an image Blob.
 //   - Keeps aspect ratio

@@ -1407,6 +1407,50 @@ function applyDbMigrations(d){
   if(!d.amulets)d.amulets=[];
   if(!d.accessories)d.accessories=[];
   if(!d.projects)d.projects=[];
+  return rewriteImageUrls(d);
+}
+
+// ─── IMAGEKIT URL REWRITER ────────────────────────────────────────────────
+// Walks the DB and rewrites every Firebase Storage URL through ImageKit so
+// legacy images (uploaded before we added the proxy) also get the CDN
+// speed boost. Idempotent — calling twice is a no-op because
+// _toImageKitUrl() skips URLs that don't match the Firebase pattern.
+function rewriteImageUrls(d){
+  const rw = (window._toImageKitUrl || ((u) => u));
+
+  // Helper to rewrite an array of image URLs in place
+  const arrRw = (arr) => Array.isArray(arr) ? arr.map(rw) : arr;
+
+  // Settings — single-image fields and the nav/page image arrays
+  if(d.settings){
+    if(d.settings.hero){
+      d.settings.hero.bgImage    = rw(d.settings.hero.bgImage);
+      d.settings.hero.heroImage  = rw(d.settings.hero.heroImage);
+      d.settings.hero.phra3dFront = rw(d.settings.hero.phra3dFront);
+      d.settings.hero.phra3dBack  = rw(d.settings.hero.phra3dBack);
+      // phra3dGlb is a .glb file, not an image — also CDN-eligible
+      d.settings.hero.phra3dGlb   = rw(d.settings.hero.phra3dGlb);
+    }
+    if(d.settings.payment && d.settings.payment.qrImage){
+      d.settings.payment.qrImage = rw(d.settings.payment.qrImage);
+    }
+    if(Array.isArray(d.settings.featured)){
+      d.settings.featured.forEach(f => { if(f && f.img) f.img = rw(f.img); });
+    }
+  }
+
+  // Item arrays — each has an imgs[] (and sometimes bannerImg)
+  (d.amulets    || []).forEach(it => { it.imgs = arrRw(it.imgs); });
+  (d.accessories|| []).forEach(it => { it.imgs = arrRw(it.imgs); });
+  (d.projects   || []).forEach(it => { it.imgs = arrRw(it.imgs); });
+  (d.reviews    || []).forEach(it => { it.imgs = arrRw(it.imgs); });
+
+  // Casing types — banner image + nested variants
+  (d.casingTypes || []).forEach(ty => {
+    ty.bannerImg = rw(ty.bannerImg);
+    (ty.variants || []).forEach(v => { v.imgs = arrRw(v.imgs); });
+  });
+
   return d;
 }
 

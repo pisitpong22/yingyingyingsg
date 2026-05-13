@@ -1851,6 +1851,43 @@ function applyDbMigrations(d){
   if(!d.amulets)d.amulets=[];
   if(!d.accessories)d.accessories=[];
   if(!d.projects)d.projects=[];
+  return rewriteImageUrls(d);
+}
+
+// ─── IMAGEKIT URL REWRITER (admin) ────────────────────────────────────────
+// Mirror of the rewriter in index.html so admin previews load fast too.
+// When admin SAVES the DB, the rewritten URLs get persisted to Firestore —
+// at that point every read by any client just gets ImageKit URLs already.
+function rewriteImageUrls(d){
+  const rw = (window._toImageKitUrl || ((u) => u));
+  const arrRw = (arr) => Array.isArray(arr) ? arr.map(rw) : arr;
+
+  if(d.settings){
+    if(d.settings.hero){
+      d.settings.hero.bgImage     = rw(d.settings.hero.bgImage);
+      d.settings.hero.heroImage   = rw(d.settings.hero.heroImage);
+      d.settings.hero.phra3dFront = rw(d.settings.hero.phra3dFront);
+      d.settings.hero.phra3dBack  = rw(d.settings.hero.phra3dBack);
+      d.settings.hero.phra3dGlb   = rw(d.settings.hero.phra3dGlb);
+    }
+    if(d.settings.payment && d.settings.payment.qrImage){
+      d.settings.payment.qrImage = rw(d.settings.payment.qrImage);
+    }
+    if(Array.isArray(d.settings.featured)){
+      d.settings.featured.forEach(f => { if(f && f.img) f.img = rw(f.img); });
+    }
+  }
+
+  (d.amulets     || []).forEach(it => { it.imgs = arrRw(it.imgs); });
+  (d.accessories || []).forEach(it => { it.imgs = arrRw(it.imgs); });
+  (d.projects    || []).forEach(it => { it.imgs = arrRw(it.imgs); });
+  (d.reviews     || []).forEach(it => { it.imgs = arrRw(it.imgs); });
+
+  (d.casingTypes || []).forEach(ty => {
+    ty.bannerImg = rw(ty.bannerImg);
+    (ty.variants || []).forEach(v => { v.imgs = arrRw(v.imgs); });
+  });
+
   return d;
 }
 
