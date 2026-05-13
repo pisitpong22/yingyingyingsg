@@ -254,19 +254,84 @@
   .hero.no-3d .stat{text-align:center;padding-left:0}
   .hero.no-3d .stat::before{display:none}
   @media(max-width:780px){
-    .hero.no-3d{padding:24px 22px 40px}
-    .hero.no-3d .hero-inner{text-align:left;padding:0}
-    .hero.no-3d .hero-title{text-align:left}
-    .hero.no-3d .hero-sub{text-align:left}
-    .hero.no-3d .hero-desc{text-align:left;margin:0}
-    .hero.no-3d .hero-btns{justify-content:flex-start}
-    .hero.no-3d .hero-stats{justify-content:flex-start;width:auto}
-    .hero.no-3d .stat{text-align:left;padding-left:16px}
-    .hero.no-3d .stat::before{display:block}
+    /* ─── Mobile Hero — redesigned for breathing room ─── */
+    .hero{
+      grid-template-columns:1fr;
+      gap:24px;
+      padding:0 22px;
+      min-height:auto;
+    }
+    .hero-inner{
+      padding:36px 0 32px;
+      max-width:100%;
+      text-align:center;
+    }
+    .eyebrow{
+      font-size:9.5px;letter-spacing:2.2px;
+      padding:6px 12px;margin-bottom:22px;
+      max-width:fit-content;margin-left:auto;margin-right:auto;
+    }
+    .eyebrow::before,.eyebrow::after{width:10px}
+    .hero-title{
+      font-size:38px;letter-spacing:-.5px;line-height:1.1;
+      margin-bottom:14px;text-align:center;
+    }
+    .hero-title .ying{padding-right:.25em;margin-right:-.1em}
+    .hero-sub{
+      font-size:14.5px;line-height:1.5;margin-bottom:18px;
+      text-align:center;letter-spacing:.2px;padding:0 6px;
+    }
+    .hero-desc{
+      font-size:14px;line-height:1.7;margin-bottom:26px;
+      max-width:100%;text-align:center;padding:0 6px;
+    }
+    .hero-btns{
+      justify-content:center;gap:10px;margin-bottom:30px;
+    }
+    .hero-btns .btn,.hero-btns .btn-ol{
+      flex:1 1 auto;max-width:300px;justify-content:center;
+      padding:13px 22px;font-size:12.5px;letter-spacing:1.2px;
+    }
+    .hero-stats{
+      display:grid;grid-template-columns:1fr 1fr;
+      gap:14px 18px;margin-top:24px;padding-top:24px;
+      max-width:100%;width:100%;
+      justify-content:stretch;
+    }
+    .stat{padding-left:14px}
+    .stat::before{display:block}
+    .stat-num{font-size:28px;line-height:1}
+    .stat-label{font-size:10px;letter-spacing:1.5px;margin-top:4px}
+
+    /* When hero has no 3D / image visual — keep mobile centered too */
+    .hero.no-3d{padding:0 22px;max-width:100%}
+    .hero.no-3d .hero-inner{padding:36px 0 32px;text-align:center}
+    .hero.no-3d .hero-title{text-align:center}
+    .hero.no-3d .hero-sub{text-align:center}
+    .hero.no-3d .hero-desc{text-align:center;margin:0 auto 26px}
+    .hero.no-3d .hero-btns{justify-content:center}
+    .hero.no-3d .hero-stats{justify-content:stretch;width:100%}
+    .hero.no-3d .stat{text-align:left;padding-left:14px}
+
+    /* Mobile 3D/image height — shorter so text + visual both visible */
+    .hero-3d{height:55vh;max-height:420px;order:2}
+    .hero-still-img{max-width:80%}
   }
-  /* Thai pattern overlay - subtle, gives non-AI feel */
+  @media(max-width:380px){
+    .hero-title{font-size:32px}
+    .hero-stats{grid-template-columns:1fr 1fr;gap:12px 14px}
+    .stat-num{font-size:24px}
+    .eyebrow{font-size:8.5px;letter-spacing:1.8px;padding:5px 10px}
+  }
+  /* Old no-3d mobile rules — now superseded by the unified block above */
+  /* Thai pattern overlay - subtle, gives non-AI feel — extended to full
+     viewport width so it matches the hero background image. */
   .hero::before{
-    content:'';position:absolute;inset:0;
+    content:'';position:absolute;
+    top:0;bottom:0;
+    left:calc(50% - 50vw);
+    right:calc(50% - 50vw);
+    width:100vw;
     background-image:
       radial-gradient(circle at 0 0,rgba(201,168,76,.04) 1px,transparent 1px),
       radial-gradient(circle at 30px 30px,rgba(201,168,76,.03) 1px,transparent 1px);
@@ -275,18 +340,59 @@
     pointer-events:none;z-index:1;
   }
   .hero::after{
-    content:'';position:absolute;left:0;right:0;bottom:0;height:120px;
+    content:'';position:absolute;
+    bottom:0;
+    left:calc(50% - 50vw);
+    right:calc(50% - 50vw);
+    width:100vw;height:120px;
     background:linear-gradient(180deg,transparent 0%,rgba(0,0,0,.4) 100%);
     pointer-events:none;z-index:1;
   }
-  .hero-bg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity .6s}
+  .hero-bg{
+    position:absolute;
+    /* Extend beyond the constrained .hero box so the background image
+       fills the entire .hero-wrap viewport width, even on huge monitors
+       where .hero is capped at 1400px. */
+    top:0;bottom:0;
+    left:calc(50% - 50vw);
+    right:calc(50% - 50vw);
+    width:100vw;
+    background-size:cover;background-position:center;
+    opacity:0;transition:opacity .6s;
+    z-index:0;
+  }
   .hero-bg.show{opacity:.25}
-  .hero-bg-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,16,10,.5) 0%,rgba(18,16,10,.65) 50%,rgba(18,16,10,.8) 100%);z-index:1}
+  .hero-bg-overlay{
+    position:absolute;
+    top:0;bottom:0;
+    left:calc(50% - 50vw);
+    right:calc(50% - 50vw);
+    width:100vw;
+    background:linear-gradient(180deg,rgba(18,16,10,.5) 0%,rgba(18,16,10,.65) 50%,rgba(18,16,10,.8) 100%);
+    z-index:1;
+  }
 
   /* 3D canvas container */
   .hero-3d{position:relative;width:100%;height:80vh;max-height:680px;z-index:2;display:flex;align-items:center;justify-content:center}
   #phra3d{width:100%;height:100%;cursor:grab}
   #phra3d:active{cursor:grabbing}
+  /* Still-image hero mode — used instead of the 3D canvas when admin
+     uploads a plain image. Subtle drop shadow + gold glow underneath. */
+  .hero-still-img{
+    max-width:100%;max-height:100%;
+    width:auto;height:auto;
+    object-fit:contain;
+    border-radius:8px;
+    filter:drop-shadow(0 12px 32px rgba(0,0,0,.4)) drop-shadow(0 0 28px rgba(201,168,76,.18));
+    animation:heroImgFloat 6s ease-in-out infinite;
+  }
+  @keyframes heroImgFloat{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-12px)}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .hero-still-img{animation:none}
+  }
   .phra-hint{position:absolute;bottom:-10px;left:0;right:0;text-align:center;color:rgba(201,168,76,.6);font-size:10.5px;letter-spacing:2px;text-transform:uppercase;z-index:5;font-weight:500;pointer-events:none;padding:0 10px;line-height:1.4}
   /* glow halo behind the 3D model */
   .hero-3d::before{
@@ -923,10 +1029,7 @@
       <div class="hero-stats" id="heroStats"></div>
     </div>
     <div class="hero-3d">
-      <div class="sacred-ring r1"></div>
-      <div class="sacred-ring r2"></div>
       <canvas id="phra3d"></canvas>
-      <div class="phra-hint">↻ click or drag to interact · tap to flip</div>
     </div>
     <div class="scroll-cue">Scroll to explore</div>
   </section>
@@ -1117,6 +1220,7 @@ function defaultSettings(){
     customPages:[], // [{id,label,title,desc,content}]
     hero:{
       bgImage:'',
+      heroImage:'',         // plain still image — takes priority over 3D
       phra3dGlb:'',
       phra3dFront:'',
       phra3dBack:'',
@@ -1218,6 +1322,7 @@ function applyDbMigrations(d){
   if(d.settings.hero && d.settings.hero.phra3dGlb===undefined)d.settings.hero.phra3dGlb='';
   if(d.settings.hero && d.settings.hero.phra3dFront===undefined)d.settings.hero.phra3dFront='';
   if(d.settings.hero && d.settings.hero.phra3dBack===undefined)d.settings.hero.phra3dBack='';
+  if(d.settings.hero && d.settings.hero.heroImage===undefined)d.settings.hero.heroImage='';
   const def=defaultSettings();
   if(!d.settings.payment)d.settings.payment=def.payment;
   if(!d.settings.featured)d.settings.featured=def.featured;
@@ -1333,15 +1438,41 @@ function applySettings(){
     ov.style.display='none';
   }
 
-  // PHRA 3D — three modes: GLB (preferred), images (fallback), or hidden
+  // HERO VISUAL — four modes in priority order:
+  //   1. heroImage (a still image)
+  //   2. GLB 3D model
+  //   3. Front + Back tablet images (3D)
+  //   4. no visual — single-column hero
   window.PHRA_GLB        = s.hero.phra3dGlb || '';
   window.PHRA_FRONT_IMG  = s.hero.phra3dFront || '';
   window.PHRA_BACK_IMG   = s.hero.phra3dBack  || '';
+  const heroImage = s.hero.heroImage || '';
   const hero3dBlock = document.querySelector('.hero-3d');
   const heroSection = document.querySelector('.hero');
   const has3D = !!(window.PHRA_GLB || (window.PHRA_FRONT_IMG && window.PHRA_BACK_IMG));
+  const hasHeroVisual = !!(heroImage || has3D);
   if(hero3dBlock){
-    if(has3D){
+    // Clean previous content (image element or canvas leftover)
+    const existingImg = hero3dBlock.querySelector('.hero-still-img');
+    const canvas = document.getElementById('phra3d');
+    if(heroImage){
+      // Still image mode — hide canvas, show image
+      if(canvas) canvas.style.display = 'none';
+      if(existingImg){
+        existingImg.src = heroImage;
+      } else {
+        const img = document.createElement('img');
+        img.className = 'hero-still-img';
+        img.src = heroImage;
+        img.alt = '';
+        hero3dBlock.appendChild(img);
+      }
+      hero3dBlock.style.display = '';
+      if(heroSection) heroSection.classList.remove('no-3d');
+    } else if(has3D){
+      // 3D mode — remove still image if it was there, show canvas
+      if(existingImg) existingImg.remove();
+      if(canvas) canvas.style.display = '';
       hero3dBlock.style.display = '';
       if(heroSection) heroSection.classList.remove('no-3d');
       if(typeof window.initPhra3D === 'function'){
@@ -1350,6 +1481,8 @@ function applySettings(){
         window.refreshPhra3DTextures();
       }
     } else {
+      // No visual — hide the right column entirely
+      if(existingImg) existingImg.remove();
       hero3dBlock.style.display = 'none';
       if(heroSection) heroSection.classList.add('no-3d');
     }
@@ -2355,27 +2488,31 @@ window.addEventListener('appinstalled',()=>{
     phraGroup = new THREE.Group();
     scene.add(phraGroup);
 
-    // Gold halo backdrop (used in both modes)
+    // Halo placeholder — kept in the scene graph so later code that references
+    // `halo` doesn't crash, but invisible. Setting opacity to 0 (rather than
+    // omitting the mesh) preserves the rest of the scene-management logic.
     const haloGeom = new THREE.PlaneGeometry(3.5, 4.6);
     const haloMat  = new THREE.MeshBasicMaterial({
-      color: 0xc9a84c, transparent: true, opacity: 0.18,
-      blending: THREE.AdditiveBlending, depthWrite: false
+      color: 0xc9a84c, transparent: true, opacity: 0,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+      visible: false,
     });
     halo = new THREE.Mesh(haloGeom, haloMat);
     halo.position.z = -0.6;
     scene.add(halo);
 
-    // Lights
-    const keyLight = new THREE.DirectionalLight(0xfff0c4, 1.1);
+    // Neutral, balanced lighting — no warm/golden tint so 3D models display
+    // in their true colours rather than being washed yellow.
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.0);
     keyLight.position.set(3, 4, 5);
     scene.add(keyLight);
-    const rimLight = new THREE.DirectionalLight(0xffd87a, 0.8);
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0.55);
     rimLight.position.set(-2, 3, -5);
     scene.add(rimLight);
-    const fillLight = new THREE.DirectionalLight(0xa07050, 0.4);
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.35);
     fillLight.position.set(-4, 1, 3);
     scene.add(fillLight);
-    scene.add(new THREE.AmbientLight(0x7a5f40, 0.6));
+    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
 
     setupInteractionAndAnimation();
   }
@@ -2606,10 +2743,8 @@ window.addEventListener('appinstalled',()=>{
       targetRotX = -mouseY * 0.25;
     }, {passive: true});
 
+    // tap-to-flip removed — the model just responds to drag/orbit now.
     let flipped = 0;
-    canvas.addEventListener('click', () => {
-      flipped = flipped === 0 ? Math.PI : 0;
-    });
     window.addEventListener('scroll', () => { scrollOffset = window.scrollY; }, {passive: true});
 
     clock = new THREE.Clock();
@@ -2629,9 +2764,8 @@ window.addEventListener('appinstalled',()=>{
         phraGroup.rotation.x = curRotX + idleX;
         phraGroup.position.y = Math.sin(t * 1.1) * 0.1;
       }
-      if(halo){
-        halo.material.opacity = 0.14 + Math.sin(t * 1.4) * 0.05;
-      }
+      // Halo intentionally invisible — kept in the scene for backward
+      // compatibility but its opacity stays 0 (set when constructed).
       renderer.render(scene, camera);
     }
     animate();

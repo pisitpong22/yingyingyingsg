@@ -383,28 +383,29 @@
     .ub-text{line-height:1.4}
   }
  */
-  .prev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:7px;margin-top:10px}
-  .prev-item{position:relative;border-radius:8px;overflow:hidden;background:var(--surface);border:1.5px solid var(--border);transition:all .2s;display:flex;flex-direction:column}
+  /* ───── IMAGE PREVIEW GRID — v3 small ───── */
+  .prev-grid{display:grid !important;grid-template-columns:repeat(auto-fill,minmax(64px,1fr)) !important;gap:6px !important;margin-top:10px}
+  .prev-item{position:relative;border-radius:7px;overflow:hidden;background:var(--surface);border:1.5px solid var(--border);transition:all .2s;display:flex;flex-direction:column}
   .prev-item:hover{border-color:var(--gold);transform:translateY(-1px);box-shadow:0 3px 10px rgba(201,168,76,.12)}
   .prev-item.is-primary{border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,168,76,.25)}
-  .prev-item.is-uploading{border-color:rgba(201,168,76,.5);background:rgba(201,168,76,.05);padding:7px;flex-direction:row;align-items:center;gap:8px;grid-column:span 2}
-  .prev-item.is-error{border-color:rgba(139,0,0,.5);background:rgba(139,0,0,.05);padding:7px;flex-direction:row;align-items:center;gap:8px;grid-column:span 2}
+  .prev-item.is-uploading{border-color:rgba(201,168,76,.5);background:rgba(201,168,76,.05);padding:6px;flex-direction:row;align-items:center;gap:7px;grid-column:span 3}
+  .prev-item.is-error{border-color:rgba(139,0,0,.5);background:rgba(139,0,0,.05);padding:6px;flex-direction:row;align-items:center;gap:7px;grid-column:span 3}
 
-  .pi-thumb{width:100%;aspect-ratio:1;background:#f0e8d0;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
-  .pi-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-  .pi-thumb-loading,.pi-thumb-error{width:40px;height:40px;aspect-ratio:1;border-radius:6px;font-size:17px}
+  .pi-thumb{width:100% !important;aspect-ratio:1 !important;background:#f0e8d0;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;max-height:80px}
+  .pi-thumb img{width:100% !important;height:100% !important;object-fit:cover !important;display:block}
+  .pi-thumb-loading,.pi-thumb-error{width:36px !important;height:36px !important;aspect-ratio:1;border-radius:5px;font-size:15px;max-height:36px}
   .pi-thumb-loading{background:rgba(201,168,76,.12)}
   .pi-thumb-error{background:rgba(139,0,0,.12)}
 
   .pi-spinner{
-    width:18px;height:18px;border:2.5px solid rgba(201,168,76,.25);
+    width:16px;height:16px;border:2px solid rgba(201,168,76,.25);
     border-top-color:var(--gold);border-radius:50%;
     animation:piSpin .8s linear infinite;
   }
   @keyframes piSpin{to{transform:rotate(360deg)}}
 
-  .pi-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;padding-right:20px}
-  .pi-name{font-size:11px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pi-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;padding-right:18px}
+  .pi-name{font-size:10.5px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .pi-meta{font-size:10px;color:var(--text-muted)}
   .pi-status{color:var(--gold-dark);font-weight:600}
   .pi-error-text{color:#a55;font-weight:600}
@@ -412,19 +413,19 @@
   .pi-bar{height:3px;background:rgba(201,168,76,.12);border-radius:2px;overflow:hidden;margin-top:3px}
   .pi-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold-light),var(--gold));border-radius:2px;transition:width .3s ease-out}
 
-  .pi-badge{position:absolute;top:2px;left:2px;background:var(--gold);color:var(--deep);font-size:8px;font-weight:700;padding:1px 4px;border-radius:6px;letter-spacing:.3px;box-shadow:0 1px 3px rgba(0,0,0,.2);pointer-events:none;line-height:1.3}
+  .pi-badge{position:absolute;top:2px;left:2px;background:var(--gold);color:var(--deep);font-size:7.5px;font-weight:700;padding:1px 4px;border-radius:5px;letter-spacing:.3px;box-shadow:0 1px 3px rgba(0,0,0,.2);pointer-events:none;line-height:1.3}
 
   .pi-reorder{position:absolute;bottom:2px;left:2px;display:flex;gap:2px;opacity:0;transition:opacity .2s;pointer-events:none}
   .prev-item:hover .pi-reorder{opacity:1;pointer-events:auto}
-  .pi-move{background:rgba(18,16,10,.85);color:var(--gold-light);border:none;width:16px;height:16px;border-radius:4px;font-size:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .pi-move{background:rgba(18,16,10,.85);color:var(--gold-light);border:none;width:15px;height:15px;border-radius:3px;font-size:7.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
   .pi-move:hover:not(:disabled){background:var(--gold);color:var(--deep)}
   .pi-move:disabled{opacity:.35;cursor:not-allowed}
 
-  .pi-rm{position:absolute;top:2px;right:2px;background:rgba(139,0,0,.85);color:white;border:none;border-radius:50%;width:16px;height:16px;font-size:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:2}
+  .pi-rm{position:absolute;top:2px;right:2px;background:rgba(139,0,0,.85);color:white;border:none;border-radius:50%;width:15px;height:15px;font-size:7.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:2}
   .pi-rm:hover{background:#a00;transform:scale(1.1)}
 
   /* Legacy support */
-  .prev-rm{position:absolute;top:2px;right:2px;background:rgba(139,0,0,.85);color:white;border:none;border-radius:50%;width:16px;height:16px;font-size:8px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .prev-rm{position:absolute;top:2px;right:2px;background:rgba(139,0,0,.85);color:white;border:none;border-radius:50%;width:15px;height:15px;font-size:8px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 
   .dtable{
     width:100%;border-collapse:separate;border-spacing:0;
@@ -610,7 +611,7 @@
     .u-icon{font-size:24px;margin-bottom:4px}
     .u-text{font-size:12.5px}
     .u-hint{font-size:11px}
-    .prev-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:9px}
+    .prev-grid{grid-template-columns:repeat(auto-fill,minmax(64px,1fr)) !important;gap:6px}
     .prev-item.is-uploading,.prev-item.is-error{grid-column:span 1;flex-direction:column;align-items:stretch;text-align:center}
     .pi-info{padding-right:0;align-items:center}
     .pi-name{text-align:center}
@@ -832,11 +833,27 @@
         </div>
 
         <div class="form-card">
-          <div class="form-section-title" data-en="🔮 Phra Somdej 3D Model" data-th="🔮 พระสมเด็จ 3D Model">🔮 Phra Somdej 3D Model</div>
+          <div class="form-section-title" data-en="🖼️ Hero Image (recommended — easiest)" data-th="🖼️ รูป Hero (แนะนำ — ง่ายที่สุด)">🖼️ Hero Image (recommended — easiest)</div>
           <div class="form-section-desc"
-               data-en-html="Upload a 3D model file (.glb or .gltf) to display as a rotatable phra somdej on the homepage. <strong>If no 3D model is uploaded, the hero will show only text — full width, no empty space.</strong> Use <a href='https://trellis2.app' target='_blank' style='color:var(--gold-dark);text-decoration:underline'>trellis2.app</a> or similar to generate a .glb from a photo of your amulet."
-               data-th-html="อัปโหลดไฟล์ 3D (.glb หรือ .gltf) เพื่อแสดงพระสมเด็จหมุนได้บนหน้าแรก <strong>ถ้าไม่อัปโหลด หน้า hero จะแสดงเฉพาะข้อความ — เต็มความกว้าง ไม่มีช่องว่าง</strong> ใช้ <a href='https://trellis2.app' target='_blank' style='color:var(--gold-dark);text-decoration:underline'>trellis2.app</a> หรือเครื่องมือสร้าง 3D อื่นๆ เจนไฟล์ .glb จากรูปพระเครื่อง">
-            Upload a 3D model file (.glb or .gltf). If no model is uploaded, the hero shows text only.
+               data-en-html="Upload a single still image to display on the right side of the hero. <strong>This takes priority over the 3D model below</strong> — use this if you don't have a .glb file. Square or portrait images work best."
+               data-th-html="อัปโหลดรูปนิ่ง 1 รูปแสดงทางขวาของ hero <strong>รูปนี้จะใช้แทน 3D model ด้านล่าง</strong> — เลือกใช้ตัวนี้ถ้าไม่มีไฟล์ .glb รูปสี่เหลี่ยมจัตุรัสหรือแนวตั้งสวยที่สุด">
+            Upload a single image to display in the hero. Takes priority over 3D model.
+          </div>
+          <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'h_hero_img',true)">
+            <input type="file" accept="image/*" onchange="handleSingleImg(event,'h_hero_img')">
+            <div class="u-icon">🖼️</div>
+            <div class="u-text" data-en="Click or drag an image" data-th="คลิกหรือลากรูป">Click or drag an image</div>
+            <div class="u-hint" data-en="Recommended: square or portrait, at least 600×600 px" data-th="แนะนำ: สี่เหลี่ยมจัตุรัสหรือแนวตั้ง อย่างน้อย 600×600 px">Recommended: square or portrait, at least 600×600 px</div>
+          </div>
+          <div class="prev-grid" id="h_hero_img_p"></div>
+        </div>
+
+        <div class="form-card">
+          <div class="form-section-title" data-en="🔮 Phra Somdej 3D Model (optional)" data-th="🔮 พระสมเด็จ 3D Model (ไม่บังคับ)">🔮 Phra Somdej 3D Model (optional)</div>
+          <div class="form-section-desc"
+               data-en-html="Upload a 3D model file (.glb or .gltf) to display as a rotatable phra somdej. Used only if no Hero Image is uploaded above. Use <a href='https://trellis2.app' target='_blank' style='color:var(--gold-dark);text-decoration:underline'>trellis2.app</a> to generate a .glb from a photo."
+               data-th-html="อัปโหลดไฟล์ 3D (.glb หรือ .gltf) เพื่อแสดงพระสมเด็จหมุนได้ ใช้เฉพาะเมื่อไม่มี Hero Image ด้านบน ใช้ <a href='https://trellis2.app' target='_blank' style='color:var(--gold-dark);text-decoration:underline'>trellis2.app</a> สร้าง .glb จากรูปภาพ">
+            Upload a 3D model. Used only if no Hero Image is uploaded above.
           </div>
           <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="dropGlb(event)">
             <input type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" onchange="handleGlbFile(event)">
@@ -1645,6 +1662,7 @@ function defaultSettings(){
     customPages:[],
     hero:{
       bgImage:'',
+      heroImage:'',
       phra3dGlb:'',
       phra3dFront:'',
       phra3dBack:'',
@@ -1778,6 +1796,7 @@ function applyDbMigrations(d){
   if(!d.settings)d.settings=defaultSettings();
   if(!d.settings.customPages)d.settings.customPages=[];
   if(d.settings.hero && d.settings.hero.bgImage===undefined)d.settings.hero.bgImage='';
+  if(d.settings.hero && d.settings.hero.heroImage===undefined)d.settings.hero.heroImage='';
   if(d.settings.hero && d.settings.hero.phra3dGlb===undefined)d.settings.hero.phra3dGlb='';
   if(d.settings.hero && d.settings.hero.phra3dFront===undefined)d.settings.hero.phra3dFront='';
   if(d.settings.hero && d.settings.hero.phra3dBack===undefined)d.settings.hero.phra3dBack='';
@@ -2105,6 +2124,7 @@ function loadHero(){
   document.getElementById('h_sub').value=h.sub||'';
   document.getElementById('h_desc').value=h.desc||'';
   tempImgs['h_bg']=h.bgImage?[h.bgImage]:[];renderPrev('h_bg');
+  tempImgs['h_hero_img']=h.heroImage?[h.heroImage]:[];renderPrev('h_hero_img');
   tempImgs['h_phra_front']=h.phra3dFront?[h.phra3dFront]:[];renderPrev('h_phra_front');
   tempImgs['h_phra_back']=h.phra3dBack?[h.phra3dBack]:[];renderPrev('h_phra_back');
   _tempGlb = h.phra3dGlb || '';
@@ -2285,6 +2305,7 @@ function saveHero(){
   if(!ensureUploadsDone()) return;
   const db=getDB();
   db.settings.hero.bgImage=(captureImgs('h_bg')[0]||'');
+  db.settings.hero.heroImage=(captureImgs('h_hero_img')[0]||'');
   db.settings.hero.phra3dGlb=_tempGlb||'';
   db.settings.hero.phra3dFront=(captureImgs('h_phra_front')[0]||'');
   db.settings.hero.phra3dBack=(captureImgs('h_phra_back')[0]||'');
@@ -2308,6 +2329,7 @@ function resetHeroVisuals(){
   const db = getDB();
   if(db.settings.hero){
     db.settings.hero.bgImage     = '';
+    db.settings.hero.heroImage   = '';
     db.settings.hero.phra3dGlb   = '';
     db.settings.hero.phra3dFront = '';
     db.settings.hero.phra3dBack  = '';
@@ -2315,10 +2337,12 @@ function resetHeroVisuals(){
   // Clear local upload state too
   if(typeof tempImgs === 'object'){
     tempImgs['h_bg'] = [];
+    tempImgs['h_hero_img'] = [];
     tempImgs['h_phra_front'] = [];
     tempImgs['h_phra_back'] = [];
     if(typeof renderPrev === 'function'){
       renderPrev('h_bg');
+      renderPrev('h_hero_img');
       renderPrev('h_phra_front');
       renderPrev('h_phra_back');
     }
