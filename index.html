@@ -2054,12 +2054,17 @@ function renderCasingTypes(){
   const types=db.casingTypes||[];
   const grid=document.getElementById('cTypeGrid');
   if(!types.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">No casing types available yet.</div>`;return;}
+  // Banner is ~480px wide, ~200px tall. Request the right size up front.
+  const bannerify = (url) => {
+    if(!url || !url.includes('ik.imagekit.io') || url.includes('/tr:')) return url;
+    return url.replace(/(\/yingyingyingsg\/yyy)\/(.+)$/, '$1/tr:w-640,h-400,fo-auto,q-80,f-auto/$2');
+  };
   grid.innerHTML=types.map(ty=>{
     const count=(ty.variants||[]).length;
     return `
     <div class="ftype-card" onclick="openCasingType(${ty.id})">
       <div class="ftype-banner">
-        ${ty.bannerImg?`<img loading="lazy" decoding="async" src="${ty.bannerImg}">`:`<span class="ftype-icon-bg">🪬</span>`}
+        ${ty.bannerImg?`<img loading="lazy" decoding="async" src="${bannerify(ty.bannerImg)}">`:`<span class="ftype-icon-bg">🪬</span>`}
         <div class="ftype-count">${count} ${count===1?'style':'styles'}</div>
       </div>
       <div class="ftype-body">
@@ -2110,10 +2115,15 @@ function renderVariants(typeId){
   const vars=ty.variants||[];
   const grid=document.getElementById('vGrid');
   if(!vars.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">No styles in this type yet.</div>`;return;}
+  // Variant card image is ~240×240 — request small thumbnail size up front.
+  const thumbify = (url) => {
+    if(!url || !url.includes('ik.imagekit.io') || url.includes('/tr:')) return url;
+    return url.replace(/(\/yingyingyingsg\/yyy)\/(.+)$/, '$1/tr:w-480,h-480,fo-auto,q-80,f-auto/$2');
+  };
   grid.innerHTML=vars.map(v=>`
     <div class="var-card" onclick="openVariant(${ty.id},${v.id})">
       <div class="var-img">
-        ${v.imgs&&v.imgs[0]?`<img loading="lazy" decoding="async" src="${v.imgs[0]}">`:'🪬'}
+        ${v.imgs&&v.imgs[0]?`<img loading="lazy" decoding="async" src="${thumbify(v.imgs[0])}">`:'🪬'}
         ${v.price?`<div class="var-price-badge">S$${Number(v.price).toLocaleString()}</div>`:''}
         ${v.imgs&&v.imgs.length>1?`<div class="var-img-count">📷 ${v.imgs.length}</div>`:''}
       </div>
@@ -2129,8 +2139,17 @@ function openVariant(typeId,varId){
   const ty=(db.casingTypes||[]).find(x=>x.id===typeId);if(!ty)return;
   const v=(ty.variants||[]).find(x=>x.id===varId);if(!v)return;
   const imgs=v.imgs||[];
-  // store images globally for lightbox
+  // store images globally for lightbox — keep originals for full-size view
   window._lbImages = imgs;
+  // For gallery thumbnails: explicitly request a small size via ImageKit.
+  // The auto-resize observer will also run, but doing it here means the
+  // network request fires with the optimised URL from the start (no race).
+  const thumbify = (url) => {
+    if(!url || typeof url !== 'string') return url;
+    if(!url.includes('ik.imagekit.io')) return url;
+    if(url.includes('/tr:')) return url;
+    return url.replace(/(\/yingyingyingsg\/yyy)\/(.+)$/, '$1/tr:w-320,q-75,f-auto/$2');
+  };
   document.getElementById('modalContent').innerHTML=`
     <div class="modal-head" style="padding-bottom:12px;margin-bottom:16px">
       <div class="modal-title-wrap">
@@ -2143,7 +2162,7 @@ function openVariant(typeId,varId){
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="variant-gallery">
-      ${imgs.length?imgs.map((img,i)=>`<div class="variant-photo" onclick="openLightbox(${i})"><img loading="lazy" decoding="async" src="${img}"></div>`).join(''):'<div class="variant-photo" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d1e06,#12100a)">🪬</div>'}
+      ${imgs.length?imgs.map((img,i)=>`<div class="variant-photo" onclick="openLightbox(${i})"><img loading="lazy" decoding="async" src="${thumbify(img)}"></div>`).join(''):'<div class="variant-photo" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d1e06,#12100a)">🪬</div>'}
     </div>`;
   document.getElementById('modal').classList.add('open');
 }
@@ -2161,7 +2180,13 @@ function openLightbox(idx){
 function showLightboxImage(){
   const imgs = window._lbImages || [];
   if(!imgs.length) return;
-  document.getElementById('lbImg').src = imgs[_lbIndex];
+  // Lightbox shows large image but no need for true original — 1280px is
+  // sharp on any normal screen and downloads ~4x faster than the original.
+  let url = imgs[_lbIndex];
+  if(url && url.includes('ik.imagekit.io') && !url.includes('/tr:')){
+    url = url.replace(/(\/yingyingyingsg\/yyy)\/(.+)$/, '$1/tr:w-1280,q-85,f-auto/$2');
+  }
+  document.getElementById('lbImg').src = url;
   document.getElementById('lbCounter').textContent = (_lbIndex+1) + ' / ' + imgs.length;
   // hide arrows if only 1 image
   const single = imgs.length <= 1;
