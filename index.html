@@ -3038,7 +3038,7 @@ window.addEventListener('appinstalled',()=>{
       renderer.outputEncoding = THREE.sRGBEncoding;
     }
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.7;
+    renderer.toneMappingExposure = 0.4;
 
     function resize(){
       const w = canvas.clientWidth;
@@ -3183,34 +3183,43 @@ window.addEventListener('appinstalled',()=>{
       model.position.y = -center.y * scale;
       model.position.z = -center.z * scale;
 
-      // ─── Force gold-looking materials to render as polished metal ───
-      // Trellis/photogrammetry models often come with low metalness and
-      // high roughness, which makes shiny gold appear pale/cream. We walk
-      // every mesh, detect gold-ish colours, and force PBR settings that
-      // give a real gold appearance: high metalness, low roughness, and
-      // a slightly darker/richer base colour so light highlights pop.
+      // ─── Force ALL PBR materials to render as polished gold ───
+      // Trellis exports a model with:
+      //   1. material.color = white (#fff)
+      //   2. baseColor texture (`map`) = baked cream/yellow image
+      //   3. low metalness / high roughness
+      // This combination makes shiny gold look flat and pale. We can't
+      // detect "is gold" from material.color (it's white) — so we just
+      // strip the maps and force every material to be polished gold.
+      // This works because the model is a single-coloured gold artifact;
+      // for multi-material models, a more selective approach would be
+      // needed.
       model.traverse(obj => {
         if(obj.isMesh && obj.material){
           const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
           mats.forEach(mat => {
             if(mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial){
+              // Strip texture maps that are washing out our colour
+              if(mat.map){
+                mat.map.dispose && mat.map.dispose();
+                mat.map = null;
+              }
+              if(mat.metalnessMap){
+                mat.metalnessMap.dispose && mat.metalnessMap.dispose();
+                mat.metalnessMap = null;
+              }
+              if(mat.roughnessMap){
+                mat.roughnessMap.dispose && mat.roughnessMap.dispose();
+                mat.roughnessMap = null;
+              }
+              // Set a deep, rich burnished gold (#b87a1f-ish)
+              mat.color.setRGB(0.72, 0.48, 0.12);
+              // Force polished metal
+              mat.metalness = 1.0;
+              mat.roughness = 0.28;
               // Studio environment so metal reflects something
               if(scene.environment) mat.envMap = scene.environment;
               mat.envMapIntensity = 1.0;
-              const col = mat.color;
-              const looksGold = col && col.r > 0.4 && col.g > 0.25 && col.b < 0.5;
-              if(looksGold){
-                // Deepen the gold base — most pale-cream gold textures are
-                // way too light. Multiply down toward true gold (#c9a04a-ish).
-                col.r = Math.min(col.r, 0.85);
-                col.g = Math.min(col.g, 0.62);
-                col.b = Math.min(col.b, 0.25);
-                // Force polished metal settings
-                mat.metalness = 1.0;
-                mat.roughness = 0.22;
-              } else {
-                mat.roughness = Math.min(mat.roughness ?? 1, 0.6);
-              }
               mat.needsUpdate = true;
             }
           });
