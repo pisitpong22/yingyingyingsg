@@ -592,6 +592,109 @@
     font-family:var(--font-display);font-size:32px;color:var(--text);
     font-weight:700;margin:0 0 16px;line-height:1.15;
   }
+  /* ─── CUSTOM PAGE COLLECTIONS — grid / list layouts ───
+     Used when admin chose layout=grid or layout=list for a custom page. */
+  .cp-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+    gap:22px;
+  }
+  .cp-card{
+    background:var(--glass-bg);
+    backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    border:1px solid var(--glass-border);
+    border-radius:16px;
+    overflow:hidden;
+    cursor:pointer;
+    transition:transform .3s, box-shadow .3s, border-color .3s;
+    box-shadow:var(--glass-shadow),var(--glass-shadow-inner);
+    display:flex;flex-direction:column;
+  }
+  .cp-card:hover{
+    transform:translateY(-4px);
+    border-color:var(--glass-border-strong);
+    box-shadow:var(--glass-shadow-hover),var(--glass-shadow-inner);
+  }
+  .cp-card-img{
+    width:100%;aspect-ratio:4/3;
+    background:linear-gradient(135deg,#2d1e06,#12100a);
+    display:flex;align-items:center;justify-content:center;
+    font-size:48px;overflow:hidden;
+  }
+  .cp-card-img img{width:100%;height:100%;object-fit:cover;display:block}
+  .cp-card-body{padding:20px}
+  .cp-card-title{
+    font-family:var(--font-display);font-size:18px;
+    color:var(--text);font-weight:700;
+    margin:0 0 6px;line-height:1.3;
+  }
+  .cp-card-subtitle{
+    color:var(--text-muted);font-size:13.5px;
+    line-height:1.55;margin-bottom:14px;
+  }
+  .cp-card-more{
+    color:var(--gold-dark);font-size:12.5px;font-weight:600;
+    letter-spacing:.4px;
+  }
+
+  /* List layout */
+  .cp-list{display:flex;flex-direction:column;gap:16px}
+  .cp-list-item{
+    display:grid;grid-template-columns:200px 1fr;gap:22px;
+    background:var(--glass-bg);
+    backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    border:1px solid var(--glass-border);
+    border-radius:14px;
+    overflow:hidden;
+    cursor:pointer;
+    transition:transform .25s,box-shadow .25s,border-color .25s;
+    box-shadow:var(--glass-shadow),var(--glass-shadow-inner);
+  }
+  .cp-list-item:hover{
+    transform:translateY(-2px);
+    border-color:var(--glass-border-strong);
+    box-shadow:var(--glass-shadow-hover),var(--glass-shadow-inner);
+  }
+  .cp-list-img{
+    aspect-ratio:1;background:linear-gradient(135deg,#2d1e06,#12100a);
+    overflow:hidden;display:flex;align-items:center;justify-content:center;
+  }
+  .cp-list-img img{width:100%;height:100%;object-fit:cover}
+  .cp-list-body{padding:22px 24px 22px 0;display:flex;flex-direction:column;justify-content:center}
+  .cp-list-title{
+    font-family:var(--font-display);font-size:22px;
+    font-weight:700;color:var(--text);
+    margin:0 0 6px;line-height:1.25;
+  }
+  .cp-list-subtitle{
+    color:var(--gold-dark);font-size:13.5px;font-weight:600;
+    margin-bottom:10px;letter-spacing:.3px;
+  }
+  .cp-list-content{
+    color:var(--text-muted);font-size:14px;line-height:1.7;
+    margin-bottom:10px;
+  }
+  .cp-list-more{
+    color:var(--gold-dark);font-size:13px;font-weight:600;
+    letter-spacing:.3px;
+  }
+
+  @media(max-width:780px){
+    .cp-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+    .cp-card-body{padding:14px 14px 16px}
+    .cp-card-title{font-size:15px}
+    .cp-card-subtitle{font-size:12.5px;margin-bottom:10px}
+    .cp-card-more{font-size:11.5px}
+
+    .cp-list-item{grid-template-columns:110px 1fr;gap:12px}
+    .cp-list-body{padding:14px 14px 14px 0}
+    .cp-list-title{font-size:17px}
+    .cp-list-subtitle{font-size:12.5px}
+    .cp-list-content{font-size:13.5px;margin-bottom:8px}
+  }
+
   /* ─── CUSTOM PAGE CONTENT ───
      Style the rich-text content of admin-created custom pages so it looks
      polished by default — no matter what HTML the admin's RTE produces. */
@@ -1442,6 +1545,11 @@ function applyDbMigrations(d){
   if(!d.casingTypes)d.casingTypes=[];
   if(!d.settings)d.settings=defaultSettings();
   if(!d.settings.customPages)d.settings.customPages=[];
+  // Backfill layout + items on legacy custom pages
+  d.settings.customPages.forEach(p => {
+    if(!p.layout) p.layout = 'article';
+    if(!Array.isArray(p.items)) p.items = [];
+  });
   if(d.settings.hero && d.settings.hero.bgImage===undefined)d.settings.hero.bgImage='';
   if(d.settings.hero && d.settings.hero.phra3dGlb===undefined)d.settings.hero.phra3dGlb='';
   if(d.settings.hero && d.settings.hero.phra3dFront===undefined)d.settings.hero.phra3dFront='';
@@ -1745,16 +1853,75 @@ function applySettings(){
 function renderCustomPages(){
   const db=getDB();const cp=db.settings.customPages||[];
   const container=document.getElementById('customPages');
-  container.innerHTML=cp.map(p=>`
+  container.innerHTML=cp.map(p=>{
+    const layout = p.layout || 'article';
+    const items  = p.items || [];
+    let body;
+    if(layout === 'article' || !items.length){
+      // Article: single rich-text block
+      body = `<div class="custom-page-content">
+        ${p.content||'<p style="text-align:center;color:var(--text-muted);font-style:italic">No content yet. Edit this page in the admin to add content.</p>'}
+      </div>`;
+    } else if(layout === 'list'){
+      // List: vertical rows of image + text
+      body = `<div class="cp-list">${items.map(it => `
+        <div class="cp-list-item" onclick="openCpItem('${p.id}','${it.id}')">
+          ${it.img?`<div class="cp-list-img"><img loading="lazy" decoding="async" src="${it.img}" alt=""></div>`:''}
+          <div class="cp-list-body">
+            <h3 class="cp-list-title">${it.title || ''}</h3>
+            ${it.subtitle?`<div class="cp-list-subtitle">${it.subtitle}</div>`:''}
+            ${it.content?`<div class="cp-list-content">${truncateHtml(it.content, 180)}</div>`:''}
+            ${it.content?`<div class="cp-list-more">Read more →</div>`:''}
+          </div>
+        </div>
+      `).join('')}</div>`;
+    } else {
+      // Grid: cards in responsive grid
+      body = `<div class="cp-grid">${items.map(it => `
+        <div class="cp-card" onclick="openCpItem('${p.id}','${it.id}')">
+          <div class="cp-card-img">${it.img?`<img loading="lazy" decoding="async" src="${it.img}" alt="">`:'📄'}</div>
+          <div class="cp-card-body">
+            <h3 class="cp-card-title">${it.title || ''}</h3>
+            ${it.subtitle?`<div class="cp-card-subtitle">${it.subtitle}</div>`:''}
+            <div class="cp-card-more">View details →</div>
+          </div>
+        </div>
+      `).join('')}</div>`;
+    }
+    return `
     <div id="page-${p.id}" class="page">
       <div class="sec-head"><h2>${p.title||p.label}</h2><div class="gline"></div>${p.desc?`<p>${p.desc}</p>`:''}</div>
-      <div class="content">
-        <div class="custom-page-content">
-          ${p.content||'<p style="text-align:center;color:var(--text-muted);font-style:italic">No content yet. Edit this page in the admin to add content.</p>'}
-        </div>
+      <div class="content">${body}</div>
+    </div>`;
+  }).join('');
+}
+
+// Strip HTML tags then truncate — used for grid/list card previews
+function truncateHtml(html, maxLen){
+  const plain = String(html||'').replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').trim();
+  if(plain.length <= maxLen) return plain;
+  return plain.slice(0, maxLen) + '…';
+}
+
+// Open detail modal for a single custom-page item (used by grid/list cards)
+function openCpItem(pageId, itemId){
+  const db = getDB();
+  const p = (db.settings.customPages||[]).find(x => x.id === pageId);
+  if(!p) return;
+  const it = (p.items||[]).find(x => String(x.id) === String(itemId));
+  if(!it) return;
+  document.getElementById('modalContent').innerHTML = `
+    <div class="modal-head" style="padding-bottom:14px;margin-bottom:18px">
+      <div class="modal-title-wrap">
+        <div class="modal-title" style="font-size:24px">${it.title || ''}</div>
+        ${it.subtitle?`<div style="font-size:14px;color:var(--text-muted);margin-top:4px">${it.subtitle}</div>`:''}
       </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
-  `).join('');
+    ${it.img?`<div style="text-align:center;margin-bottom:22px"><img src="${it.img}" alt="" style="max-width:100%;max-height:400px;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.15)"></div>`:''}
+    <div class="custom-page-content" style="max-width:100%;background:transparent;border:none;box-shadow:none;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none">${it.content || '<p style="color:var(--text-muted);font-style:italic">No content.</p>'}</div>
+  `;
+  document.getElementById('modal').classList.add('open');
 }
 
 function animN(id,target){const el=document.getElementById(id);if(!el)return;let c=0;const iv=setInterval(()=>{c=Math.min(c+1,target);el.textContent=c;if(c>=target)clearInterval(iv);},60);}
