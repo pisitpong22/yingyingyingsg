@@ -436,14 +436,16 @@
       #15151a 100%) !important;
     opacity:1 !important;
   }
-  /* The 3D block holds the image — also paint a studio backdrop here so
-     that even if .hero-bg fails, the area immediately behind the image
-     stays neutral (never the page's cream colour bleeding through). */
-  .hero.has-hero-image .hero-3d{
+  /* ─── 3D MODE STUDIO BACKDROP ───
+     When a 3D GLB model is shown, paint a neutral grey gradient behind it.
+     Polished gold needs DARK contrast to read as metallic — on a cream/gold
+     background it just blends in and looks dim. The dark backdrop gives
+     gold a place to shine. */
+  .hero-3d.has-3d{
     background:radial-gradient(ellipse at center,
-      rgba(58,58,66,.6) 0%,
-      rgba(37,37,42,.4) 50%,
-      transparent 80%);
+      #3a3a42 0%,
+      #25252a 50%,
+      #181818 100%);
     border-radius:24px;
   }
   .phra-hint{position:absolute;bottom:-10px;left:0;right:0;text-align:center;color:rgba(201,168,76,.6);font-size:10.5px;letter-spacing:2px;text-transform:uppercase;z-index:5;font-weight:500;pointer-events:none;padding:0 10px;line-height:1.4}
@@ -3045,7 +3047,7 @@ window.addEventListener('appinstalled',()=>{
       renderer.outputEncoding = THREE.sRGBEncoding;
     }
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.6;
+    renderer.toneMappingExposure = 0.95;
 
     function resize(){
       const w = canvas.clientWidth;
@@ -3075,36 +3077,27 @@ window.addEventListener('appinstalled',()=>{
     halo.position.z = -0.6;
     scene.add(halo);
 
-    // ─── STUDIO LIGHTING — designed for shiny gold/brass models ───
-     // Strong key + fill + rim from multiple angles, plus high ambient,
-     // so metallic surfaces catch light from every direction (mimics a
-     // softbox setup). Without enough light, polished gold reads as black
-     // (it's a perfect mirror — black background reflects in).
-    const keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
+    // ─── STUDIO LIGHTING — calibrated for shiny gold on a dark backdrop ───
+    // Strong directional key for highlights, moderate fill, low ambient.
+    // Gold needs CONTRAST (bright highlights + deep shadows) to read as
+    // metallic. Too much ambient washes it out to cream/yellow.
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.6);
     keyLight.position.set(3, 5, 5);
     scene.add(keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0xfff4d6, 1.4);
+    const rimLight = new THREE.DirectionalLight(0xfff4d6, 0.8);
     rimLight.position.set(-3, 4, -4);
     scene.add(rimLight);
 
-    const fillLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
     fillLight.position.set(-4, 1, 3);
     scene.add(fillLight);
 
-    // Bottom light — catches the base of the model so the lower half
-    // doesn't fall into shadow
-    const bottomLight = new THREE.DirectionalLight(0xfff0c8, 0.8);
-    bottomLight.position.set(0, -3, 2);
-    scene.add(bottomLight);
+    // Low ambient — keeps shadow areas dark enough to define form.
+    scene.add(new THREE.AmbientLight(0xffffff, 0.35));
 
-    // High ambient — so even surfaces facing away from any light still
-    // pick up gold colour rather than going black.
-    scene.add(new THREE.AmbientLight(0xffffff, 1.2));
-
-    // HEMISPHERE LIGHT — adds soft "sky+ground" tinting, perfect for
-    // making metallic gold pop without looking flat.
-    const hemi = new THREE.HemisphereLight(0xfff4d6, 0x4a3818, 1.0);
+    // Subtle hemisphere — warm sky / dark ground for natural tinting.
+    const hemi = new THREE.HemisphereLight(0xfff4d6, 0x1a1a1a, 0.4);
     scene.add(hemi);
 
     // ─── ENVIRONMENT MAP — synthetic studio environment ───
@@ -3209,7 +3202,7 @@ window.addEventListener('appinstalled',()=>{
             if(mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial){
               // Studio environment so metal reflects something, not black
               if(scene.environment) mat.envMap = scene.environment;
-              mat.envMapIntensity = 1.4;
+              mat.envMapIntensity = 0.7;
               // Detect "looks like gold" — high R, mid G, low B in baseColor
               const col = mat.color;
               const looksGold = col && col.r > 0.4 && col.g > 0.25 && col.b < 0.4;
