@@ -476,9 +476,17 @@
   .card:hover{transform:translateY(-5px);box-shadow:0 14px 44px rgba(201,168,76,.16);border-color:var(--gold)}
   .card-img{width:100%;height:225px;background:linear-gradient(135deg,#2d1e06,#12100a);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
   .card-img img{width:100%;height:100%;object-fit:cover}
-  /* ───── IMAGE LAZY LOAD + SKELETON ─────
-     Subtle shimmer placeholder while loading — blends with the cream/gold
-     palette so it doesn't look out of place. */
+  /* ───── IMAGE LAZY LOAD + BLUR PROGRESSIVE ─────
+     Approach:
+     1. While loading: show animated shimmer placeholder
+     2. As a backdrop, set a CSS background to a tiny blurred preview
+        (the same image, requested via ImageKit at w-20,blur-10) — only
+        ~1KB, loads almost instantly. Blurred up via CSS to fill the
+        container.
+     3. Once full-size image decoded: fade in over 350ms; the blur preview
+        is hidden by the now-opaque foreground image.
+     This eliminates the "blank box" feeling on cold cache misses — users
+     see the SHAPE of the image immediately, then the sharp version. */
   img.is-loading{
     opacity:0;
     background:
@@ -491,6 +499,15 @@
     background-blend-mode:overlay, normal;
     animation:imgShimmer 1.6s ease-in-out infinite;
     min-height:60px;
+  }
+  /* When a blur preview is set, use it as the background instead of shimmer */
+  img.is-loading.has-blur{
+    background-image:var(--blur-preview, none);
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+    animation:none;
+    filter:blur(0); /* the bitmap is already blurred */
   }
   img.is-loaded{
     opacity:1;
@@ -2405,6 +2422,21 @@ function watchImage(img){
   // Apply ImageKit auto-resize BEFORE network request fires
   applyImageKitResize(img);
 
+  // Set a blur preview as CSS background if this is an ImageKit URL — only
+  // costs ~1 KB to fetch and shows the user the IMAGE SHAPE immediately,
+  // even on cold-cache first visits. The real image fades in over the top.
+  const src = img.src || img.dataset.src;
+  if(src && src.includes('ik.imagekit.io')){
+    // Strip any existing transformation, then add tiny + blur
+    const cleaned = src.replace(/\/tr:[^/]+/, '');
+    const blurUrl = cleaned.replace(
+      /(\/yingyingyingsg\/yyy)\/(.+)$/,
+      '$1/tr:w-24,bl-6,q-30,f-auto/$2'
+    );
+    img.style.setProperty('--blur-preview', `url("${blurUrl}")`);
+    img.classList.add('has-blur');
+  }
+
   // Eager (above-the-fold) images: keep native loading, just listen for load
   if(img.getAttribute('loading') !== 'lazy'){
     if(img.complete && img.naturalWidth > 0){
@@ -2435,9 +2467,9 @@ function watchImage(img){
   });
   if(_imgObserver && img.src){
     // Move src → data-src so the network request waits for the observer
-    const src = img.src;
+    const realSrc = img.src;
     img.removeAttribute('src');
-    img.dataset.src = src;
+    img.dataset.src = realSrc;
     _imgObserver.observe(img);
   } else if(img.complete && img.naturalWidth > 0){
     img.classList.remove('is-loading');

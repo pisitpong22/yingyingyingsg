@@ -1319,6 +1319,25 @@
       <div class="panel" id="panel-settings">
         <div class="panel-title" data-en="⚙️ Settings" data-th="⚙️ ตั้งค่า">⚙️ Settings</div>
         <div class="form-card">
+          <div class="form-section-title" data-en="🚀 CDN Pre-warm" data-th="🚀 อุ่น CDN ล่วงหน้า">🚀 CDN Pre-warm</div>
+          <div class="form-section-desc"
+               data-en="First visitor to each image triggers a slow ImageKit cache miss (~1s). Click this button to warm up the CDN — every image will be pre-fetched at the sizes your site actually uses. After this, every visitor gets fast loads from the first byte."
+               data-th="ลูกค้าคนแรกของรูปแต่ละใบจะโหลดช้า (~1 วินาที) เพราะ ImageKit ยังไม่ cache กดปุ่มนี้เพื่ออุ่น CDN ก่อน — รูปทุกใบจะถูก pre-fetch ในขนาดที่เว็บใช้จริง หลังจากนี้ลูกค้าทุกคนจะโหลดเร็วตั้งแต่รูปแรก">
+            Click this button to pre-cache every image at the sizes the site uses. Run after uploading new images.
+          </div>
+          <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+            <button class="btn-gold" onclick="prewarmCDN()" id="prewarmBtn" data-en="🔥 Pre-warm All Images" data-th="🔥 อุ่นรูปทั้งหมด">🔥 Pre-warm All Images</button>
+            <span id="prewarmStatus" style="color:var(--text-muted);font-size:13px"></span>
+          </div>
+          <div id="prewarmProgress" style="margin-top:14px;display:none">
+            <div style="background:rgba(201,168,76,.12);border-radius:10px;height:8px;overflow:hidden">
+              <div id="prewarmBar" style="height:100%;background:linear-gradient(90deg,var(--gold-light),var(--gold));width:0%;transition:width .2s ease-out;border-radius:10px"></div>
+            </div>
+            <div id="prewarmLog" style="margin-top:10px;font-size:12px;color:var(--text-muted);max-height:120px;overflow-y:auto;padding:8px 12px;background:rgba(201,168,76,.05);border-radius:8px;font-family:monospace"></div>
+          </div>
+        </div>
+
+        <div class="form-card">
           <div class="form-section-title" data-en="🔐 Change Password" data-th="🔐 เปลี่ยนรหัสผ่าน">🔐 Change Password</div>
           <div class="form-grid">
             <div class="fg"><label class="fl" data-en="Current" data-th="รหัสปัจจุบัน">Current</label><input class="fi" id="pw_old" type="password"></div>
@@ -3602,6 +3621,116 @@ function clearF(ids,imgKey){
 }
 
 function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ─── CDN PRE-WARM ──────────────────────────────────────────────────────────
+// Walks the DB, collects every image URL, requests each one through ImageKit
+// at the sizes the site actually uses. After this finishes, real visitors
+// hit a warm cache from the first byte → no more 1s cold-start latency.
+async function prewarmCDN(){
+  const btn = document.getElementById('prewarmBtn');
+  const status = document.getElementById('prewarmStatus');
+  const progress = document.getElementById('prewarmProgress');
+  const bar = document.getElementById('prewarmBar');
+  const log = document.getElementById('prewarmLog');
+
+  btn.disabled = true;
+  progress.style.display = 'block';
+  log.innerHTML = '';
+
+  const db = getDB();
+  // Collect every image URL in the DB along with the sizes the site renders it at
+  const tasks = [];
+  const addImg = (url, sizes) => {
+    if(!url || typeof url !== 'string') return;
+    if(!url.includes('ik.imagekit.io')) return;
+    sizes.forEach(s => {
+      const base = url.split('/tr:')[0] === url ? url : url.replace(/\/tr:[^/]+/, '');
+      const variant = base.replace(
+        /(\/yingyingyingsg\/yyy)\/(.+)$/,
+        `$1/tr:${s}/$2`
+      );
+      tasks.push(variant);
+    });
+  };
+
+  // Hero
+  if(db.settings && db.settings.hero){
+    const h = db.settings.hero;
+    addImg(h.bgImage,    ['w-1920,q-80,f-auto']);
+    addImg(h.heroImage,  ['w-800,q-85,f-auto']);
+    addImg(h.phra3dFront,['w-800,q-85,f-auto']);
+    addImg(h.phra3dBack, ['w-800,q-85,f-auto']);
+  }
+  // Featured (home grid)
+  if(db.settings && Array.isArray(db.settings.featured)){
+    db.settings.featured.forEach(f => addImg(f.img, ['w-480,q-80,f-auto']));
+  }
+  // Payment QR
+  if(db.settings && db.settings.payment && db.settings.payment.qrImage){
+    addImg(db.settings.payment.qrImage, ['w-480,q-80,f-auto']);
+  }
+  // Products
+  const addManyImgs = (arr, sizes) => (arr || []).forEach(it =>
+    (it.imgs || []).forEach(u => addImg(u, sizes)));
+  addManyImgs(db.amulets,     ['w-480,q-80,f-auto', 'w-1280,q-85,f-auto']);
+  addManyImgs(db.accessories, ['w-480,q-80,f-auto', 'w-1280,q-85,f-auto']);
+  addManyImgs(db.projects,    ['w-480,q-80,f-auto', 'w-1280,q-85,f-auto']);
+  addManyImgs(db.reviews,     ['w-320,q-75,f-auto']);
+  // Casing
+  (db.casingTypes || []).forEach(ty => {
+    addImg(ty.bannerImg, ['w-640,h-400,fo-auto,q-80,f-auto']);
+    (ty.variants || []).forEach(v =>
+      (v.imgs || []).forEach(u => addImg(u, [
+        'w-480,h-480,fo-auto,q-80,f-auto',  // variant card
+        'w-320,q-75,f-auto',                 // modal gallery thumb
+        'w-1280,q-85,f-auto',                // lightbox
+      ]))
+    );
+  });
+
+  // De-duplicate
+  const unique = [...new Set(tasks)];
+  const total = unique.length;
+  if(!total){
+    status.textContent = lang==='th'?'ไม่มีรูปต้องอุ่น':'No images to warm';
+    btn.disabled = false;
+    setTimeout(() => progress.style.display = 'none', 2000);
+    return;
+  }
+
+  status.textContent = (lang==='th'?'กำลังอุ่น':'Warming') + ` 0 / ${total}…`;
+  let done = 0, ok = 0, fail = 0;
+
+  // Run in batches of 6 so we don't hammer ImageKit (and our own bandwidth)
+  const BATCH = 6;
+  for(let i = 0; i < unique.length; i += BATCH){
+    const batch = unique.slice(i, i + BATCH);
+    await Promise.all(batch.map(async url => {
+      try {
+        const t0 = performance.now();
+        const r = await fetch(url, {mode:'cors', cache:'reload'});
+        const dt = Math.round(performance.now() - t0);
+        if(r.ok){
+          ok++;
+          log.innerHTML += `<div style="color:#2a8045">✓ ${dt}ms · ${url.split('/').pop().slice(0,60)}</div>`;
+        } else {
+          fail++;
+          log.innerHTML += `<div style="color:#a55">✗ ${r.status} · ${url.split('/').pop().slice(0,60)}</div>`;
+        }
+      } catch(e){
+        fail++;
+        log.innerHTML += `<div style="color:#a55">✗ ERR · ${url.split('/').pop().slice(0,60)}</div>`;
+      }
+      done++;
+      bar.style.width = (done/total*100) + '%';
+      status.textContent = (lang==='th'?'กำลังอุ่น':'Warming') + ` ${done} / ${total}…`;
+      log.scrollTop = log.scrollHeight;
+    }));
+  }
+
+  status.innerHTML = `<span style="color:#2a8045;font-weight:600">✓ ${lang==='th'?'อุ่นเสร็จแล้ว':'Pre-warm complete'}</span> · ${ok} ok, ${fail} fail`;
+  btn.disabled = false;
+}
 
 function exportDB(){
   const blob=new Blob([JSON.stringify(getDB(),null,2)],{type:'application/json'});
