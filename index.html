@@ -3417,21 +3417,31 @@ window.addEventListener('appinstalled',()=>{
     // tap-to-flip removed — the model just responds to drag/orbit now.
     let flipped = 0;
     // Scroll-linked rotation feels nice on desktop but on mobile it
-    // means scrolling down + back up leaves the model in a tilted/upside-
-    // down state. We only apply it on non-touch (desktop) devices.
-    const enableScrollRot = !('ontouchstart' in window) && !navigator.maxTouchPoints;
-    window.addEventListener('scroll', () => { scrollOffset = window.scrollY; }, {passive: true});
+    // leaves the model tilted/upside-down when scrolled back to top.
+    // We detect mobile via the same media query the rest of the CSS
+    // uses — touch detection is unreliable on hybrid devices (iPad with
+    // pencil, etc).
+    const enableScrollRot =
+      typeof window.matchMedia === 'function'
+        ? !window.matchMedia('(max-width: 900px)').matches &&
+          !window.matchMedia('(hover: none)').matches
+        : true;
+    console.log('[phra3d] scroll rotation enabled:', enableScrollRot,
+                'viewport:', window.innerWidth, 'x', window.innerHeight);
+    window.addEventListener('scroll', () => {
+      // Only update if scroll rotation is enabled — saves a tiny bit on mobile
+      if(enableScrollRot) scrollOffset = window.scrollY;
+    }, {passive: true});
 
     // ─── GYROSCOPE TILT — mobile only ───
-    // On phones with a gyroscope, tilting the device tilts the 3D model.
-    // iOS 13+ requires an EXPLICIT button press to grant motion permission
-    // — we cannot request it during a `click` from another element, only
-    // from a real user gesture on the button itself.
+    // Listens for device orientation events and tilts the 3D model.
+    // iOS 13+ requires permission, which MUST be requested from a direct
+    // user gesture. We listen for the first touch anywhere on the page
+    // and request permission then — same effect as a button, but no UI.
     let gyroX = 0, gyroY = 0;
     const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
     const onDeviceOrientation = (e) => {
-      // beta = front-back tilt (-180..180), gamma = left-right tilt (-90..90)
       const beta  = (e.beta  || 0);
       const gamma = (e.gamma || 0);
       gyroY = Math.max(-0.4, Math.min(0.4, gamma * 0.012));
@@ -3444,63 +3454,30 @@ window.addEventListener('appinstalled',()=>{
         typeof DeviceOrientationEvent.requestPermission === 'function';
 
       if(iosNeedsPermission){
-        // ─── iOS — show a clear button asking for motion permission ───
-        // The permission popup will only fire if requested DIRECTLY from
-        // a user gesture (touch/click event on the button itself).
-        const btn = document.createElement('button');
-        btn.textContent = '✨ Enable Tilt';
-        btn.setAttribute('aria-label', 'Enable motion tilt for the 3D model');
-        Object.assign(btn.style, {
-          position: 'absolute',
-          bottom: '12px',
-          right: '12px',
-          zIndex: '20',
-          background: 'rgba(201,168,76,0.95)',
-          color: '#12100a',
-          border: 'none',
-          borderRadius: '20px',
-          padding: '8px 14px',
-          fontSize: '12px',
-          fontWeight: '700',
-          cursor: 'pointer',
-          letterSpacing: '0.5px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-          fontFamily: 'inherit',
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-        });
-        // Place button inside the .hero-3d container (parent of canvas)
-        const heroBlock = canvas.parentElement;
-        if(heroBlock){
-          if(getComputedStyle(heroBlock).position === 'static'){
-            heroBlock.style.position = 'relative';
-          }
-          heroBlock.appendChild(btn);
-        }
-        btn.addEventListener('click', async (ev) => {
-          ev.stopPropagation();
-          try {
-            const state = await DeviceOrientationEvent.requestPermission();
-            if(state === 'granted'){
-              window.addEventListener('deviceorientation', onDeviceOrientation, {passive: true});
-              btn.textContent = '✅ Tilt On';
-              btn.style.background = 'rgba(26,91,58,0.95)';
-              btn.style.color = '#fff';
-              setTimeout(() => btn.remove(), 1500);
-            } else {
-              btn.textContent = '🚫 Permission Denied';
-              btn.style.background = 'rgba(139,0,0,0.85)';
-              btn.style.color = '#fff';
-              setTimeout(() => btn.remove(), 2500);
-            }
-          } catch(err){
-            console.warn('[gyro] permission request failed:', err);
-            btn.textContent = '❌ Not available';
-            setTimeout(() => btn.remove(), 2000);
-          }
-        });
+        // iOS — request permission on first user interaction anywhere.
+        // This produces the same iOS permission popup, just triggered
+        // automatically when the user first touches the page (which is
+        // how they're already interacting anyway).
+        const requestGyroNow = () => {
+          DeviceOrientationEvent.requestPermission()
+            .then(state => {
+              if(state === 'granted'){
+                window.addEventListener('deviceorientation', onDeviceOrientation, {passive: true});
+                console.log('[phra3d] gyro permission granted');
+              } else {
+                console.log('[phra3d] gyro permission denied:', state);
+              }
+            })
+            .catch(err => console.warn('[phra3d] gyro permission request failed:', err));
+          // Remove all listeners — request only once
+          document.removeEventListener('touchend', requestGyroNow);
+          document.removeEventListener('click', requestGyroNow);
+        };
+        // First touch on ANY element triggers the request.
+        document.addEventListener('touchend', requestGyroNow, {once: true, passive: true});
+        document.addEventListener('click', requestGyroNow, {once: true});
       } else {
-        // ─── Android / older iOS — just listen, no permission needed ───
+        // Android / non-iOS-13+ — listen directly, no permission needed
         window.addEventListener('deviceorientation', onDeviceOrientation, {passive: true});
       }
     }
