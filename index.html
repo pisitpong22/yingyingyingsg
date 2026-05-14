@@ -3024,7 +3024,14 @@ window.addEventListener('appinstalled',()=>{
     camera.position.set(0, 0, 7);
 
     renderer = new THREE.WebGLRenderer({canvas, alpha: true, antialias: true});
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // ─── Cap pixel ratio for performance ───
+    // Full retina (DPR 3) on a phone means 9x the pixels to render every
+    // frame. That's heavy on a WebGL scene with envMaps. Cap at 2 on
+    // desktop and 1.5 on touch devices — the model is small enough that
+    // the visual difference is minimal.
+    const isMobileForPx = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    const dprCap = isMobileForPx ? 1.5 : 2;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprCap));
     renderer.setClearColor(0x000000, 0);
     // Studio-quality colour & exposure for metallic models (gold/brass).
     // outputColorSpace = sRGB ensures colours render as the artist intended
@@ -3094,50 +3101,31 @@ window.addEventListener('appinstalled',()=>{
 
     // ─── HDR-STYLE STUDIO ENVIRONMENT — designed for shiny gold ───
     // Polished gold is a perfect mirror — its appearance comes ENTIRELY
-    // from what it reflects. Without a high-contrast environment to
-    // reflect (bright key sources + dark surrounds), gold renders as a
-    // flat dim colour.
+    // from what it reflects. We bake a procedural studio into an envMap.
     //
-    // We build a synthetic studio: a DARK base scene with several BRIGHT
-    // emissive sources at different angles. The PMREMGenerator bakes this
-    // into an envMap that gets assigned to scene.environment — invisible
-    // as a background, but every metallic surface reflects it.
+    // Performance note: PMREMGenerator can be expensive. We use a small
+    // env scene and the lowest acceptable roughness on PMREM (0.04)
+    // to keep memory/GPU cost down on mobile.
     try {
       const pmrem = new THREE.PMREMGenerator(renderer);
       pmrem.compileEquirectangularShader();
 
       const envScene = new THREE.Scene();
-      // DARK ambient base — provides the deep shadow reflections that
-      // make gold look polished (not chalky).
       envScene.background = new THREE.Color(0x0a0a0a);
-      const baseSphere = new THREE.Mesh(
-        new THREE.SphereGeometry(50, 16, 16),
-        new THREE.MeshBasicMaterial({color: 0x0a0a0a, side: THREE.BackSide})
-      );
-      envScene.add(baseSphere);
 
-      // BRIGHT studio lights as emissive panels — these are what gold
-      // reflects as highlights.
-      // Position them at common product-photography angles:
-      //   • main softbox (front-top-right) — large soft highlight
-      //   • secondary key (front-top-left) — fill highlight
-      //   • back rims (left & right) — edge separation
-      //   • top fill — catches the top of the model (head/uṣṇīṣa)
+      // 4 bright sources at studio angles (down from 6 — lighter on mobile)
       const lights = [
-        // [x, y, z, size, color, intensity-as-brightness]
-        [ 6,  5,  6,  4.0, 0xffffff, 8.0],   // main softbox (huge, bright)
-        [-5,  4,  5,  3.0, 0xfff4e0, 5.0],   // secondary key (warm)
-        [ 7,  2, -3,  2.0, 0xffffff, 6.0],   // back rim right
-        [-7,  2, -3,  2.0, 0xffffff, 6.0],   // back rim left
+        [ 6,  5,  6,  4.0, 0xffffff, 8.0],   // main softbox
+        [-5,  4,  5,  3.0, 0xfff4e0, 5.0],   // secondary key
         [ 0,  8,  2,  3.5, 0xfffaf0, 5.0],   // top fill
-        [ 0, -3,  6,  2.0, 0xffe8c0, 2.5],   // bottom bounce (warm, dim)
+        [ 0, -3,  6,  2.0, 0xffe8c0, 2.5],   // bottom bounce
       ];
       lights.forEach(([x, y, z, size, color, intensity]) => {
         const m = new THREE.Mesh(
-          new THREE.SphereGeometry(size, 16, 16),
+          new THREE.SphereGeometry(size, 12, 12),  // 12-segment is plenty for env
           new THREE.MeshBasicMaterial({
             color: new THREE.Color(color).multiplyScalar(intensity),
-            toneMapped: false,  // keep emissive bright through tonemap
+            toneMapped: false,
           })
         );
         m.position.set(x, y, z);
@@ -3245,6 +3233,15 @@ window.addEventListener('appinstalled',()=>{
       });
 
       phraGroup.add(model);
+      // ─── Force re-renders once textures + env are fully decoded ───
+      // The model can render before its textures finish decoding, which
+      // briefly shows it as dark/black. We schedule additional renders
+      // over the next ~600ms to make sure the first paint is correct.
+      [50, 150, 350, 600].forEach(delay => {
+        setTimeout(() => {
+          if(renderer && scene && camera) renderer.render(scene, camera);
+        }, delay);
+      });
       console.log('[phra3d] glb loaded. dims (pre-scale):',
                   size.x.toFixed(2), size.y.toFixed(2), size.z.toFixed(2),
                   '→ scale:', scale.toFixed(3));
@@ -3425,11 +3422,69 @@ window.addEventListener('appinstalled',()=>{
     let flipped = 0;
     window.addEventListener('scroll', () => { scrollOffset = window.scrollY; }, {passive: true});
 
+    // ─── GYROSCOPE TILT — mobile only ───
+    // On phones with a gyroscope (iPhone, recent Android), tilting the
+    // device tilts the 3D model. This makes the gold catch light from
+    // different angles as the user moves the phone — feels premium
+    // without being heavy.
+    let gyroX = 0, gyroY = 0;
+    let gyroEnabled = false;
+    const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    if(isTouch){
+      const onDeviceOrientation = (e) => {
+        // beta = front-back tilt (-180..180), gamma = left-right tilt (-90..90)
+        // Map gentle tilts (~30deg max) to small rotations on the model.
+        const beta  = (e.beta  || 0);
+        const gamma = (e.gamma || 0);
+        // Damped & clamped so even big movements don't make the model spin
+        gyroY = Math.max(-0.4, Math.min(0.4, gamma * 0.012));
+        gyroX = Math.max(-0.25, Math.min(0.25, (beta - 45) * 0.008));
+      };
+      // iOS 13+ requires explicit permission
+      if(typeof DeviceOrientationEvent !== 'undefined' &&
+         typeof DeviceOrientationEvent.requestPermission === 'function'){
+        // Defer to first user tap on the canvas to request permission
+        const requestGyro = () => {
+          DeviceOrientationEvent.requestPermission().then(state => {
+            if(state === 'granted'){
+              window.addEventListener('deviceorientation', onDeviceOrientation, {passive: true});
+              gyroEnabled = true;
+            }
+          }).catch(()=>{});
+          canvas.removeEventListener('click', requestGyro);
+          canvas.removeEventListener('touchend', requestGyro);
+        };
+        canvas.addEventListener('click', requestGyro, {once: true});
+        canvas.addEventListener('touchend', requestGyro, {once: true});
+      } else {
+        // Android / older iOS — just listen
+        window.addEventListener('deviceorientation', onDeviceOrientation, {passive: true});
+        gyroEnabled = true;
+      }
+    }
+
+    // ─── VISIBILITY-AWARE RENDERING (performance) ───
+    // Pause the animation when the canvas scrolls off-screen, when the
+    // tab is hidden, or when the user is on a low-power device. This is
+    // critical on mobile — a continuously running WebGL loop drains
+    // battery and makes the rest of the page laggy.
+    let canvasVisible = true;
+    if('IntersectionObserver' in window){
+      new IntersectionObserver((entries) => {
+        canvasVisible = entries[0].isIntersecting;
+      }, {threshold: 0.05}).observe(canvas);
+    }
+    document.addEventListener('visibilitychange', () => {
+      canvasVisible = !document.hidden && canvasVisible;
+    });
+
     clock = new THREE.Clock();
     let curRotY = 0, curRotX = 0, curFlip = 0;
     function animate(){
       if(!renderer) return;     // disposed
       requestAnimationFrame(animate);
+      // Skip rendering when hidden — huge battery & CPU saver on mobile.
+      if(!canvasVisible || document.hidden) return;
       const t = clock.getElapsedTime();
       curRotY += (targetRotY - curRotY) * 0.05;
       curRotX += (targetRotX - curRotX) * 0.05;
@@ -3438,12 +3493,10 @@ window.addEventListener('appinstalled',()=>{
       const idleX = Math.cos(t * 0.45) * 0.03;
       const scrollRot = scrollOffset * 0.0015;
       if(phraGroup){
-        phraGroup.rotation.y = curRotY + idleY + scrollRot + curFlip;
-        phraGroup.rotation.x = curRotX + idleX;
+        phraGroup.rotation.y = curRotY + idleY + scrollRot + curFlip + gyroY;
+        phraGroup.rotation.x = curRotX + idleX + gyroX;
         phraGroup.position.y = Math.sin(t * 1.1) * 0.1;
       }
-      // Halo intentionally invisible — kept in the scene for backward
-      // compatibility but its opacity stays 0 (set when constructed).
       renderer.render(scene, camera);
     }
     animate();
