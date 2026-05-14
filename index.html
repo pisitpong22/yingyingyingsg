@@ -3045,7 +3045,7 @@ window.addEventListener('appinstalled',()=>{
       renderer.outputEncoding = THREE.sRGBEncoding;
     }
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMappingExposure = 0.75;
 
     function resize(){
       const w = canvas.clientWidth;
@@ -3216,16 +3216,12 @@ window.addEventListener('appinstalled',()=>{
               // Studio environment so metal reflects something
               if(scene.environment) mat.envMap = scene.environment;
               mat.envMapIntensity = 1.8;  // strong reflections = gold shine
-              // Warm gold tint — slightly brighter so it reads as polished
-              // gold leaf rather than dark brass. The texture's natural
-              // shading still preserves depth; this multiplier just sets
-              // the *base* gold tone.
-              mat.color.setRGB(1.0, 0.85, 0.50);
+              // Warm gold tint — deeper amber gold for that "burnished
+              // leaf" look. Texture × this multiplier = rich gold.
+              mat.color.setRGB(0.95, 0.62, 0.20);
               // Force polished-metal physical properties.
-              // Lower roughness = sharper highlights (which is what makes
-              // the target image's gold look "wet" and luxurious).
               mat.metalness = 1.0;
-              mat.roughness = 0.22;
+              mat.roughness = 0.25;
               mat.needsUpdate = true;
             }
           });
@@ -3423,43 +3419,85 @@ window.addEventListener('appinstalled',()=>{
     window.addEventListener('scroll', () => { scrollOffset = window.scrollY; }, {passive: true});
 
     // ─── GYROSCOPE TILT — mobile only ───
-    // On phones with a gyroscope (iPhone, recent Android), tilting the
-    // device tilts the 3D model. This makes the gold catch light from
-    // different angles as the user moves the phone — feels premium
-    // without being heavy.
+    // On phones with a gyroscope, tilting the device tilts the 3D model.
+    // iOS 13+ requires an EXPLICIT button press to grant motion permission
+    // — we cannot request it during a `click` from another element, only
+    // from a real user gesture on the button itself.
     let gyroX = 0, gyroY = 0;
-    let gyroEnabled = false;
     const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+    const onDeviceOrientation = (e) => {
+      // beta = front-back tilt (-180..180), gamma = left-right tilt (-90..90)
+      const beta  = (e.beta  || 0);
+      const gamma = (e.gamma || 0);
+      gyroY = Math.max(-0.4, Math.min(0.4, gamma * 0.012));
+      gyroX = Math.max(-0.25, Math.min(0.25, (beta - 45) * 0.008));
+    };
+
     if(isTouch){
-      const onDeviceOrientation = (e) => {
-        // beta = front-back tilt (-180..180), gamma = left-right tilt (-90..90)
-        // Map gentle tilts (~30deg max) to small rotations on the model.
-        const beta  = (e.beta  || 0);
-        const gamma = (e.gamma || 0);
-        // Damped & clamped so even big movements don't make the model spin
-        gyroY = Math.max(-0.4, Math.min(0.4, gamma * 0.012));
-        gyroX = Math.max(-0.25, Math.min(0.25, (beta - 45) * 0.008));
-      };
-      // iOS 13+ requires explicit permission
-      if(typeof DeviceOrientationEvent !== 'undefined' &&
-         typeof DeviceOrientationEvent.requestPermission === 'function'){
-        // Defer to first user tap on the canvas to request permission
-        const requestGyro = () => {
-          DeviceOrientationEvent.requestPermission().then(state => {
+      const iosNeedsPermission =
+        typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function';
+
+      if(iosNeedsPermission){
+        // ─── iOS — show a clear button asking for motion permission ───
+        // The permission popup will only fire if requested DIRECTLY from
+        // a user gesture (touch/click event on the button itself).
+        const btn = document.createElement('button');
+        btn.textContent = '✨ Enable Tilt';
+        btn.setAttribute('aria-label', 'Enable motion tilt for the 3D model');
+        Object.assign(btn.style, {
+          position: 'absolute',
+          bottom: '12px',
+          right: '12px',
+          zIndex: '20',
+          background: 'rgba(201,168,76,0.95)',
+          color: '#12100a',
+          border: 'none',
+          borderRadius: '20px',
+          padding: '8px 14px',
+          fontSize: '12px',
+          fontWeight: '700',
+          cursor: 'pointer',
+          letterSpacing: '0.5px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          fontFamily: 'inherit',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+        });
+        // Place button inside the .hero-3d container (parent of canvas)
+        const heroBlock = canvas.parentElement;
+        if(heroBlock){
+          if(getComputedStyle(heroBlock).position === 'static'){
+            heroBlock.style.position = 'relative';
+          }
+          heroBlock.appendChild(btn);
+        }
+        btn.addEventListener('click', async (ev) => {
+          ev.stopPropagation();
+          try {
+            const state = await DeviceOrientationEvent.requestPermission();
             if(state === 'granted'){
               window.addEventListener('deviceorientation', onDeviceOrientation, {passive: true});
-              gyroEnabled = true;
+              btn.textContent = '✅ Tilt On';
+              btn.style.background = 'rgba(26,91,58,0.95)';
+              btn.style.color = '#fff';
+              setTimeout(() => btn.remove(), 1500);
+            } else {
+              btn.textContent = '🚫 Permission Denied';
+              btn.style.background = 'rgba(139,0,0,0.85)';
+              btn.style.color = '#fff';
+              setTimeout(() => btn.remove(), 2500);
             }
-          }).catch(()=>{});
-          canvas.removeEventListener('click', requestGyro);
-          canvas.removeEventListener('touchend', requestGyro);
-        };
-        canvas.addEventListener('click', requestGyro, {once: true});
-        canvas.addEventListener('touchend', requestGyro, {once: true});
+          } catch(err){
+            console.warn('[gyro] permission request failed:', err);
+            btn.textContent = '❌ Not available';
+            setTimeout(() => btn.remove(), 2000);
+          }
+        });
       } else {
-        // Android / older iOS — just listen
+        // ─── Android / older iOS — just listen, no permission needed ───
         window.addEventListener('deviceorientation', onDeviceOrientation, {passive: true});
-        gyroEnabled = true;
       }
     }
 
