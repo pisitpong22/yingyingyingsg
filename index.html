@@ -3416,6 +3416,10 @@ window.addEventListener('appinstalled',()=>{
 
     // tap-to-flip removed — the model just responds to drag/orbit now.
     let flipped = 0;
+    // Scroll-linked rotation feels nice on desktop but on mobile it
+    // means scrolling down + back up leaves the model in a tilted/upside-
+    // down state. We only apply it on non-touch (desktop) devices.
+    const enableScrollRot = !('ontouchstart' in window) && !navigator.maxTouchPoints;
     window.addEventListener('scroll', () => { scrollOffset = window.scrollY; }, {passive: true});
 
     // ─── GYROSCOPE TILT — mobile only ───
@@ -3529,7 +3533,7 @@ window.addEventListener('appinstalled',()=>{
       curFlip += (flipped - curFlip) * 0.06;
       const idleY = Math.sin(t * 0.35) * 0.06;
       const idleX = Math.cos(t * 0.45) * 0.03;
-      const scrollRot = scrollOffset * 0.0015;
+      const scrollRot = enableScrollRot ? (scrollOffset * 0.0015) : 0;
       if(phraGroup){
         phraGroup.rotation.y = curRotY + idleY + scrollRot + curFlip + gyroY;
         phraGroup.rotation.x = curRotX + idleX + gyroX;
