@@ -626,13 +626,38 @@
   .var-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}
   /* ───── CASING TYPE DETAIL PAGE ───── */
   .casing-detail-head{
-    display:grid;grid-template-columns:1fr 280px;gap:30px;
-    margin:14px 0 36px;align-items:start;
+    margin:14px 0 36px;
   }
   .casing-detail-main{min-width:0}
+  /* Title + price chip on same line, with the chip flowing to the right
+     of the title. On narrow screens it wraps below. */
+  .casing-detail-title-row{
+    display:flex;align-items:baseline;
+    gap:14px;flex-wrap:wrap;
+    margin-bottom:14px;
+  }
   .casing-detail-title{
     font-family:var(--font-display);font-size:32px;color:var(--text);
-    font-weight:700;margin:0 0 16px;line-height:1.15;
+    font-weight:700;margin:0;line-height:1.15;
+  }
+  .casing-detail-price-badge{
+    display:inline-flex;align-items:baseline;gap:8px;
+    padding:6px 14px;
+    background:linear-gradient(135deg, rgba(232,201,106,.18) 0%, rgba(201,168,76,.1) 100%);
+    border:1.5px solid rgba(201,168,76,.4);
+    border-radius:999px;
+    box-shadow:0 2px 8px rgba(201,168,76,.15);
+  }
+  .cd-price-chip-label{
+    font-size:10.5px;letter-spacing:1.5px;
+    text-transform:uppercase;font-weight:700;
+    color:var(--gold-dark);opacity:.85;
+  }
+  .cd-price-chip-value{
+    font-family:var(--font-display);
+    font-size:17px;font-weight:700;
+    color:var(--gold-dark);
+    letter-spacing:.3px;
   }
   /* ─── CUSTOM PAGE COLLECTIONS — grid / list layouts ───
      Used when admin chose layout=grid or layout=list for a custom page. */
@@ -894,8 +919,11 @@
   }
 
   @media(max-width:780px){
-    .casing-detail-head{grid-template-columns:1fr;gap:18px;margin-bottom:24px}
+    .casing-detail-head{margin-bottom:24px}
     .casing-detail-title{font-size:24px}
+    .casing-detail-price-badge{padding:5px 12px}
+    .cd-price-chip-value{font-size:15px}
+    .cd-price-chip-label{font-size:9.5px;letter-spacing:1px}
     .casing-detail-desc{font-size:14px;padding:16px 18px}
     .cd-side-card{padding:16px 20px}
     .cd-side-value{font-size:24px}
@@ -921,24 +949,9 @@
   .var-img img{width:100%;height:100%;object-fit:cover}
   .var-img-count{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.6);color:white;font-size:11px;font-weight:600;padding:3px 9px;border-radius:25px;backdrop-filter:blur(6px)}
   .var-price-badge{position:absolute;top:10px;right:10px;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--deep);font-family:var(--font-display);font-size:14px;font-weight:700;padding:5px 11px;border-radius:8px;box-shadow:0 3px 10px rgba(0,0,0,.25);letter-spacing:.3px}
-  .var-body{padding:14px 18px}
-  .var-name-row{
-    display:flex;align-items:baseline;justify-content:space-between;
-    gap:10px;margin-bottom:5px;
-  }
-  .var-name{
-    font-family:var(--font-display);font-size:16px;font-weight:700;
-    color:var(--text);
-    flex:1;min-width:0;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  }
-  .var-price-inline{
-    font-family:var(--font-display);font-size:15px;font-weight:700;
-    color:var(--gold-dark);
-    flex-shrink:0;
-    letter-spacing:.3px;
-  }
-  .var-hint{font-size:11.5px;color:var(--gold-dark);font-weight:600;opacity:.85;transition:opacity .2s;text-align:center}
+  .var-body{padding:14px 18px;text-align:center}
+  .var-name{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--text);margin-bottom:5px}
+  .var-hint{font-size:11.5px;color:var(--gold-dark);font-weight:600;opacity:.85;transition:opacity .2s}
   .var-card:hover .var-hint{opacity:1}
 
   .proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:24px}
@@ -1445,10 +1458,12 @@
       <div class="crumb" id="vCrumb"></div>
       <div class="casing-detail-head">
         <div class="casing-detail-main">
-          <h3 class="casing-detail-title" id="vTitle"></h3>
+          <div class="casing-detail-title-row">
+            <h3 class="casing-detail-title" id="vTitle"></h3>
+            <div class="casing-detail-price-badge" id="vSide"></div>
+          </div>
           <div class="casing-detail-desc" id="vDesc"></div>
         </div>
-        <div class="casing-detail-side" id="vSide"></div>
       </div>
       <div class="var-grid-head">
         <h4 class="var-grid-title" data-en="Available Styles" data-th="แบบที่มีให้เลือก">Available Styles</h4>
@@ -2475,21 +2490,13 @@ function renderVariants(typeId){
     <span class="crumb-cur">${ty.name}</span>`;
   document.getElementById('vTitle').textContent=ty.name;
   document.getElementById('vDesc').innerHTML = ty.desc || '';
-  // Right-side info card: price range only (extracted from admin's structured price field)
+  // Price badge — small chip next to the title (e.g. "Waterproof Casing  S$15-25")
   const sideEl = document.getElementById('vSide');
   if(ty.priceRange){
-    sideEl.innerHTML = `
-      <div class="cd-side-card">
-        <div class="cd-side-label">Price range</div>
-        <div class="cd-side-value">S$${ty.priceRange}</div>
-      </div>`;
+    sideEl.innerHTML = `<span class="cd-price-chip-label">${lang==='th'?'ราคา':'Price'}</span> <span class="cd-price-chip-value">S$${ty.priceRange}</span>`;
     sideEl.style.display = '';
   } else if(ty.price){
-    sideEl.innerHTML = `
-      <div class="cd-side-card">
-        <div class="cd-side-label">Starting from</div>
-        <div class="cd-side-value">S$${Number(ty.price).toLocaleString()}</div>
-      </div>`;
+    sideEl.innerHTML = `<span class="cd-price-chip-label">${lang==='th'?'ราคาเริ่มต้น':'From'}</span> <span class="cd-price-chip-value">S$${Number(ty.price).toLocaleString()}</span>`;
     sideEl.style.display = '';
   } else {
     sideEl.style.display = 'none';
@@ -2506,13 +2513,11 @@ function renderVariants(typeId){
     <div class="var-card" onclick="openVariant(${ty.id},${v.id})">
       <div class="var-img">
         ${v.imgs&&v.imgs[0]?`<img loading="lazy" decoding="async" src="${thumbify(v.imgs[0])}">`:'🪬'}
+        ${v.price?`<div class="var-price-badge">S$${Number(v.price).toLocaleString()}</div>`:''}
         ${v.imgs&&v.imgs.length>1?`<div class="var-img-count">📷 ${v.imgs.length}</div>`:''}
       </div>
       <div class="var-body">
-        <div class="var-name-row">
-          <div class="var-name">${v.name}</div>
-          ${v.price?`<div class="var-price-inline">S$${Number(v.price).toLocaleString()}</div>`:''}
-        </div>
+        <div class="var-name">${v.name}</div>
         <div class="var-hint">👆 ${lang==='th'?'คลิกเพื่อดูตัวอย่างเพิ่ม':'Click to see more samples'}</div>
       </div>
     </div>`).join('');
