@@ -1668,6 +1668,17 @@
             <button type="button" class="rte-btn" onclick="rteExec('ft_desc','italic')" title="Italic (Ctrl+I)"><em>I</em></button>
             <button type="button" class="rte-btn" onclick="rteExec('ft_desc','underline')" title="Underline (Ctrl+U)"><u>U</u></button>
             <span class="rte-sep"></span>
+            <button type="button" class="rte-btn" onclick="rteExec('ft_desc','formatBlock','<h2>')" title="Heading 2" style="font-size:13px;font-weight:700">H2</button>
+            <button type="button" class="rte-btn" onclick="rteExec('ft_desc','formatBlock','<h3>')" title="Heading 3" style="font-size:12px;font-weight:700">H3</button>
+            <button type="button" class="rte-btn" onclick="rteExec('ft_desc','formatBlock','<p>')" title="Paragraph">¶</button>
+            <span class="rte-sep"></span>
+            <button type="button" class="rte-btn" onclick="rteExec('ft_desc','insertUnorderedList')" title="Bullet list">• ≡</button>
+            <button type="button" class="rte-btn" onclick="rteExec('ft_desc','insertOrderedList')" title="Numbered list">1. ≡</button>
+            <span class="rte-sep"></span>
+            <button type="button" class="rte-btn" onclick="rteExec('ft_desc','justifyLeft')" title="Align left">⬅</button>
+            <button type="button" class="rte-btn" onclick="rteExec('ft_desc','justifyCenter')" title="Align center">↔</button>
+            <button type="button" class="rte-btn" onclick="rteExec('ft_desc','justifyRight')" title="Align right">➡</button>
+            <span class="rte-sep"></span>
             <div class="rte-color-picker">
               <button type="button" class="rte-btn rte-color-btn" onclick="rteToggleColors('ft_desc')" title="Text color">
                 <span class="rte-color-letter">A</span>
@@ -1689,6 +1700,7 @@
               </div>
             </div>
             <span class="rte-sep"></span>
+            <button type="button" class="rte-btn" onclick="rteLink('ft_desc')" title="Insert link">🔗</button>
             <button type="button" class="rte-btn" onclick="rteExec('ft_desc','removeFormat')" title="Clear formatting">⌫</button>
           </div>
           <div class="rte-editor" id="ft_desc" contenteditable="true" data-placeholder="Enter description... use the toolbar above to format."></div>

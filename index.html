@@ -820,14 +820,43 @@
     padding:20px 24px;
     box-shadow:var(--glass-shadow),var(--glass-shadow-inner);
   }
-  /* Rich-text descriptions: line breaks, bold, italic, color all preserved */
+  /* Rich-text descriptions: full RTE support */
   .casing-detail-desc strong,
   .casing-detail-desc b{font-weight:700;color:var(--text)}
   .casing-detail-desc em,
   .casing-detail-desc i{font-style:italic}
+  .casing-detail-desc u{text-decoration:underline;text-decoration-color:rgba(201,168,76,.5);text-underline-offset:2px}
   .casing-detail-desc p{margin:0 0 10px}
   .casing-detail-desc p:last-child{margin-bottom:0}
   .casing-detail-desc br{line-height:1.85}
+  .casing-detail-desc h1,
+  .casing-detail-desc h2,
+  .casing-detail-desc h3{
+    font-family:var(--font-display);font-weight:700;color:var(--text);
+    margin:1em 0 .5em;line-height:1.3;
+  }
+  .casing-detail-desc h1:first-child,
+  .casing-detail-desc h2:first-child,
+  .casing-detail-desc h3:first-child{margin-top:0}
+  .casing-detail-desc h2{font-size:20px;color:var(--gold-dark)}
+  .casing-detail-desc h3{font-size:17px}
+  .casing-detail-desc ul,
+  .casing-detail-desc ol{margin:0 0 .8em 1.5em;padding:0}
+  .casing-detail-desc li{margin-bottom:.35em;line-height:1.75}
+  .casing-detail-desc a{
+    color:var(--gold-dark);text-decoration:underline;
+    text-decoration-color:rgba(201,168,76,.45);
+    text-underline-offset:3px;transition:color .2s,text-decoration-color .2s;
+  }
+  .casing-detail-desc a:hover{color:var(--gold);text-decoration-color:var(--gold)}
+  /* Alignment classes — execCommand produces inline style="text-align:..."
+     and may also use these tags. Make sure both work. */
+  .casing-detail-desc [style*="text-align:center"],
+  .casing-detail-desc [align="center"]{text-align:center}
+  .casing-detail-desc [style*="text-align:right"],
+  .casing-detail-desc [align="right"]{text-align:right}
+  .casing-detail-desc [style*="text-align:left"],
+  .casing-detail-desc [align="left"]{text-align:left}
 
   /* Side info card — price */
   .casing-detail-side{display:flex;flex-direction:column;gap:14px}
@@ -892,9 +921,24 @@
   .var-img img{width:100%;height:100%;object-fit:cover}
   .var-img-count{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.6);color:white;font-size:11px;font-weight:600;padding:3px 9px;border-radius:25px;backdrop-filter:blur(6px)}
   .var-price-badge{position:absolute;top:10px;right:10px;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--deep);font-family:var(--font-display);font-size:14px;font-weight:700;padding:5px 11px;border-radius:8px;box-shadow:0 3px 10px rgba(0,0,0,.25);letter-spacing:.3px}
-  .var-body{padding:14px 18px;text-align:center}
-  .var-name{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--text);margin-bottom:5px}
-  .var-hint{font-size:11.5px;color:var(--gold-dark);font-weight:600;opacity:.85;transition:opacity .2s}
+  .var-body{padding:14px 18px}
+  .var-name-row{
+    display:flex;align-items:baseline;justify-content:space-between;
+    gap:10px;margin-bottom:5px;
+  }
+  .var-name{
+    font-family:var(--font-display);font-size:16px;font-weight:700;
+    color:var(--text);
+    flex:1;min-width:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .var-price-inline{
+    font-family:var(--font-display);font-size:15px;font-weight:700;
+    color:var(--gold-dark);
+    flex-shrink:0;
+    letter-spacing:.3px;
+  }
+  .var-hint{font-size:11.5px;color:var(--gold-dark);font-weight:600;opacity:.85;transition:opacity .2s;text-align:center}
   .var-card:hover .var-hint{opacity:1}
 
   .proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:24px}
@@ -2452,12 +2496,14 @@ function renderVariants(typeId){
     <div class="var-card" onclick="openVariant(${ty.id},${v.id})">
       <div class="var-img">
         ${v.imgs&&v.imgs[0]?`<img loading="lazy" decoding="async" src="${thumbify(v.imgs[0])}">`:'🪬'}
-        ${v.price?`<div class="var-price-badge">S$${Number(v.price).toLocaleString()}</div>`:''}
         ${v.imgs&&v.imgs.length>1?`<div class="var-img-count">📷 ${v.imgs.length}</div>`:''}
       </div>
       <div class="var-body">
-        <div class="var-name">${v.name}</div>
-        <div class="var-hint">👆 Click to see more samples</div>
+        <div class="var-name-row">
+          <div class="var-name">${v.name}</div>
+          ${v.price?`<div class="var-price-inline">S$${Number(v.price).toLocaleString()}</div>`:''}
+        </div>
+        <div class="var-hint">👆 ${lang==='th'?'คลิกเพื่อดูตัวอย่างเพิ่ม':'Click to see more samples'}</div>
       </div>
     </div>`).join('');
 }
