@@ -436,20 +436,9 @@
       #15151a 100%) !important;
     opacity:1 !important;
   }
-  /* ─── 3D MODE STUDIO BACKDROP ───
-     When a 3D GLB model is shown, paint a neutral dark gradient behind it.
-     Polished gold needs DARK contrast to read as metallic — on a cream/light
-     background it reflects nothing and looks dim. The dark backdrop gives
-     gold a place to "shine into" and produces the bright highlights you
-     see in studio product photos. */
-  .hero-3d.has-3d{
-    background:radial-gradient(ellipse at center,
-      #3a3a42 0%,
-      #25252a 55%,
-      #16161a 100%);
-    border-radius:24px;
-    box-shadow:0 24px 60px rgba(0,0,0,.35), inset 0 0 80px rgba(0,0,0,.4);
-  }
+  /* 3D mode: keep transparent — let the hero background show through.
+     The 3D model gets its shine from the environment map (set in JS),
+     which is invisible — only reflects onto the polished gold surface. */
   .phra-hint{position:absolute;bottom:-10px;left:0;right:0;text-align:center;color:rgba(201,168,76,.6);font-size:10.5px;letter-spacing:2px;text-transform:uppercase;z-index:5;font-weight:500;pointer-events:none;padding:0 10px;line-height:1.4}
   /* glow halo — ONLY for 3D mode (not hero still image). Adding the
      .has-3d class to .hero-3d when a GLB/canvas is rendering keeps the
@@ -3049,7 +3038,7 @@ window.addEventListener('appinstalled',()=>{
       renderer.outputEncoding = THREE.sRGBEncoding;
     }
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.0;
+    renderer.toneMappingExposure = 1.2;
 
     function resize(){
       const w = canvas.clientWidth;
@@ -3079,59 +3068,79 @@ window.addEventListener('appinstalled',()=>{
     halo.position.z = -0.6;
     scene.add(halo);
 
-    // ─── STUDIO LIGHTING — calibrated for shiny gold on a dark backdrop ───
-    // Strong directional key for highlights, moderate fill, low ambient.
-    // Gold needs CONTRAST (bright highlights + deep shadows) to read as
-    // metallic. Too much ambient washes it out to cream/yellow.
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.6);
+    // ─── DIRECT LIGHTS — supplementary only ───
+    // The envMap handles most of the lighting for shiny gold. These
+    // direct lights add a touch of definition to shape and form, but
+    // they are intentionally LOW intensity so they don't overwhelm the
+    // gold reflections (which is what makes gold actually look like gold).
+    const keyLight = new THREE.DirectionalLight(0xffffff, 0.6);
     keyLight.position.set(3, 5, 5);
     scene.add(keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0xfff4d6, 0.8);
+    const rimLight = new THREE.DirectionalLight(0xfff4d6, 0.3);
     rimLight.position.set(-3, 4, -4);
     scene.add(rimLight);
 
-    const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.2);
     fillLight.position.set(-4, 1, 3);
     scene.add(fillLight);
 
-    // Very low ambient — keeps shadows deep so gold reads as metallic.
-    scene.add(new THREE.AmbientLight(0xffffff, 0.15));
+    // Minimal ambient — the envMap provides general illumination.
+    scene.add(new THREE.AmbientLight(0xffffff, 0.1));
 
-    // Subtle hemisphere — warm sky / dark ground for natural tinting.
-    const hemi = new THREE.HemisphereLight(0xfff4d6, 0x1a1a1a, 0.2);
+    // Very subtle hemisphere — tints shadows slightly.
+    const hemi = new THREE.HemisphereLight(0xfff4d6, 0x1a1a1a, 0.15);
     scene.add(hemi);
 
-    // ─── ENVIRONMENT MAP — synthetic studio environment ───
-    // Without an envMap, polished metal (high metalness, low roughness)
-    // has nothing to reflect and renders BLACK. Generate a soft warm-tinted
-    // procedural environment using PMREMGenerator so gold catches highlights.
+    // ─── HDR-STYLE STUDIO ENVIRONMENT — designed for shiny gold ───
+    // Polished gold is a perfect mirror — its appearance comes ENTIRELY
+    // from what it reflects. Without a high-contrast environment to
+    // reflect (bright key sources + dark surrounds), gold renders as a
+    // flat dim colour.
+    //
+    // We build a synthetic studio: a DARK base scene with several BRIGHT
+    // emissive sources at different angles. The PMREMGenerator bakes this
+    // into an envMap that gets assigned to scene.environment — invisible
+    // as a background, but every metallic surface reflects it.
     try {
       const pmrem = new THREE.PMREMGenerator(renderer);
       pmrem.compileEquirectangularShader();
 
-      // Build a small studio-light scene to capture into an env map
       const envScene = new THREE.Scene();
-      // Warm key (top-right)
-      const envKey = new THREE.Mesh(
-        new THREE.SphereGeometry(2, 16, 16),
-        new THREE.MeshBasicMaterial({color: 0xfff4d6, side: THREE.BackSide})
+      // DARK ambient base — provides the deep shadow reflections that
+      // make gold look polished (not chalky).
+      envScene.background = new THREE.Color(0x0a0a0a);
+      const baseSphere = new THREE.Mesh(
+        new THREE.SphereGeometry(50, 16, 16),
+        new THREE.MeshBasicMaterial({color: 0x0a0a0a, side: THREE.BackSide})
       );
-      envScene.add(envKey);
-      // Add some "lights" as visible spheres so they reflect onto metal.
-      // Mix of bright + dim sources gives gold richer highlights & dark
-      // reflections (which is what makes it look polished, not flat).
-      [
-        {pos:[ 5, 4,  3], color:0xffffff, size:1.4},
-        {pos:[-4, 3, -2], color:0xffd88a, size:1.0},
-        {pos:[ 2,-2,  4], color:0x4a3818, size:1.5},  // dark warm = depth
-        {pos:[-3,-1,  3], color:0x222222, size:1.2},  // dark = contrast
-      ].forEach(L => {
+      envScene.add(baseSphere);
+
+      // BRIGHT studio lights as emissive panels — these are what gold
+      // reflects as highlights.
+      // Position them at common product-photography angles:
+      //   • main softbox (front-top-right) — large soft highlight
+      //   • secondary key (front-top-left) — fill highlight
+      //   • back rims (left & right) — edge separation
+      //   • top fill — catches the top of the model (head/uṣṇīṣa)
+      const lights = [
+        // [x, y, z, size, color, intensity-as-brightness]
+        [ 6,  5,  6,  4.0, 0xffffff, 8.0],   // main softbox (huge, bright)
+        [-5,  4,  5,  3.0, 0xfff4e0, 5.0],   // secondary key (warm)
+        [ 7,  2, -3,  2.0, 0xffffff, 6.0],   // back rim right
+        [-7,  2, -3,  2.0, 0xffffff, 6.0],   // back rim left
+        [ 0,  8,  2,  3.5, 0xfffaf0, 5.0],   // top fill
+        [ 0, -3,  6,  2.0, 0xffe8c0, 2.5],   // bottom bounce (warm, dim)
+      ];
+      lights.forEach(([x, y, z, size, color, intensity]) => {
         const m = new THREE.Mesh(
-          new THREE.SphereGeometry(L.size, 8, 8),
-          new THREE.MeshBasicMaterial({color: L.color})
+          new THREE.SphereGeometry(size, 16, 16),
+          new THREE.MeshBasicMaterial({
+            color: new THREE.Color(color).multiplyScalar(intensity),
+            toneMapped: false,  // keep emissive bright through tonemap
+          })
         );
-        m.position.set(L.pos[0], L.pos[1], L.pos[2]);
+        m.position.set(x, y, z);
         envScene.add(m);
       });
 
@@ -3218,7 +3227,7 @@ window.addEventListener('appinstalled',()=>{
             if(mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial){
               // Studio environment so metal reflects something
               if(scene.environment) mat.envMap = scene.environment;
-              mat.envMapIntensity = 1.0;
+              mat.envMapIntensity = 1.8;  // strong reflections = gold shine
               // Warm gold tint — slightly brighter so it reads as polished
               // gold leaf rather than dark brass. The texture's natural
               // shading still preserves depth; this multiplier just sets
