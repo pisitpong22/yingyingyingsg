@@ -3404,8 +3404,23 @@ window.addEventListener('appinstalled',()=>{
       targetRotY = mouseX * 0.5;
       targetRotX = -mouseY * 0.25;
     });
-    window.addEventListener('touchmove', (e) => {
-      if(!e.touches[0]) return;
+
+    // ─── TOUCH ROTATION — only when actively dragging the canvas ───
+    // Previously we listened to touchmove on `window`, which meant that
+    // scrolling the page (which is a touchmove) was being interpreted as
+    // a drag-to-rotate. The model would tilt based on where the user's
+    // finger happened to be on the screen during scroll — leading to the
+    // model appearing upside-down/flipped after scrolling.
+    //
+    // Now we ONLY listen to touchmove that starts inside the canvas, and
+    // we reset the target rotation when the user lifts their finger so
+    // the model springs back to its resting position.
+    let isDraggingCanvas = false;
+    canvas.addEventListener('touchstart', (e) => {
+      isDraggingCanvas = true;
+    }, {passive: true});
+    canvas.addEventListener('touchmove', (e) => {
+      if(!isDraggingCanvas || !e.touches[0]) return;
       const rect = canvas.getBoundingClientRect();
       if(rect.width === 0) return;
       mouseX = ((e.touches[0].clientX - rect.left) / rect.width) * 2 - 1;
@@ -3413,6 +3428,15 @@ window.addEventListener('appinstalled',()=>{
       targetRotY = mouseX * 0.5;
       targetRotX = -mouseY * 0.25;
     }, {passive: true});
+    const onTouchEnd = () => {
+      isDraggingCanvas = false;
+      // Spring back to resting position so the model returns upright
+      // instead of staying wherever the user dragged it to.
+      targetRotY = 0;
+      targetRotX = 0;
+    };
+    canvas.addEventListener('touchend', onTouchEnd, {passive: true});
+    canvas.addEventListener('touchcancel', onTouchEnd, {passive: true});
 
     // tap-to-flip removed — the model just responds to drag/orbit now.
     let flipped = 0;
