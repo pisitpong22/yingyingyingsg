@@ -3038,7 +3038,7 @@ window.addEventListener('appinstalled',()=>{
       renderer.outputEncoding = THREE.sRGBEncoding;
     }
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.4;
+    renderer.toneMappingExposure = 0.6;
 
     function resize(){
       const w = canvas.clientWidth;
@@ -3183,43 +3183,39 @@ window.addEventListener('appinstalled',()=>{
       model.position.y = -center.y * scale;
       model.position.z = -center.z * scale;
 
-      // ─── Force ALL PBR materials to render as polished gold ───
-      // Trellis exports a model with:
-      //   1. material.color = white (#fff)
-      //   2. baseColor texture (`map`) = baked cream/yellow image
-      //   3. low metalness / high roughness
-      // This combination makes shiny gold look flat and pale. We can't
-      // detect "is gold" from material.color (it's white) — so we just
-      // strip the maps and force every material to be polished gold.
-      // This works because the model is a single-coloured gold artifact;
-      // for multi-material models, a more selective approach would be
-      // needed.
+      // ─── Tune materials for a metallic gold look — but PRESERVE textures ───
+      // Trellis exports come with baked baseColor textures that include all
+      // the model's surface detail (red cushion, fabric folds, etc.). We
+      // must KEEP these textures, otherwise the model becomes a single
+      // colour and loses all detail.
+      //
+      // What we tune:
+      //   • mat.color → warm gold tint (1.0, 0.78, 0.42) — acts as a
+      //     MULTIPLIER on the texture. White texture pixels become gold;
+      //     red cushion pixels become a warmer red-gold (still distinct).
+      //   • metalness → 1.0  (full metal — reflects light, doesn't absorb)
+      //   • roughness → 0.32 (polished, not mirror — soft highlights)
+      //   • envMapIntensity → 1.0 (strong environment reflections)
+      //
+      // What we leave alone:
+      //   • mat.map (baseColor texture — has the actual surface detail!)
+      //   • All other maps (normal, AO, emissive, etc.)
       model.traverse(obj => {
         if(obj.isMesh && obj.material){
           const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
           mats.forEach(mat => {
             if(mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial){
-              // Strip texture maps that are washing out our colour
-              if(mat.map){
-                mat.map.dispose && mat.map.dispose();
-                mat.map = null;
-              }
-              if(mat.metalnessMap){
-                mat.metalnessMap.dispose && mat.metalnessMap.dispose();
-                mat.metalnessMap = null;
-              }
-              if(mat.roughnessMap){
-                mat.roughnessMap.dispose && mat.roughnessMap.dispose();
-                mat.roughnessMap = null;
-              }
-              // Set a deep, rich burnished gold (#b87a1f-ish)
-              mat.color.setRGB(0.72, 0.48, 0.12);
-              // Force polished metal
-              mat.metalness = 1.0;
-              mat.roughness = 0.28;
               // Studio environment so metal reflects something
               if(scene.environment) mat.envMap = scene.environment;
               mat.envMapIntensity = 1.0;
+              // Warm gold tint applied as a multiplier on the texture.
+              // Three.js does: finalColor = texture × mat.color × lighting
+              // So a cream texture × gold-ish multiplier = rich gold.
+              // (And red-cushion pixels stay red-ish, just warmer.)
+              mat.color.setRGB(1.0, 0.78, 0.42);
+              // Force polished-metal physical properties for everything.
+              mat.metalness = 1.0;
+              mat.roughness = 0.32;
               mat.needsUpdate = true;
             }
           });
