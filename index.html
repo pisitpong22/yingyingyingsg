@@ -1760,6 +1760,16 @@ function getDB(){
   return seedDB();
 }
 
+// `lang` is a global property derived from <body class="th">.
+// Code throughout the file uses `lang === 'th'` to localise dynamically
+// generated HTML — declaring it as a getter on `window` means it stays
+// up to date when the user toggles language without us having to push
+// updates to every consumer.
+Object.defineProperty(window, 'lang', {
+  get(){ return document.body.classList.contains('th') ? 'th' : 'en'; },
+  configurable: true,
+});
+
 // index.html never writes to the DB — admin.html is the only writer.
 // Keep this stub so any legacy call sites don't crash.
 function saveDB(/*db*/){}
