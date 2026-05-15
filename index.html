@@ -1119,7 +1119,10 @@
 
     .content{padding:28px 14px}
 
-    .card-grid,.ftype-grid,.proj-grid{grid-template-columns:1fr;gap:14px}
+    /* Casing types: 2 columns on mobile (was 1) — much faster to scan
+       through 8+ casing types without scrolling for ages. */
+    .card-grid,.proj-grid{grid-template-columns:1fr;gap:14px}
+    .ftype-grid{grid-template-columns:repeat(2,1fr);gap:12px}
     .var-grid{grid-template-columns:repeat(2,1fr);gap:12px}
     .card-img{height:200px}
     .card-body{padding:14px 16px 8px}
@@ -1127,11 +1130,20 @@
     .card-desc{font-size:12px}
     .card-price{font-size:18px}
 
-    .ftype-banner{height:160px}
-    .ftype-icon-bg{font-size:60px}
-    .ftype-body{padding:18px 18px}
-    .ftype-name{font-size:18px}
-    .ftype-desc{font-size:13px}
+    /* Compact casing-type cards for 2-column mobile layout */
+    .ftype-banner{height:120px}
+    .ftype-icon-bg{font-size:48px}
+    .ftype-count{font-size:10px;padding:2px 8px;top:8px;right:8px}
+    .ftype-body{padding:12px 14px}
+    .ftype-name{font-size:14.5px;margin-bottom:5px;line-height:1.25}
+    .ftype-desc{
+      font-size:11.5px;line-height:1.5;margin-bottom:10px;
+      -webkit-line-clamp:3;line-clamp:3;
+    }
+    .ftype-cta{padding-top:10px;flex-wrap:wrap;gap:6px}
+    .ftype-from{font-size:10px}
+    .ftype-from strong{font-size:14px}
+    .ftype-arrow{font-size:11.5px}
 
     .var-img{font-size:38px}
     .var-name{font-size:13px}
@@ -1708,13 +1720,13 @@ function applyDbMigrations(d){
   return rewriteImageUrls(d);
 }
 
-// ─── IMAGEKIT URL REWRITER ────────────────────────────────────────────────
-// Walks the DB and rewrites every Firebase Storage URL through ImageKit so
-// legacy images (uploaded before we added the proxy) also get the CDN
-// speed boost. Idempotent — calling twice is a no-op because
-// _toImageKitUrl() skips URLs that don't match the Firebase pattern.
+// ─── LEGACY URL REWRITER ────────────────────────────────────────────────
+// Walks the DB and converts any old ImageKit URLs back to direct Firebase
+// Storage URLs (pointing at the legacy US bucket). After the Asia-bucket
+// migration finishes, every URL will be a *.firebasestorage.app one and
+// this rewriter becomes a no-op.
 function rewriteImageUrls(d){
-  const rw = (window._toImageKitUrl || ((u) => u));
+  const rw = (window._rewriteLegacyImageUrl || ((u) => u));
 
   // Helper to rewrite an array of image URLs in place
   const arrRw = (arr) => Array.isArray(arr) ? arr.map(rw) : arr;
@@ -2451,11 +2463,10 @@ function renderCasingTypes(){
   const types=db.casingTypes||[];
   const grid=document.getElementById('cTypeGrid');
   if(!types.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">No casing types available yet.</div>`;return;}
-  // Banner is ~480px wide, ~200px tall. Request the right size up front.
-  const bannerify = (url) => {
-    if(!url || !url.includes('ik.imagekit.io') || url.includes('/tr:')) return url;
-    return url.replace(/(\/yingyingyingsg\/yyy)\/(.+)$/, '$1/tr:w-640,h-400,fo-auto,q-80,f-auto/$2');
-  };
+  // Direct Firebase Storage URLs — no proxy/resize, just pass through.
+  // Upload-time optimisation in firebase-shared.js already caps images at
+  // 1920px and re-encodes to WebP q85, so they're already CDN-friendly.
+  const bannerify = (url) => url;
   grid.innerHTML=types.map(ty=>{
     const count=(ty.variants||[]).length;
     return `
@@ -2504,11 +2515,8 @@ function renderVariants(typeId){
   const vars=ty.variants||[];
   const grid=document.getElementById('vGrid');
   if(!vars.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">No styles in this type yet.</div>`;return;}
-  // Variant card image is ~240×240 — request small thumbnail size up front.
-  const thumbify = (url) => {
-    if(!url || !url.includes('ik.imagekit.io') || url.includes('/tr:')) return url;
-    return url.replace(/(\/yingyingyingsg\/yyy)\/(.+)$/, '$1/tr:w-480,h-480,fo-auto,q-80,f-auto/$2');
-  };
+  // Direct URLs — see note in renderCasingTypes about why no resize.
+  const thumbify = (url) => url;
   grid.innerHTML=vars.map(v=>`
     <div class="var-card" onclick="openVariant(${ty.id},${v.id})">
       <div class="var-img">
@@ -2530,15 +2538,8 @@ function openVariant(typeId,varId){
   const imgs=v.imgs||[];
   // store images globally for lightbox — keep originals for full-size view
   window._lbImages = imgs;
-  // For gallery thumbnails: explicitly request a small size via ImageKit.
-  // The auto-resize observer will also run, but doing it here means the
-  // network request fires with the optimised URL from the start (no race).
-  const thumbify = (url) => {
-    if(!url || typeof url !== 'string') return url;
-    if(!url.includes('ik.imagekit.io')) return url;
-    if(url.includes('/tr:')) return url;
-    return url.replace(/(\/yingyingyingsg\/yyy)\/(.+)$/, '$1/tr:w-320,q-75,f-auto/$2');
-  };
+  // Direct URLs — Firebase Storage Asia bucket serves original optimised images.
+  const thumbify = (url) => url;
   document.getElementById('modalContent').innerHTML=`
     <div class="modal-head" style="padding-bottom:12px;margin-bottom:16px">
       <div class="modal-title-wrap">
@@ -2569,12 +2570,8 @@ function openLightbox(idx){
 function showLightboxImage(){
   const imgs = window._lbImages || [];
   if(!imgs.length) return;
-  // Lightbox shows large image but no need for true original — 1280px is
-  // sharp on any normal screen and downloads ~4x faster than the original.
-  let url = imgs[_lbIndex];
-  if(url && url.includes('ik.imagekit.io') && !url.includes('/tr:')){
-    url = url.replace(/(\/yingyingyingsg\/yyy)\/(.+)$/, '$1/tr:w-1280,q-85,f-auto/$2');
-  }
+  // Direct Firebase Storage URL — already optimised at upload time.
+  const url = imgs[_lbIndex];
   document.getElementById('lbImg').src = url;
   document.getElementById('lbCounter').textContent = (_lbIndex+1) + ' / ' + imgs.length;
   // hide arrows if only 1 image
@@ -2760,60 +2757,21 @@ const _imgObserver = ('IntersectionObserver' in window)
 // before sending bytes over the wire. Typical reduction: 90%+.
 //
 // We use devicePixelRatio so retina screens get 2x assets (still small).
-function applyImageKitResize(img){
-  if(!img || !img.src && !img.dataset.src) return;
-  const url = img.src || img.dataset.src;
-  if(!url.includes('ik.imagekit.io')) return;
-  if(url.includes('/tr:')) return;  // already has transformation
-
-  // Measure displayed size (after CSS layout). Use the image's clientWidth
-  // if available, else its parent's, else fall back to 800px.
-  let displayW = img.clientWidth || (img.parentElement && img.parentElement.clientWidth) || 800;
-  // Cap and round to nice numbers — avoids cache fragmentation across slightly
-  // different sizes (e.g. 237px vs 241px would generate 2 cache entries).
-  const targets = [320, 480, 640, 800, 1024, 1280, 1600, 1920];
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const target = targets.find(t => t >= displayW * dpr) || 1920;
-
-  // Hero images and other "showcase" images get a higher quality (95) so
-  // gold/brass tones don't compress to a muddy darkness. Other images use
-  // q-80 which is plenty for thumbnails. .hero-still-img is the main one.
-  const isShowcase = img.classList.contains('hero-still-img');
-  const quality = isShowcase ? 95 : 80;
-
-  // Build new URL: insert /tr:w-{target},q-{quality},f-auto/ before the path
-  const newUrl = url.replace(
-    /(\/yingyingyingsg\/yyy)\/(.+)$/,
-    `$1/tr:w-${target},q-${quality},f-auto/$2`
-  );
-  if(img.dataset.src){
-    img.dataset.src = newUrl;
-  } else {
-    img.src = newUrl;
-  }
-}
+// ─── IMAGE WATCH ────────────────────────────────────────────────
+// Previously we had an applyImageKitResize() here that injected /tr:.../
+// transformations into ImageKit URLs to fetch device-appropriate sizes.
+// After migrating to a Singapore-region Firebase Storage bucket (no CDN
+// proxy), images now come directly from Cloud Storage at their original
+// (already optimised) dimensions. Upload-time optimisation in
+// firebase-shared.js caps every image at 1920px wide and re-encodes to
+// WebP at quality 85, so we no longer need on-the-fly resizing.
 
 function watchImage(img){
   if(!img || img.dataset._watched) return;
   img.dataset._watched = '1';
 
-  // Apply ImageKit auto-resize BEFORE network request fires
-  applyImageKitResize(img);
-
-  // Set a blur preview as CSS background if this is an ImageKit URL — only
-  // costs ~1 KB to fetch and shows the user the IMAGE SHAPE immediately,
-  // even on cold-cache first visits. The real image fades in over the top.
-  const src = img.src || img.dataset.src;
-  if(src && src.includes('ik.imagekit.io')){
-    // Strip any existing transformation, then add tiny + blur
-    const cleaned = src.replace(/\/tr:[^/]+/, '');
-    const blurUrl = cleaned.replace(
-      /(\/yingyingyingsg\/yyy)\/(.+)$/,
-      '$1/tr:w-24,bl-6,q-30,f-auto/$2'
-    );
-    img.style.setProperty('--blur-preview', `url("${blurUrl}")`);
-    img.classList.add('has-blur');
-  }
+  // Direct Firebase Storage URLs are already optimised at upload time
+  // (capped 1920px, WebP q85). No on-the-fly resize needed.
 
   // Eager (above-the-fold) images: keep native loading, just listen for load
   if(img.getAttribute('loading') !== 'lazy'){

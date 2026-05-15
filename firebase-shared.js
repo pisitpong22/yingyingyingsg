@@ -28,20 +28,24 @@ import {
   getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, setDoc, onSnapshot
+  getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, getDocs
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import {
   getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-storage.js";
 
 // ─── CONFIG (PUBLIC — safe to commit; protection is via Security Rules) ────
+// Project: yingyingyingsgshop (Singapore — asia-southeast1)
+// Firestore + Storage + Auth all hosted in Asia for low-latency delivery
+// to Thai/SG customers. Created fresh after migrating from the original
+// US-EAST1 project (yingyingying-sg) which had cold-cache latency issues.
 const firebaseConfig = {
-  apiKey: "AIzaSyCTPhpdN7eynONWvTXCWocLvuwT3K3AWVU",
-  authDomain: "yingyingying-sg.firebaseapp.com",
-  projectId: "yingyingying-sg",
-  storageBucket: "yingyingying-sg.firebasestorage.app",
-  messagingSenderId: "451804767814",
-  appId: "1:451804767814:web:c83a8b59d8f43803a78c47"
+  apiKey: "AIzaSyCvK5tsaz6AJDGdG7zVoy6a32yoU1_-koA",
+  authDomain: "yingyingyingsgshop.firebaseapp.com",
+  projectId: "yingyingyingsgshop",
+  storageBucket: "yingyingyingsgshop.firebasestorage.app",
+  messagingSenderId: "329334358389",
+  appId: "1:329334358389:web:105a3024960b00a7c9533c"
 };
 
 // ─── INIT ──────────────────────────────────────────────────────────────────
@@ -136,8 +140,19 @@ async function uploadFile(fileOrBlob, pathHint){
     try {
       blob = await optimiseImage(blob);
     } catch(err){
-      console.warn('[FB] image optimise failed, uploading original:', err);
-      // Fall through with original blob
+      console.warn('[FB] image optimise failed:', err);
+      // If the source is a format browsers can't display (HEIC/HEIF), do NOT
+      // upload the original — it would just sit in storage unviewable. Surface
+      // the error to the caller so they can show a clear message.
+      const orig = fileOrBlob;
+      const isUnviewable =
+        (orig && orig.type === 'image/heic') ||
+        (orig && orig.type === 'image/heif') ||
+        (orig && orig.name && /\.(heic|heif)$/i.test(orig.name));
+      if(isUnviewable){
+        throw err;  // propagate — admin UI will show the message
+      }
+      // For other formats (jpg/png) it's safe to upload the original
     }
   }
 
@@ -153,51 +168,16 @@ async function uploadFile(fileOrBlob, pathHint){
     cacheControl: 'public,max-age=31536000,immutable',
   } : undefined);
   const fbUrl = await getDownloadURL(ref);
-  // Return the ImageKit-proxied URL so subsequent reads go through the CDN.
-  return toImageKitUrl(fbUrl);
+  // Direct Firebase Storage URL — bucket is in Singapore, so Asian
+  // visitors get sub-100ms delivery without any CDN proxy.
+  return fbUrl;
 }
 
-// ─── IMAGEKIT CDN PROXY ────────────────────────────────────────────────────
-// We serve images through ImageKit instead of Firebase Storage directly so
-// they're cached on a CDN with edge nodes near our visitors (incl. Thailand
-// & SG). ImageKit also does on-the-fly resize + WebP conversion via URL
-// params, which we can apply with toImageKitUrl(fbUrl, {width: 400}).
-//
-// Endpoint structure (set up in ImageKit dashboard):
-//   https://ik.imagekit.io/{ACCOUNT}/{PATH-IDENTIFIER}/<file-path>
-//
-// We map Firebase URLs like:
-//   https://firebasestorage.googleapis.com/v0/b/<bucket>/o/<encoded-path>?alt=media&token=...
-// to:
-//   https://ik.imagekit.io/yingyingyingsg/yyy/<encoded-path>?alt=media&token=...
-//
-// The token query param is preserved so Firebase still allows the request
-// to fetch the underlying object — ImageKit forwards it transparently.
-const IMAGEKIT_ENDPOINT = 'https://ik.imagekit.io/yingyingyingsg/yyy';
-
-function toImageKitUrl(url, opts){
-  if(!url || typeof url !== 'string') return url;
-  // Only rewrite Firebase Storage download URLs
-  const m = url.match(/^https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/[^/]+\/o\/(.+)$/);
-  if(!m) return url;  // not a Firebase URL — leave alone
-  let pathAndQuery = m[1];
-  // Add transformation params (resize, format, quality) if requested
-  if(opts && (opts.width || opts.height || opts.quality)){
-    const tr = [];
-    if(opts.width)   tr.push('w-' + opts.width);
-    if(opts.height)  tr.push('h-' + opts.height);
-    if(opts.quality) tr.push('q-' + opts.quality);
-    tr.push('f-auto');  // auto WebP/AVIF
-    // ImageKit transformation param goes BEFORE the path
-    return `${IMAGEKIT_ENDPOINT}/tr:${tr.join(',')}/${pathAndQuery}`;
-  }
-  return `${IMAGEKIT_ENDPOINT}/${pathAndQuery}`;
-}
-
-// Expose so other scripts (index.html, admin.html) can rewrite URLs
-// stored from earlier uploads. Used by a post-process step that walks the
-// DB and rewrites every image URL to the proxied version.
-window._toImageKitUrl = toImageKitUrl;
+// No-op rewriter kept for backwards compatibility with index.html/admin.html.
+// (Older versions of this file rewrote URLs to/from ImageKit and to/from a
+// legacy bucket — neither applies anymore now that everything's in one
+// fresh Asia project.)
+window._rewriteLegacyImageUrl = (url) => url;
 
 // Resize & re-encode an image Blob.
 //   - Keeps aspect ratio
@@ -206,6 +186,52 @@ window._toImageKitUrl = toImageKitUrl;
 async function optimiseImage(blob){
   const MAX_DIM = 1920;       // longest side
   const QUALITY = 0.85;       // 0–1; 0.85 looks identical to humans for most photos
+
+  // ─── HEIC / HEIF handling ───
+  // Apple devices (iPhone, iPad) save photos as HEIC by default. Most
+  // desktop browsers (Chrome, Firefox, Edge) CANNOT decode HEIC at all —
+  // createImageBitmap throws, <img> shows broken. The only reliable fix
+  // is to convert HEIC → JPEG before processing using a dedicated library.
+  //
+  // We lazy-load heic2any from a CDN only when needed, to keep the page's
+  // initial bundle small. The library produces an ordinary Blob that
+  // createImageBitmap can then read.
+  const isHeic =
+    blob.type === 'image/heic' ||
+    blob.type === 'image/heif' ||
+    blob.type === '' ||  // some browsers leave HEIC type blank
+    (blob.name && /\.(heic|heif)$/i.test(blob.name));
+
+  if(isHeic){
+    console.log('[FB] HEIC detected, converting to JPEG…');
+    try {
+      // Load heic2any from JsDelivr CDN if not already loaded
+      if(!window.heic2any){
+        await new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
+          s.onload = res;
+          s.onerror = rej;
+          document.head.appendChild(s);
+        });
+      }
+      const converted = await window.heic2any({
+        blob: blob,
+        toType: 'image/jpeg',
+        quality: 0.92,
+      });
+      // heic2any can return Blob or Blob[]; coalesce to single Blob
+      blob = Array.isArray(converted) ? converted[0] : converted;
+      console.log('[FB] HEIC → JPEG conversion done, size:', blob.size);
+    } catch(e){
+      console.error('[FB] HEIC conversion failed:', e);
+      throw new Error(
+        'HEIC files cannot be converted. Please use a JPEG/PNG image instead, ' +
+        'or take screenshots on your iPhone with the camera set to "Most Compatible" ' +
+        '(Settings → Camera → Formats → Most Compatible).'
+      );
+    }
+  }
 
   // Decode the source image. We use createImageBitmap when available — it's
   // faster than <img> and avoids EXIF orientation issues on most browsers.
@@ -327,6 +353,81 @@ function onAuthChange(cb){
 
 function currentUser(){ return auth.currentUser; }
 
+// ─── ADMIN ROLES ───────────────────────────────────────────────────────────
+// Each admin is stored as a doc under `admins/{lowercased-email}` with
+// shape: { email, role, addedBy, addedAt, displayName? }
+// Roles in order of decreasing privilege:
+//   super_admin — full access; manages other admins
+//   admin       — full CRUD; cannot manage admins or see Settings
+//   editor      — can create/edit but not delete; no Settings, no admin mgmt
+//
+// IMPORTANT: enforcing access control here is convenience, not security.
+// Real enforcement lives in Firestore Security Rules — without them an
+// "editor" could still bypass the UI by calling the SDK directly.
+
+const ADMINS_COL = 'admins';
+const adminEmailKey = (email) => (email || '').toLowerCase().trim();
+
+async function getAdminRecord(email){
+  const key = adminEmailKey(email);
+  if(!key) return null;
+  try {
+    const snap = await getDoc(doc(fs, ADMINS_COL, key));
+    return snap.exists() ? { id: key, ...snap.data() } : null;
+  } catch(e){
+    console.warn('[FB] getAdminRecord failed:', e);
+    return null;
+  }
+}
+
+async function listAdmins(){
+  try {
+    const snap = await getDocs(collection(fs, ADMINS_COL));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch(e){
+    console.warn('[FB] listAdmins failed:', e);
+    return [];
+  }
+}
+
+async function setAdminRecord(email, data){
+  const key = adminEmailKey(email);
+  if(!key) throw new Error('email is required');
+  const payload = {
+    email: key,
+    role: data.role || 'editor',
+    displayName: data.displayName || '',
+    addedBy: data.addedBy || (auth.currentUser ? auth.currentUser.email : 'system'),
+    addedAt: data.addedAt || new Date().toISOString(),
+    ...data,
+  };
+  await setDoc(doc(fs, ADMINS_COL, key), payload, { merge: true });
+  return payload;
+}
+
+async function deleteAdminRecord(email){
+  const key = adminEmailKey(email);
+  if(!key) return;
+  await deleteDoc(doc(fs, ADMINS_COL, key));
+}
+
+// Bootstrap: if there are NO admins yet, the first email to sign in
+// becomes the super_admin. After that, every login must match an
+// existing record. This lets the very first deploy work without
+// needing manual Firestore seeding.
+async function ensureFirstSuperAdmin(email){
+  const key = adminEmailKey(email);
+  if(!key) return null;
+  const existing = await getAdminRecord(key);
+  if(existing) return existing;
+  const all = await listAdmins();
+  if(all.length === 0){
+    console.log('[FB] No admins yet — promoting first signer to super_admin:', key);
+    return await setAdminRecord(key, { role: 'super_admin', addedBy: 'bootstrap' });
+  }
+  return null;
+}
+
 // ─── EXPOSE GLOBALLY ───────────────────────────────────────────────────────
 window.FB = {
   getDB, saveDB, onDBChange, ready,
@@ -335,6 +436,12 @@ window.FB = {
   signOut: signOutUser,
   onAuthChange,
   currentUser,
+  // Admin role management
+  getAdminRecord,
+  listAdmins,
+  setAdminRecord,
+  deleteAdminRecord,
+  ensureFirstSuperAdmin,
 };
 
 // Optional debug helper

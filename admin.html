@@ -608,6 +608,65 @@
     margin-bottom:20px;
   }
 
+  /* ─── ROLE-BASED UI ───
+     Used by Team Management panel + applied across the app to hide
+     actions that the current role can't perform. */
+  .role-options{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:10px;margin-top:6px;
+  }
+  .role-opt{cursor:pointer;display:block}
+  .role-opt input{position:absolute;opacity:0;pointer-events:none}
+  .role-opt-body{
+    background:#fff;
+    border:2px solid rgba(201,168,76,.25);
+    border-radius:12px;padding:14px 14px;
+    transition:all .2s;height:100%;
+  }
+  .role-opt:hover .role-opt-body{border-color:var(--gold);transform:translateY(-1px)}
+  .role-opt input:checked + .role-opt-body{
+    border-color:var(--gold);
+    background:linear-gradient(135deg,rgba(232,201,106,.12) 0%,rgba(201,168,76,.06) 100%);
+    box-shadow:0 4px 16px rgba(201,168,76,.18);
+  }
+  .role-opt-icon{font-size:24px;margin-bottom:6px}
+  .role-opt-name{font-weight:700;font-size:14px;margin-bottom:4px;color:var(--text)}
+  .role-opt-desc{font-size:11.5px;color:var(--text-muted);line-height:1.5}
+
+  /* Team list rows */
+  .team-row{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:14px;flex-wrap:wrap;
+    padding:14px 18px;
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:10px;
+    margin-bottom:10px;
+    transition:border-color .2s, transform .2s;
+  }
+  .team-row:hover{border-color:rgba(201,168,76,.45)}
+  .team-info{flex:1;min-width:200px}
+  .team-email{font-weight:600;font-size:14px;color:var(--text);margin-bottom:2px}
+  .team-name{font-size:12.5px;color:var(--text-muted);margin-bottom:6px}
+  .team-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .team-role-badge{
+    color:#fff;font-size:10.5px;font-weight:700;
+    padding:3px 10px;border-radius:8px;letter-spacing:.3px;
+  }
+  .team-added{font-size:11px;color:var(--text-muted)}
+  .team-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+  /* Hide delete buttons globally when role lacks delete permission */
+  body.no-delete .btn-del,
+  body.no-delete .pi-rm,
+  body.no-delete .rep-rm{display:none !important}
+
+  @media(max-width:680px){
+    .role-options{grid-template-columns:1fr}
+    .team-row{padding:12px 14px}
+    .team-actions{width:100%;justify-content:flex-end}
+  }
+
   /* ─── PAGE LAYOUT PICKER ───
      Used inside the custom-page modal — admin picks Article, Grid, or List
      before adding content. Visual radio cards. */
@@ -967,6 +1026,7 @@
     </div>
     <div class="top-right">
       <span style="color:#9e8a60;font-size:13px" id="adminUser"></span>
+      <span id="roleBadge" style="display:none;color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:10px;letter-spacing:.3px;margin-left:6px;background:var(--gold-dark)"></span>
       <div class="lang-sw">
         <button class="lb active" onclick="setLang('en')">EN</button>
         <button class="lb" onclick="setLang('th')">TH</button>
@@ -1016,6 +1076,7 @@
 
       <!-- ─── SYSTEM ─── -->
       <div class="sidebar-label" data-en="System" data-th="ระบบ">System</div>
+      <div class="side-item" onclick="showPanel('team',this)" data-en="👥 Team Management" data-th="👥 จัดการทีม">👥 Team Management</div>
       <div class="side-item" onclick="showPanel('settings',this)" data-en="⚙️ Settings" data-th="⚙️ ตั้งค่า">⚙️ Settings</div>
     </div>
 
@@ -1601,27 +1662,75 @@
         <div id="r_list"></div>
       </div>
 
+      <!-- TEAM MANAGEMENT — super_admin only -->
+      <div class="panel" id="panel-team">
+        <div class="panel-title" data-en="👥 Team Management" data-th="👥 จัดการทีม">👥 Team Management</div>
+        <div class="panel-sub"
+             data-en="Invite teammates and assign roles. Only Super Admins can manage the team."
+             data-th="เชิญทีมเข้าระบบและกำหนดบทบาท เฉพาะผู้ดูแลสูงสุดเท่านั้นที่จัดการทีมได้">
+          Invite teammates and assign roles. Only Super Admins can manage the team.
+        </div>
+
+        <div class="form-card">
+          <div class="form-section-title" data-en="➕ Invite Team Member" data-th="➕ เชิญสมาชิกทีมใหม่">➕ Invite Team Member</div>
+          <div class="form-section-desc"
+               data-en="The user must first create their account in Firebase Authentication (or use Google Sign-In). After being added here, they can log in to this admin panel."
+               data-th="ผู้ใช้ต้องสร้างบัญชี Firebase Authentication ก่อน (หรือล็อกอินด้วย Google) หลังจากนี้พวกเขาจะล็อกอินเข้าระบบหลังบ้านได้">
+            User must already have a Firebase account. After adding here, they can log in.
+          </div>
+          <div class="form-grid">
+            <div class="fg">
+              <label class="fl" data-en="Email *" data-th="อีเมล *">Email *</label>
+              <input class="fi" id="newAdminEmail" type="email" placeholder="someone@example.com">
+            </div>
+            <div class="fg">
+              <label class="fl" data-en="Display Name (optional)" data-th="ชื่อแสดง (ไม่บังคับ)">Display Name (optional)</label>
+              <input class="fi" id="newAdminName" placeholder="e.g. Khun Somchai">
+            </div>
+            <div class="fg full">
+              <label class="fl" data-en="Role *" data-th="บทบาท *">Role *</label>
+              <div class="role-options">
+                <label class="role-opt">
+                  <input type="radio" name="newAdminRole" value="admin" checked>
+                  <div class="role-opt-body">
+                    <div class="role-opt-icon">👤</div>
+                    <div class="role-opt-name" data-en="Admin" data-th="แอดมิน">Admin</div>
+                    <div class="role-opt-desc" data-en="Full content access. Can create, edit, and delete amulets, casing, reviews, etc. Cannot manage team or see Settings." data-th="เข้าถึงเนื้อหาทั้งหมด สร้าง แก้ไข และลบสินค้าและรีวิวได้ ไม่สามารถจัดการทีมหรือเข้า Settings">Full content access; no team / settings.</div>
+                  </div>
+                </label>
+                <label class="role-opt">
+                  <input type="radio" name="newAdminRole" value="editor">
+                  <div class="role-opt-body">
+                    <div class="role-opt-icon">✏️</div>
+                    <div class="role-opt-name" data-en="Editor" data-th="ผู้แก้ไข">Editor</div>
+                    <div class="role-opt-desc" data-en="Can add and edit content but cannot delete. Good for staff who help with daily updates." data-th="เพิ่มและแก้ไขเนื้อหาได้ แต่ลบไม่ได้ เหมาะกับเจ้าหน้าที่ที่อัปเดตประจำวัน">Add and edit, but cannot delete.</div>
+                  </div>
+                </label>
+                <label class="role-opt">
+                  <input type="radio" name="newAdminRole" value="super_admin">
+                  <div class="role-opt-body">
+                    <div class="role-opt-icon">🦄</div>
+                    <div class="role-opt-name" data-en="Super Admin" data-th="ผู้ดูแลสูงสุด">Super Admin</div>
+                    <div class="role-opt-desc" data-en="Everything an Admin can do, PLUS manage the team and access Settings. Use sparingly." data-th="ทำได้ทุกอย่างเหมือน Admin + จัดการทีม + เข้า Settings ใช้อย่างจำกัด">Everything + manage team + settings.</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:16px">
+            <button class="btn-gold" onclick="inviteTeamMember()" data-en="✅ Add Team Member" data-th="✅ เพิ่มสมาชิกทีม">✅ Add Team Member</button>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="form-section-title" data-en="👥 Current Team" data-th="👥 ทีมปัจจุบัน">👥 Current Team</div>
+          <div id="teamList"></div>
+        </div>
+      </div>
+
       <!-- SETTINGS -->
       <div class="panel" id="panel-settings">
         <div class="panel-title" data-en="⚙️ Settings" data-th="⚙️ ตั้งค่า">⚙️ Settings</div>
-        <div class="form-card">
-          <div class="form-section-title" data-en="🚀 CDN Pre-warm" data-th="🚀 อุ่น CDN ล่วงหน้า">🚀 CDN Pre-warm</div>
-          <div class="form-section-desc"
-               data-en="First visitor to each image triggers a slow ImageKit cache miss (~1s). Click this button to warm up the CDN — every image will be pre-fetched at the sizes your site actually uses. After this, every visitor gets fast loads from the first byte."
-               data-th="ลูกค้าคนแรกของรูปแต่ละใบจะโหลดช้า (~1 วินาที) เพราะ ImageKit ยังไม่ cache กดปุ่มนี้เพื่ออุ่น CDN ก่อน — รูปทุกใบจะถูก pre-fetch ในขนาดที่เว็บใช้จริง หลังจากนี้ลูกค้าทุกคนจะโหลดเร็วตั้งแต่รูปแรก">
-            Click this button to pre-cache every image at the sizes the site uses. Run after uploading new images.
-          </div>
-          <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-            <button class="btn-gold" onclick="prewarmCDN()" id="prewarmBtn" data-en="🔥 Pre-warm All Images" data-th="🔥 อุ่นรูปทั้งหมด">🔥 Pre-warm All Images</button>
-            <span id="prewarmStatus" style="color:var(--text-muted);font-size:13px"></span>
-          </div>
-          <div id="prewarmProgress" style="margin-top:14px;display:none">
-            <div style="background:rgba(201,168,76,.12);border-radius:10px;height:8px;overflow:hidden">
-              <div id="prewarmBar" style="height:100%;background:linear-gradient(90deg,var(--gold-light),var(--gold));width:0%;transition:width .2s ease-out;border-radius:10px"></div>
-            </div>
-            <div id="prewarmLog" style="margin-top:10px;font-size:12px;color:var(--text-muted);max-height:120px;overflow-y:auto;padding:8px 12px;background:rgba(201,168,76,.05);border-radius:8px;font-family:monospace"></div>
-          </div>
-        </div>
 
         <div class="form-card">
           <div class="form-section-title" data-en="🔐 Change Password" data-th="🔐 เปลี่ยนรหัสผ่าน">🔐 Change Password</div>
@@ -2302,12 +2411,12 @@ function applyDbMigrations(d){
   return rewriteImageUrls(d);
 }
 
-// ─── IMAGEKIT URL REWRITER (admin) ────────────────────────────────────────
-// Mirror of the rewriter in index.html so admin previews load fast too.
-// When admin SAVES the DB, the rewritten URLs get persisted to Firestore —
-// at that point every read by any client just gets ImageKit URLs already.
+// ─── LEGACY URL REWRITER (admin) ────────────────────────────────────────
+// Converts any old ImageKit URLs back to direct Firebase Storage URLs
+// pointing at the legacy bucket. New uploads go straight to the Asia
+// bucket, so this is only needed until existing data is migrated.
 function rewriteImageUrls(d){
-  const rw = (window._toImageKitUrl || ((u) => u));
+  const rw = (window._rewriteLegacyImageUrl || ((u) => u));
   const arrRw = (arr) => Array.isArray(arr) ? arr.map(rw) : arr;
 
   if(d.settings){
@@ -2419,8 +2528,20 @@ function showPanel(name, el){
   if(name==='navigation'){
     loadNav(); loadSections();
   }
-  if(name==='checkout'){
-    loadPayment(); loadContact();
+  if(name==='team'){
+    if(!hasPerm('manageAdmins')){
+      showToast(lang==='th' ? 'คุณไม่มีสิทธิ์ในส่วนนี้' : 'You do not have access to this section');
+      showPanel('dashboard');
+      return;
+    }
+    loadTeamList();
+  }
+  if(name==='settings'){
+    if(!hasPerm('viewSettings')){
+      showToast(lang==='th' ? 'คุณไม่มีสิทธิ์ในส่วนนี้' : 'You do not have access to this section');
+      showPanel('dashboard');
+      return;
+    }
   }
 }
 
@@ -4371,110 +4492,133 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 // Walks the DB, collects every image URL, requests each one through ImageKit
 // at the sizes the site actually uses. After this finishes, real visitors
 // hit a warm cache from the first byte → no more 1s cold-start latency.
-async function prewarmCDN(){
-  const btn = document.getElementById('prewarmBtn');
-  const status = document.getElementById('prewarmStatus');
-  const progress = document.getElementById('prewarmProgress');
-  const bar = document.getElementById('prewarmBar');
-  const log = document.getElementById('prewarmLog');
-
-  btn.disabled = true;
-  progress.style.display = 'block';
-  log.innerHTML = '';
-
-  const db = getDB();
-  // Collect every image URL in the DB along with the sizes the site renders it at
-  const tasks = [];
-  const addImg = (url, sizes) => {
-    if(!url || typeof url !== 'string') return;
-    if(!url.includes('ik.imagekit.io')) return;
-    sizes.forEach(s => {
-      const base = url.split('/tr:')[0] === url ? url : url.replace(/\/tr:[^/]+/, '');
-      const variant = base.replace(
-        /(\/yingyingyingsg\/yyy)\/(.+)$/,
-        `$1/tr:${s}/$2`
-      );
-      tasks.push(variant);
-    });
-  };
-
-  // Hero
-  if(db.settings && db.settings.hero){
-    const h = db.settings.hero;
-    addImg(h.bgImage,    ['w-1920,q-80,f-auto']);
-    addImg(h.heroImage,  ['w-800,q-85,f-auto']);
-    addImg(h.phra3dFront,['w-800,q-85,f-auto']);
-    addImg(h.phra3dBack, ['w-800,q-85,f-auto']);
-  }
-  // Featured (home grid)
-  if(db.settings && Array.isArray(db.settings.featured)){
-    db.settings.featured.forEach(f => addImg(f.img, ['w-480,q-80,f-auto']));
-  }
-  // Payment QR
-  if(db.settings && db.settings.payment && db.settings.payment.qrImage){
-    addImg(db.settings.payment.qrImage, ['w-480,q-80,f-auto']);
-  }
-  // Products
-  const addManyImgs = (arr, sizes) => (arr || []).forEach(it =>
-    (it.imgs || []).forEach(u => addImg(u, sizes)));
-  addManyImgs(db.amulets,     ['w-480,q-80,f-auto', 'w-1280,q-85,f-auto']);
-  addManyImgs(db.accessories, ['w-480,q-80,f-auto', 'w-1280,q-85,f-auto']);
-  addManyImgs(db.projects,    ['w-480,q-80,f-auto', 'w-1280,q-85,f-auto']);
-  addManyImgs(db.reviews,     ['w-320,q-75,f-auto']);
-  // Casing
-  (db.casingTypes || []).forEach(ty => {
-    addImg(ty.bannerImg, ['w-640,h-400,fo-auto,q-80,f-auto']);
-    (ty.variants || []).forEach(v =>
-      (v.imgs || []).forEach(u => addImg(u, [
-        'w-480,h-480,fo-auto,q-80,f-auto',  // variant card
-        'w-320,q-75,f-auto',                 // modal gallery thumb
-        'w-1280,q-85,f-auto',                // lightbox
-      ]))
-    );
-  });
-
-  // De-duplicate
-  const unique = [...new Set(tasks)];
-  const total = unique.length;
-  if(!total){
-    status.textContent = lang==='th'?'ไม่มีรูปต้องอุ่น':'No images to warm';
-    btn.disabled = false;
-    setTimeout(() => progress.style.display = 'none', 2000);
+// ─── TEAM MANAGEMENT ───────────────────────────────────────────────────────
+async function loadTeamList(){
+  const c = document.getElementById('teamList');
+  if(!c) return;
+  c.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">Loading team…</div>';
+  const team = await FB.listAdmins();
+  if(!team.length){
+    c.innerHTML = '<div class="empty-state">No team members yet.</div>';
     return;
   }
+  const currentEmail = (FB.currentUser() && FB.currentUser().email || '').toLowerCase();
+  // Sort: super_admins first, then by name
+  const rank = { super_admin: 0, admin: 1, editor: 2 };
+  team.sort((a,b) => (rank[a.role] ?? 9) - (rank[b.role] ?? 9));
 
-  status.textContent = (lang==='th'?'กำลังอุ่น':'Warming') + ` 0 / ${total}…`;
-  let done = 0, ok = 0, fail = 0;
+  const roleLabels = {
+    super_admin: { en:'🦄 Super Admin', th:'🦄 ผู้ดูแลสูงสุด', color:'#8b4f9a' },
+    admin:       { en:'👤 Admin',        th:'👤 แอดมิน',        color:'var(--gold-dark)' },
+    editor:      { en:'✏️ Editor',       th:'✏️ ผู้แก้ไข',       color:'#6b8e23' },
+  };
 
-  // Run in batches of 6 so we don't hammer ImageKit (and our own bandwidth)
-  const BATCH = 6;
-  for(let i = 0; i < unique.length; i += BATCH){
-    const batch = unique.slice(i, i + BATCH);
-    await Promise.all(batch.map(async url => {
-      try {
-        const t0 = performance.now();
-        const r = await fetch(url, {mode:'cors', cache:'reload'});
-        const dt = Math.round(performance.now() - t0);
-        if(r.ok){
-          ok++;
-          log.innerHTML += `<div style="color:#2a8045">✓ ${dt}ms · ${url.split('/').pop().slice(0,60)}</div>`;
-        } else {
-          fail++;
-          log.innerHTML += `<div style="color:#a55">✗ ${r.status} · ${url.split('/').pop().slice(0,60)}</div>`;
-        }
-      } catch(e){
-        fail++;
-        log.innerHTML += `<div style="color:#a55">✗ ERR · ${url.split('/').pop().slice(0,60)}</div>`;
-      }
-      done++;
-      bar.style.width = (done/total*100) + '%';
-      status.textContent = (lang==='th'?'กำลังอุ่น':'Warming') + ` ${done} / ${total}…`;
-      log.scrollTop = log.scrollHeight;
-    }));
+  c.innerHTML = team.map(m => {
+    const isSelf = m.email === currentEmail;
+    const meta = roleLabels[m.role] || { en: m.role, th: m.role, color: '#666' };
+    const label = lang==='th' ? meta.th : meta.en;
+    return `
+      <div class="team-row">
+        <div class="team-info">
+          <div class="team-email">
+            ${m.email}
+            ${isSelf ? `<span style="font-size:10.5px;color:var(--text-muted);font-weight:400;margin-left:6px">(${lang==='th'?'คุณ':'you'})</span>` : ''}
+          </div>
+          ${m.displayName ? `<div class="team-name">${m.displayName}</div>` : ''}
+          <div class="team-meta">
+            <span class="team-role-badge" style="background:${meta.color}">${label}</span>
+            ${m.addedAt ? `<span class="team-added">${lang==='th'?'เพิ่มเมื่อ':'Added'} ${new Date(m.addedAt).toLocaleDateString()}</span>` : ''}
+          </div>
+        </div>
+        <div class="team-actions">
+          ${isSelf
+            ? `<span style="font-size:11.5px;color:var(--text-muted);font-style:italic">${lang==='th'?'แก้บทบาทตัวเองไม่ได้':'Cannot edit own role'}</span>`
+            : `
+              <select class="fsel team-role-select" data-email="${m.email}" onchange="updateTeamRole('${m.email}', this.value)" style="padding:6px 10px;font-size:12.5px">
+                <option value="super_admin" ${m.role==='super_admin'?'selected':''}>🦄 Super Admin</option>
+                <option value="admin"       ${m.role==='admin'      ?'selected':''}>👤 Admin</option>
+                <option value="editor"      ${m.role==='editor'     ?'selected':''}>✏️ Editor</option>
+              </select>
+              <button class="btn-del" onclick="removeTeamMember('${m.email}')">${tr('del')}</button>
+            `
+          }
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function inviteTeamMember(){
+  const email = document.getElementById('newAdminEmail').value.trim().toLowerCase();
+  const name  = document.getElementById('newAdminName').value.trim();
+  const role  = (document.querySelector('input[name="newAdminRole"]:checked') || {}).value || 'admin';
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    showToast(lang==='th'?'กรุณาใส่อีเมลให้ถูกต้อง':'Please enter a valid email');
+    return;
   }
+  // Check duplicates
+  const existing = await FB.getAdminRecord(email);
+  if(existing){
+    showToast(lang==='th'?'อีเมลนี้อยู่ในทีมแล้ว':'This email is already on the team');
+    return;
+  }
+  try {
+    await FB.setAdminRecord(email, { role, displayName: name });
+    showToast(lang==='th'?'เพิ่มสมาชิกทีมเรียบร้อย':'Team member added');
+    document.getElementById('newAdminEmail').value = '';
+    document.getElementById('newAdminName').value = '';
+    loadTeamList();
+  } catch(e){
+    console.error(e);
+    showToast(lang==='th'?'เพิ่มไม่สำเร็จ — ตรวจสอบ permission ของ Firestore':'Failed to add — check Firestore rules');
+  }
+}
 
-  status.innerHTML = `<span style="color:#2a8045;font-weight:600">✓ ${lang==='th'?'อุ่นเสร็จแล้ว':'Pre-warm complete'}</span> · ${ok} ok, ${fail} fail`;
-  btn.disabled = false;
+async function updateTeamRole(email, newRole){
+  const existing = await FB.getAdminRecord(email);
+  if(!existing) return;
+  // Safety: don't allow removing the last super_admin
+  if(existing.role === 'super_admin' && newRole !== 'super_admin'){
+    const all = await FB.listAdmins();
+    const supers = all.filter(a => a.role === 'super_admin');
+    if(supers.length <= 1){
+      showToast(lang==='th'?'ต้องมี Super Admin อย่างน้อย 1 คน':'Must have at least 1 Super Admin');
+      loadTeamList();  // re-render to restore the dropdown
+      return;
+    }
+  }
+  try {
+    await FB.setAdminRecord(email, { ...existing, role: newRole });
+    showToast(lang==='th'?'อัปเดตบทบาทเรียบร้อย':'Role updated');
+  } catch(e){
+    console.error(e);
+    showToast(lang==='th'?'อัปเดตไม่สำเร็จ':'Failed to update');
+    loadTeamList();
+  }
+}
+
+async function removeTeamMember(email){
+  const existing = await FB.getAdminRecord(email);
+  if(!existing) return;
+  if(existing.role === 'super_admin'){
+    const all = await FB.listAdmins();
+    const supers = all.filter(a => a.role === 'super_admin');
+    if(supers.length <= 1){
+      showToast(lang==='th'?'ต้องมี Super Admin อย่างน้อย 1 คน':'Must have at least 1 Super Admin');
+      return;
+    }
+  }
+  if(!confirm(lang==='th'
+    ? `ลบ ${email} ออกจากทีม?\n\n(บัญชี Firebase ของพวกเขายังคงอยู่ แต่จะเข้าระบบหลังบ้านนี้ไม่ได้)`
+    : `Remove ${email} from the team?\n\n(Their Firebase account is unaffected, but they can no longer access this admin panel.)`)) return;
+  try {
+    await FB.deleteAdminRecord(email);
+    showToast(lang==='th'?'ลบเรียบร้อย':'Removed');
+    loadTeamList();
+  } catch(e){
+    console.error(e);
+    showToast(lang==='th'?'ลบไม่สำเร็จ':'Failed to remove');
+  }
 }
 
 function exportDB(){
@@ -4604,8 +4748,98 @@ async function bootAdmin(){
   }
 
   // Subscribe to auth changes — drives login/logout UI
+  // ─── ROLE-BASED ACCESS ───
+  // Current user's role, set after successful login. One of:
+  //   'super_admin' | 'admin' | 'editor' | null (= not authorized)
+  window.currentRole = null;
+
+  // Capability matrix — which roles are allowed which actions.
+  // Used by hasPerm() throughout the admin UI.
+  const PERMISSIONS = {
+    'super_admin': {
+      manageAdmins: true,  viewSettings: true,
+      createContent: true, editContent: true, deleteContent: true,
+    },
+    'admin': {
+      manageAdmins: false, viewSettings: false,
+      createContent: true, editContent: true, deleteContent: true,
+    },
+    'editor': {
+      manageAdmins: false, viewSettings: false,
+      createContent: true, editContent: true, deleteContent: false,
+    },
+  };
+
+  window.hasPerm = function(action){
+    const role = window.currentRole;
+    if(!role || !PERMISSIONS[role]) return false;
+    return !!PERMISSIONS[role][action];
+  };
+
+  // Apply UI restrictions for the current role: hides side-menu items the
+  // role can't access, hides delete buttons, etc. Called after login.
+  function applyRoleRestrictions(){
+    const role = window.currentRole;
+    document.body.dataset.role = role || '';
+    const canManageAdmins = hasPerm('manageAdmins');
+    const canViewSettings = hasPerm('viewSettings');
+    const canDelete       = hasPerm('deleteContent');
+
+    // Side menu: hide Settings unless super_admin
+    document.querySelectorAll('.side-item').forEach(item => {
+      const onclick = item.getAttribute('onclick') || '';
+      if(onclick.includes("'settings'") && !canViewSettings){
+        item.style.display = 'none';
+      } else {
+        item.style.display = '';
+      }
+      if(onclick.includes("'team'")){
+        item.style.display = canManageAdmins ? '' : 'none';
+      }
+    });
+
+    // Delete buttons: editor role hides them
+    // (We use a body class so CSS can target it globally rather than
+    // hunting through every render function.)
+    document.body.classList.toggle('no-delete', !canDelete);
+
+    // Show role badge in top bar
+    const badge = document.getElementById('roleBadge');
+    if(badge){
+      const labels = {
+        super_admin: { en: '🦄 Super Admin', th: '🦄 ผู้ดูแลสูงสุด', color: '#8b4f9a' },
+        admin:       { en: '👤 Admin',        th: '👤 แอดมิน',        color: 'var(--gold-dark)' },
+        editor:      { en: '✏️ Editor',       th: '✏️ ผู้แก้ไข',       color: '#6b8e23' },
+      };
+      const meta = labels[role];
+      if(meta){
+        badge.textContent = (typeof lang !== 'undefined' && lang === 'th') ? meta.th : meta.en;
+        badge.style.background = meta.color;
+        badge.style.display = '';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+  }
+  window.applyRoleRestrictions = applyRoleRestrictions;
+
   FB.onAuthChange(async (user) => {
     if(user){
+      // Determine the user's role. Bootstrap the very first signer to
+      // super_admin if no admins exist yet (avoids needing manual setup).
+      let record = await FB.getAdminRecord(user.email);
+      if(!record){
+        record = await FB.ensureFirstSuperAdmin(user.email);
+      }
+      if(!record){
+        // Not authorized — sign them out with an explanation
+        await FB.signOut();
+        alert('Your account (' + user.email + ') is not authorized to access this admin panel.\n\nContact the super admin to be added.');
+        return;
+      }
+      window.currentRole = record.role;
+      console.log('[admin] logged in as', user.email, 'role:', record.role);
+
       // User is signed in. Wait for first DB load, then show admin.
       await FB.ready();
       document.getElementById('loginScreen').style.display = 'none';
@@ -4617,9 +4851,11 @@ async function bootAdmin(){
         try { await FB.saveDB(seed); console.log('[admin] seeded empty DB with defaults'); }
         catch(e){ console.error('[admin] failed to seed DB:', e); }
       }
+      applyRoleRestrictions();
       loadDash();
     } else {
       // Signed out
+      window.currentRole = null;
       document.getElementById('loginScreen').style.display = 'flex';
       document.getElementById('adminScreen').style.display = 'none';
     }
